@@ -1,5 +1,5 @@
 {-# LANGUAGE NoImplicitPrelude, OverloadedStrings #-}
-import Prelude (($))
+import Prelude (($),Num (..))
 import Language
 
 enumConversions = do
@@ -96,7 +96,7 @@ enumConversions = do
       case_ (ns ["Filter","tag","LinearMipmapNearest"]) $ return_ "GL_LINEAR_MIPMAP_NEAREST"
       case_ (ns ["Filter","tag","LinearMipmapLinear"]) $ return_ "GL_LINEAR_MIPMAP_LINEAR"
       default_ $ throw "unsupported filter mode"
-{-
+
 globalFunctions = do
   procedure "setUniformValue" ["i" :. Int, "v" :. Ref "UniformValue"] Void $ do
     switch ("v"."tag") $ do
@@ -131,7 +131,7 @@ globalFunctions = do
         call "glVertexAttribPointer"
           [ "i", "s"."glSize"
           , ("s"."buffer"~>"glType") `vectorLookup` ("s"."index"), false, 0
-          , cast (const $ Ptr Void) $ ("s"."buffer"~>"offset") `vectorLookup` ("s"."index")
+          , cast (Const $ Ptr Void) $ ("s"."buffer"~>"offset") `vectorLookup` ("s"."index")
           ]
       else_ $ do
         call "glDisableVertexAttribArray" ["i"]
@@ -162,19 +162,19 @@ globalFunctions = do
       case_ (ns ["TextureType","tag","Texture2D"]) $ do
         "t"."target" .= "GL_TEXTURE_2D"
         varADT "Texture2D" "tx2D" $ "tx"~>"textureType"
-        "internalFormat" .= call "textureDataTypeToGLType" ["tx"~>"textureSemantic","tx2D"~>"_0"]
-        "dataFormat" .= call "textureDataTypeToGLArityType" ["tx"~>"textureSemantic","tx2D"~>"_0"]
+        "internalFormat" .= callExp "textureDataTypeToGLType" ["tx"~>"textureSemantic","tx2D"~>"_0"]
+        "dataFormat" .= callExp "textureDataTypeToGLArityType" ["tx"~>"textureSemantic","tx2D"~>"_0"]
       case_ (ns ["TextureType","tag","TextureCube"]) $ do
         "t"."target" .= "GL_TEXTURE_CUBE_MAP"
         varADT "TextureCube" "txCube" $ "tx"~>"textureType"
-        "internalFormat" .= call "textureDataTypeToGLType" ["tx"~>"textureSemantic","txCube"~>"_0"]
-        "dataFormat" .= call "textureDataTypeToGLArityType" ["tx"~>"textureSemantic","txCube"~>"_0"]
+        "internalFormat" .= callExp "textureDataTypeToGLType" ["tx"~>"textureSemantic","txCube"~>"_0"]
+        "dataFormat" .= callExp "textureDataTypeToGLArityType" ["tx"~>"textureSemantic","txCube"~>"_0"]
       default_ $ throw "unsupported texture type"
 
     call "glBindTexture" ["t"."target", "t"."texture"]
     varAssign Int "dataType" $ expIf ("dataFormat" == "GL_DEPTH_COMPONENT") "GL_UNSIGNED_SHORT" "GL_UNSIGNED_BYTE"
     for (varAssign Int "level" $ "tx"~>"textureBaseLevel") ("level" <= "tx"~>"textureMaxLevel") (inc "level") $ do
-      if_ ("t"."target" == "GL_TEXTURE_2D") $
+      if_ ("t"."target" == "GL_TEXTURE_2D") $ do
         then_ $ do
           call "glTexImage2D" ["t"."target","level","internalFormat", "width", "height", 0, "dataFormat", "dataType", nullptr]
         else_ $ do
@@ -189,22 +189,22 @@ globalFunctions = do
 
     -- setup texture sampling
     varADT "SamplerDescriptor" "s" $ "tx"~>"textureSampler"
-    call "glTexParameteri" ["t"."target", "GL_TEXTURE_WRAP_S", call "edgeMode" ["s"~>"samplerWrapS"]]
-    call "glTexParameteri" ["t"."target", "GL_TEXTURE_WRAP_T", call "edgeMode" ["s"~>"samplerWrapT"."data"]]
-    call "glTexParameteri" ["t"."target", "GL_TEXTURE_MIN_FILTER", call "filterMode" ["s"~>"samplerMinFilter"]]
-    call "glTexParameteri" ["t"."target", "GL_TEXTURE_MAG_FILTER", call "filterMode" ["s"~>"samplerMagFilter"]]
+    call "glTexParameteri" ["t"."target", "GL_TEXTURE_WRAP_S", callExp "edgeMode" ["s"~>"samplerWrapS"]]
+    call "glTexParameteri" ["t"."target", "GL_TEXTURE_WRAP_T", callExp "edgeMode" ["s"~>"samplerWrapT"."data"]]
+    call "glTexParameteri" ["t"."target", "GL_TEXTURE_MIN_FILTER", callExp "filterMode" ["s"~>"samplerMinFilter"]]
+    call "glTexParameteri" ["t"."target", "GL_TEXTURE_MAG_FILTER", callExp "filterMode" ["s"~>"samplerMagFilter"]]
     return_ "t"
 
   procedure "createStreamData" ["s_" :. SmartPtr "StreamData"] (SmartPtr "GLStreamData") $ do
     varADT "StreamData" "s" "s_"
-    varConstructor (SmartPtr "GLStreamData") "gls" $ new $ "GLStreamData" []
+    varConstructor (SmartPtr "GLStreamData") "gls" $ new "GLStreamData" []
 
     switch ("s"~>"streamPrimitive"~>"tag") $ do
       case_ (ns ["FetchPrimitive","tag","Points"])    $ "gls"~>"glMode" .= "GL_POINTS"
       case_ (ns ["FetchPrimitive","tag","Lines"])     $ "gls"~>"glMode" .= "GL_LINES"
       case_ (ns ["FetchPrimitive","tag","Triangles"]) $ "gls"~>"glMode" .= "GL_TRIANGLES"
-    varConstructor (SmartPtr "Buffer") "buffer" $ new $ "Buffer" []
-    map_foreach "i" ("s"~>"streamData") $ do -- TODO: traverse through a map
+    varConstructor (SmartPtr "Buffer") "buffer" $ new "Buffer" []
+    map_foreach "i" ("s"~>"streamData") $ do
       switch (value "i"~>"tag") $ do
         case_ (ns ["ArrayValue","tag","VBoolArray"]) $ do
           varADT "VBoolArray" "a" $ value "i"
@@ -214,19 +214,19 @@ globalFunctions = do
           varADT "VWordArray" "a" $ value "i"
         case_ (ns ["ArrayValue","tag","VFloatArray"]) $ do
           varADT "VFloatArray" "a" $ value "i"
-        varAssign (SmartPtr "ArrayValue") "type" $ call "inputType" ["s"~>"streamType" `mapLookup` key "i"]
-        call ("gls"~>"streams"."add") [key "i", "type", "buffer", call ("buffer"~>"add") ["a"~>"_0"]]
+        varAssign (SmartPtr "ArrayValue") "type" $ callExp "inputType" ["s"~>"streamType" `mapLookup` key "i"]
+        call ("gls"~>"streams"."add") [key "i", "type", "buffer", callExp ("buffer"~>"add") ["a"~>"_0"]]
     call ("buffer"~>"freeze") []
     call ("gls"~>"streams"."validate") []
 
-    "gls"~>"glCount" .= 0;
+    "gls"~>"glCount" .= 0
     map_foreach "i" ("gls"~>"streams"."map") $ do
       if_ (value "i"~>"isArray") $ do
         then_ $ do
-          "gls"~>"glCount" .= (value "i"~>"buffer"~>"size" `vectorLookup` (value "i"~>"index")) / value "i"~>"glSize"
+          ("gls"~>"glCount") .= ((value "i"~>"buffer"~>"size" `vectorLookup` value "i"~>"index") / value "i"~>"glSize")
           break_
     return_ "gls"
-
+{-
   procedure "createProgram" ["p_" :. SmartPtr "Program"] (SmartPtr "GLProgram") $ do
     varADT "Program" "p" "p_"
     -- vertex shader
