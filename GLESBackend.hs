@@ -1,5 +1,5 @@
 {-# LANGUAGE NoImplicitPrelude, OverloadedStrings #-}
-import Prelude (($),Num (..))
+import Prelude (($),Num (..),return)
 import Language
 
 enumConversions = do
@@ -173,7 +173,7 @@ globalFunctions = do
 
     call "glBindTexture" ["t"."target", "t"."texture"]
     varAssign Int "dataType" $ expIf ("dataFormat" == "GL_DEPTH_COMPONENT") "GL_UNSIGNED_SHORT" "GL_UNSIGNED_BYTE"
-    for (varAssign Int "level" $ "tx"~>"textureBaseLevel") ("level" <= "tx"~>"textureMaxLevel") (inc "level") $ do
+    for (varAssign Int "level" $ "tx"~>"textureBaseLevel") ("level" <= "tx"~>"textureMaxLevel") (incExp "level") $ do
       if_ ("t"."target" == "GL_TEXTURE_2D") $ do
         then_ $ do
           call "glTexImage2D" ["t"."target","level","internalFormat", "width", "height", 0, "dataFormat", "dataType", nullptr]
@@ -226,28 +226,28 @@ globalFunctions = do
           ("gls"~>"glCount") .= ((value "i"~>"buffer"~>"size" `vectorLookup` value "i"~>"index") / value "i"~>"glSize")
           break_
     return_ "gls"
-{-
+
   procedure "createProgram" ["p_" :. SmartPtr "Program"] (SmartPtr "GLProgram") $ do
     varADT "Program" "p" "p_"
     -- vertex shader
-    varAssign UInt "vs" $ call "glCreateShader" ["GL_VERTEX_SHADER"]
-    charPtrFromString "vsSrc" $ "p"~>"vertexShader"
+    varAssign UInt "vs" $ callExp "glCreateShader" ["GL_VERTEX_SHADER"]
+    varCharPtrFromString "vsSrc" $ "p"~>"vertexShader"
     call "glShaderSource" ["vs",1,addr "vsSrc",nullptr]
     call "glCompileShader" ["vs"]
 
     -- fragment shader
-    varAssign UInt "fs" $ call "glCreateShader" ["GL_FRAGMENT_SHADER"]
-    charPtrFromString "fsSrc" $ "p"~>"fragmentShader"
+    varAssign UInt "fs" $ callExp "glCreateShader" ["GL_FRAGMENT_SHADER"]
+    varCharPtrFromString "fsSrc" $ "p"~>"fragmentShader"
     call "glShaderSource" ["fs",1,addr "fsSrc",nullptr]
     call "glCompileShader" ["fs"]
 
     -- create program
-    varAssign UInt "po" $ call "glCreateProgram" []
+    varAssign UInt "po" $ callExp "glCreateProgram" []
     call "glAttachShader" ["po","vs"]
     call "glAttachShader" ["po","fs"]
     call "glLinkProgram" ["po"]
 
-    varConstructor (SmartPtr "GLProgram") "glp" $ new $ "GLProgram" []
+    varConstructor (SmartPtr "GLProgram") "glp" $ new "GLProgram" []
     "glp"~>"program" .= "po"
     "glp"~>"vertexShader" .= "vs"
     "glp"~>"fragmentShader" .= "fs"
@@ -255,18 +255,18 @@ globalFunctions = do
     -- query uniforms
     var Int ["loc"]
     map_foreach "i" ("p"~>"programUniforms") $ do
-      "loc" .= call "glGetUniformLocation" ["po", charPtrFromString $ key "i"]
+      "loc" .= callExp "glGetUniformLocation" ["po", charPtrFromString $ key "i"]
       if_ ("loc" >= 0) $ do
         "glp"~>"programUniforms" `mapLookup` (key "i") .= "loc"
 
     -- query sampler uniforms
     map_foreach "i" ("p"~>"programInTextures") $ do
-      "loc" .= call "glGetUniformLocation" ["po", charPtrFromString $ key "i"]
+      "loc" .= callExp "glGetUniformLocation" ["po", charPtrFromString $ key "i"]
       if_ ("loc" >= 0) $ do
         "glp"~>"programInTextures" `mapLookup` (key "i") .= "loc"
     -- query vertex attributes
     map_foreach "i" ("p"~>"programStreams") $ do
-      "loc" .= call "glGetAttribLocation" ["po", charPtrFromString $ key "i"]
+      "loc" .= callExp "glGetAttribLocation" ["po", charPtrFromString $ key "i"]
       if_ ("loc" >= 0) $ do
         varADT "Parameter" "param" $ value "i"
         "glp"~>"programStreams" `mapLookup` (key "i") .= recordValue [("name","param"~>"name"),("index","loc")]
@@ -292,12 +292,12 @@ globalFunctions = do
             varADT "CullFront" "f" $ "ctx"~>"_0"
             call "glEnable" ["GL_CULL_FACE"]
             call "glCullFace" ["GL_FRONT"]
-            call "glFrontFace" [call "frontFace" ["f"~>"_0"]]
+            call "glFrontFace" [callExp "frontFace" ["f"~>"_0"]]
           case_ (ns ["CullMode","tag","CullBack"]) $ do
             varADT "CullBack" "f" $ "ctx"~>"_0"
             call "glEnable" ["GL_CULL_FACE"]
             call "glCullFace" ["GL_BACK"]
-            call "glFrontFace" [call "frontFace" ["f"~>"_0"]]
+            call "glFrontFace" [callExp "frontFace" ["f"~>"_0"]]
         call "glDisable" ["GL_POLYGON_OFFSET_FILL"]
         switch ("ctx"~>"_2"~>"tag") $ do
           case_ (ns ["PolygonOffset","tag","NoOffset"]) $ return () -- TODO
@@ -316,7 +316,7 @@ globalFunctions = do
         case_ (ns ["FragmentOperation","tag","DepthOp"]) $ do
           varADT "DepthOp" "o" "i"
           "noDepth" .= false
-          varAssign Int "df" $ call "comparisonFunction" ["o"~>"_0"]
+          varAssign Int "df" $ callExp "comparisonFunction" ["o"~>"_0"]
           if_ ("df" == "GL_ALWAYS" && "o"~>"_1" == false) $ do
             then_ $ call "glDisable" ["GL_DEPTH_TEST"]
             else_ $ do
@@ -339,10 +339,10 @@ globalFunctions = do
             case_ (ns ["Blending","tag","Blend"]) $ do
               varADT "Blend" "b" $ "o"~>"_0"
               call "glEnable" ["GL_BLEND"]
-              call "glBlendEquationSeparate" [call "blendEquation" ["b"~>"colorEqSrc"], call "blendEquation" ["b"~>"alphaEqSrc"]]
+              call "glBlendEquationSeparate" [callExp "blendEquation" ["b"~>"colorEqSrc"], callExp "blendEquation" ["b"~>"alphaEqSrc"]]
               call "glBlendColor" ["b"~>"color"."x","b"~>"color"."y","b"~>"color"."z","b"~>"color"."w"]
-              call "glBlendFuncSeparate" [ call "blendingFactor" ["b"~>"colorFSrc"], call "blendingFactor" ["b"~>"colorFDst"]
-                                         , call "blendingFactor" ["b"~>"alphaFSrc"], call "blendingFactor" ["b"~>"alphaFDst"]
+              call "glBlendFuncSeparate" [ callExp "blendingFactor" ["b"~>"colorFSrc"], callExp "blendingFactor" ["b"~>"colorFDst"]
+                                         , callExp "blendingFactor" ["b"~>"alphaFSrc"], callExp "blendingFactor" ["b"~>"alphaFDst"]
                                          ]
           varAssign Bool "maskR" true
           varAssign Bool "maskG" true
@@ -380,7 +380,7 @@ pipelineMethods = do
       varADT "TargetItem" "i" "i_"
       if_ ("i"~>"targetRef"."valid" && "i"~>"targetRef"."data"~>"tag" == ns ["ImageRef","tag","TextureImage"]) $ do
         inc "textureCount"
-    if_ ("textureCount" == 0)
+    if_ ("textureCount" == 0) $
       return_ 0
     -- has textures attachment
     var UInt ["fb"]
@@ -426,16 +426,16 @@ pipelineMethods = do
     -- allocate all resources
     --  textures
     vector_foreach "i" ("ppl"~>"textures") $ do
-      vector_pushBack "textures" $ call "createTexture" ["i"]
+      vector_pushBack "textures" $ callExp "createTexture" ["i"]
     --  targets
     vector_foreach "i" ("ppl"~>"targets") $ do
-      vector_pushBack "targets" $ call "createRenderTarget" ["i"]
+      vector_pushBack "targets" $ callExp "createRenderTarget" ["i"]
     --  programs
     vector_foreach "i" ("ppl"~>"programs") $ do
-      vector_pushBack "programs" $ call "createProgram" ["i"]
+      vector_pushBack "programs" $ callExp "createProgram" ["i"]
     --  stream data
     vector_foreach "i" ("ppl"~>"streams") $ do
-      vector_pushBack "streamData" $ call "createStreamData" ["i"]
+      vector_pushBack "streamData" $ callExp "createStreamData" ["i"]
     call "glReleaseShaderCompiler" []
 
   destructor "GLES20Pipeline" $ do
@@ -548,4 +548,3 @@ backend = do
   enumConversions
   globalFunctions
   pipelineMethods
--}
