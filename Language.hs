@@ -16,266 +16,229 @@ data Type
   | Ref Type      -- &
   | Ptr Type      -- *
   | SmartPtr Type -- shared_ptr
+  deriving Show
 
 type IfM = Writer [If]
 type DefM = Writer [Def]
 type StmtM = Writer [Stmt]
 type CaseM = Writer [Case]
 
-type Exp = ()
+data Exp
+  = Exp :-> Exp
+  | Var String
+  | Ns [String]
+  deriving Show
 
-type Def = ()
+data Def
+  = Procedure String [Arg] Type [Stmt]
+  deriving Show
 
-data Arg = String :. Type
+data Arg = String :. Type deriving Show
 
-type Stmt = ()
-type Case = ()
-type If = ()
+data Stmt
+  = Switch Exp [Case]
+  | Return Exp
+  | Throw  String
+  deriving Show
+
+data Case
+  = Case Pat [Stmt]
+  | Default [Stmt]
+  deriving Show
+
+data If = If
+
+data Pat
+  = NsPat [String]
+  deriving Show
+
 
 method :: String -> String -> [Arg] -> Type -> StmtM () -> DefM ()
-method = undefined
+method = error "method"
 
 procedure :: String -> [Arg] -> Type -> StmtM () -> DefM ()
-procedure = undefined
+procedure name args retType stmtM = tell [Procedure name args retType (execWriter stmtM)]
 
 constructor :: String -> [Arg] -> StmtM () -> DefM ()
-constructor = undefined
+constructor = error "constructor"
 
 destructor :: String -> StmtM () -> DefM ()
-destructor = undefined
+destructor = error "destructor"
 
 switch :: Exp -> CaseM () -> StmtM ()
-switch = undefined
+switch exp caseM = tell [Switch exp (execWriter caseM)]
 
 case_ :: Pat -> StmtM () -> CaseM ()
-case_ = undefined
+case_ pat stmtM = tell [Case pat (execWriter stmtM)]
 
 default_ :: StmtM () -> CaseM ()
-default_ = undefined
+default_ stmtM = tell [Default (execWriter stmtM)]
 
 throw :: String -> StmtM ()
-throw = undefined
+throw msg = tell [Throw msg]
 
-type Pat = ()
-ns :: [String] -> Pat
-ns = undefined
+ns :: [String] -> Exp
+ns = Ns
+
+nsPat :: [String] -> Pat
+nsPat = NsPat
 
 return_ :: Exp -> StmtM ()
-return_ = undefined
+return_ exp = tell [Return exp]
 
 continue_ :: StmtM ()
-continue_ = undefined
+continue_ = error "continue_"
 
 break_ :: StmtM ()
-break_ = undefined
+break_ = error "break_"
 
 map_notElem :: Exp -> Exp -> Exp
-map_notElem = undefined
+map_notElem = error "map_notElem"
 
 map_elem :: Exp -> Exp -> Exp
-map_elem = undefined
+map_elem = error "map_elem"
 
 deref :: Exp -> Exp
-deref = undefined
+deref = error "deref"
 
 not :: Exp -> Exp
-not = undefined
+not = error "not"
 
 notNull :: Exp -> Exp
-notNull = undefined
+notNull = error "notNull"
 
 (~>) :: Exp -> Exp -> Exp
-(~>) = undefined
+(~>) = (:->)
 
 (.) :: Exp -> Exp -> Exp
-(.) = undefined
+(.) = error "."
 
 call :: Exp -> [Exp] -> StmtM ()
-call = undefined
+call = error "call"
 
 callExp :: Exp -> [Exp] -> Exp
-callExp = undefined
+callExp = error "callExp"
 
 new :: String -> [Exp] -> Exp
-new = undefined
+new = error "new"
 
 cast :: Type -> Exp -> Exp
-cast = undefined
+cast = error "cast"
 
 addr :: Exp -> Exp
-addr = undefined
+addr = error "addr"
 
 false :: Exp
-false = undefined
+false = error "false"
 
 true :: Exp
-true = undefined
+true = error "true"
 
 if_ :: Exp -> IfM () -> StmtM ()
-if_ = undefined
+if_ = error "if_"
 
 then_ :: StmtM () -> IfM ()
-then_ = undefined
+then_ = error "then_"
 
 else_ :: StmtM () -> IfM ()
-else_ = undefined
+else_ = error "else_"
 
-vectorLookup :: Exp -> Exp -> Exp
-vectorLookup = undefined
+vector_lookup :: Exp -> Exp -> Exp
+vector_lookup = error "vector_lookup"
 
-mapLookup :: Exp -> Exp -> Exp
-mapLookup = undefined
+map_lookup :: Exp -> Exp -> Exp
+map_lookup = error "map_lookup"
 
 infix 1 .=
 (.=) :: Exp -> Exp -> StmtM ()
-(.=) = undefined
+(.=) = error ".="
 
 nullptr :: Exp
-nullptr = undefined
+nullptr = error "nullptr"
 
 incExp :: Exp -> Exp
-incExp = undefined
+incExp = error "incExp"
 
 inc :: Exp -> StmtM ()
-inc = undefined
+inc = error "inc"
 
 value :: Exp -> Exp
-value = undefined
+value = error "value"
 
 key :: Exp -> Exp
-key = undefined
+key = error "key"
 
 expIf :: Exp -> Exp -> Exp -> Exp
-expIf = undefined
+expIf = error "expIf"
 
 recordValue :: [(String,Exp)] -> Exp
-recordValue = undefined
+recordValue = error "recordValue"
 
 varCharPtrFromString :: String -> Exp -> StmtM ()
-varCharPtrFromString = undefined
+varCharPtrFromString = error "varCharPtrFromString"
 
 charPtrFromString :: Exp -> Exp
-charPtrFromString = undefined
+charPtrFromString = error "charPtrFromString"
 
 var :: Type -> [String] -> StmtM ()
-var = undefined
+var = error "var"
 
 varADT :: String -> String -> Exp -> StmtM ()
-varADT = undefined
+varADT = error "varADT"
 
 varAssign :: Type -> String -> Exp -> StmtM ()
-varAssign = undefined
+varAssign = error "varAssign"
 
 varConstructor :: Type -> String -> Exp -> StmtM ()
-varConstructor = undefined
+varConstructor = error "varConstructor"
 
 map_foreach :: String -> Exp -> StmtM () -> StmtM ()
-map_foreach = undefined
+map_foreach = error "map_foreach"
 
 vector_foreach :: String -> Exp -> StmtM () -> StmtM ()
-vector_foreach = undefined
+vector_foreach = error "vector_foreach"
 
 vector_pushBack :: Exp -> Exp -> StmtM ()
-vector_pushBack = undefined
+vector_pushBack = error "vector_pushBack"
 
 for :: StmtM () -> Exp -> Exp -> StmtM () -> StmtM ()
-for = undefined
+for = error "for"
 
 (/) :: Exp -> Exp -> Exp
-(/) = undefined
+(/) = error "/"
 
 (&&) :: Exp -> Exp -> Exp
-(&&) = undefined
+(&&) = error "&&"
 
 (==) :: Exp -> Exp -> Exp
-(==) = undefined
+(==) = error "=="
 
 (<=) :: Exp -> Exp -> Exp
-(<=) = undefined
+(<=) = error "<="
 
 (>=) :: Exp -> Exp -> Exp
-(>=) = undefined
+(>=) = error ">="
 
 (|=) :: Exp -> Exp -> StmtM ()
-(|=) = undefined
+(|=) = error "|="
 
 (/=) :: Exp -> Exp -> StmtM ()
-(/=) = undefined
+(/=) = error "/="
 
 (!=) :: Exp -> Exp -> Exp
-(!=) = undefined
+(!=) = error "!="
 
 instance Num Exp where
-  _ * _ = ()
-  _ - _ = ()
-  _ + _ = ()
-  fromInteger _ = ()
+  _ * _ = error "*"
+  _ - _ = error "-"
+  _ + _ = error "+"
+  fromInteger _ = error "fromInteger"
 
 instance Fractional Exp where
-  fromRational _ = ()
+  fromRational _ = error "fromRational"
 
 instance IsString Exp where
-  fromString _ = ()
+  fromString n = Var n
 
 instance IsString Type where
   fromString n = Class n
-
-
-{-
-data Statement
-return_
-switch
-  case_
-  default
-if_
-  then_
-  else_
-vector_foreach
-map_foreach
-break_
-continue_
-method
-procedure
-throw
-varADT
-var
-varAssign
-varConstructor
-new
-vector_pushBack
-
-data Expression
-(&&)
-(+)
-(->)
-(.)
-(/)
-(/=)
-(<=)
-(==)
-(>=)
-true
-false
-expIf
-`mapLookup`
-`vectorLookup`
-addr
-call
-cast
-charPtrFromString
-deref
-inc
-map_elem
-map_notElem
-not
-notNull
-nullptr
-recordValue
-key
-value
-
--- language
-(.:)
-(.=)
-ns
--}

@@ -5,98 +5,98 @@ import Language
 enumConversions = do
   procedure "inputType" ["t" :. SmartPtr "InputType"] (Enum "Type") $ do
     switch ("t"~>"tag") $ do
-      case_ (ns ["InputType","tag","Float"]) $ return_ $ ns ["Type","FLOAT"]
-      case_ (ns ["InputType","tag","V2F"])   $ return_ $ ns ["Type","FLOAT_VEC2"]
-      case_ (ns ["InputType","tag","V3F"])   $ return_ $ ns ["Type","FLOAT_VEC3"]
-      case_ (ns ["InputType","tag","V4F"])   $ return_ $ ns ["Type","FLOAT_VEC4"]
-      case_ (ns ["InputType","tag","M22F"])  $ return_ $ ns ["Type","FLOAT_MAT2"]
-      case_ (ns ["InputType","tag","M33F"])  $ return_ $ ns ["Type","FLOAT_MAT3"]
-      case_ (ns ["InputType","tag","M44F"])  $ return_ $ ns ["Type","FLOAT_MAT4"]
+      case_ (nsPat ["InputType","tag","Float"]) $ return_ $ ns ["Type","FLOAT"]
+      case_ (nsPat ["InputType","tag","V2F"])   $ return_ $ ns ["Type","FLOAT_VEC2"]
+      case_ (nsPat ["InputType","tag","V3F"])   $ return_ $ ns ["Type","FLOAT_VEC3"]
+      case_ (nsPat ["InputType","tag","V4F"])   $ return_ $ ns ["Type","FLOAT_VEC4"]
+      case_ (nsPat ["InputType","tag","M22F"])  $ return_ $ ns ["Type","FLOAT_MAT2"]
+      case_ (nsPat ["InputType","tag","M33F"])  $ return_ $ ns ["Type","FLOAT_MAT3"]
+      case_ (nsPat ["InputType","tag","M44F"])  $ return_ $ ns ["Type","FLOAT_MAT4"]
     throw "illegal input type"
 
   procedure "primitiveMode" ["p" :. "Primitive"] Int $ do
     switch "p" $ do
-      case_ (ns ["Primitive","TriangleStrip"]) $ return_ "GL_TRIANGLE_STRIP"
-      case_ (ns ["Primitive","TriangleList"])  $ return_ "GL_TRIANGLES"
-      case_ (ns ["Primitive","TriangleFan"])   $ return_ "GL_TRIANGLE_FAN"
-      case_ (ns ["Primitive","LineStrip"])     $ return_ "GL_LINE_STRIP"
-      case_ (ns ["Primitive","LineList"])      $ return_ "GL_LINES"
-      case_ (ns ["Primitive","LineLoop"])      $ return_ "GL_LINE_LOOP"
-      case_ (ns ["Primitive","PointList"])     $ return_ "GL_POINTS"
+      case_ (nsPat ["Primitive","TriangleStrip"]) $ return_ "GL_TRIANGLE_STRIP"
+      case_ (nsPat ["Primitive","TriangleList"])  $ return_ "GL_TRIANGLES"
+      case_ (nsPat ["Primitive","TriangleFan"])   $ return_ "GL_TRIANGLE_FAN"
+      case_ (nsPat ["Primitive","LineStrip"])     $ return_ "GL_LINE_STRIP"
+      case_ (nsPat ["Primitive","LineList"])      $ return_ "GL_LINES"
+      case_ (nsPat ["Primitive","LineLoop"])      $ return_ "GL_LINE_LOOP"
+      case_ (nsPat ["Primitive","PointList"])     $ return_ "GL_POINTS"
 
   procedure "blendingFactor" ["bf" :. SmartPtr "BlendingFactor"] Int $ do
     switch ("bf"~>"tag") $ do
-      case_ (ns ["BlendingFactor","tag","ConstantAlpha"]) $ return_ "GL_CONSTANT_ALPHA"
-      case_ (ns ["BlendingFactor","tag","ConstantColor"]) $ return_ "GL_CONSTANT_COLOR"
-      case_ (ns ["BlendingFactor","tag","DstAlpha"]) $ return_ "GL_DST_ALPHA"
-      case_ (ns ["BlendingFactor","tag","DstColor"]) $ return_ "GL_DST_COLOR"
-      case_ (ns ["BlendingFactor","tag","One"]) $ return_ "GL_ONE"
-      case_ (ns ["BlendingFactor","tag","OneMinusConstantAlpha"]) $ return_ "GL_ONE_MINUS_CONSTANT_ALPHA"
-      case_ (ns ["BlendingFactor","tag","OneMinusConstantColor"]) $ return_ "GL_ONE_MINUS_CONSTANT_COLOR"
-      case_ (ns ["BlendingFactor","tag","OneMinusDstAlpha"]) $ return_ "GL_ONE_MINUS_DST_ALPHA"
-      case_ (ns ["BlendingFactor","tag","OneMinusDstColor"]) $ return_ "GL_ONE_MINUS_DST_COLOR"
-      case_ (ns ["BlendingFactor","tag","OneMinusSrcAlpha"]) $ return_ "GL_ONE_MINUS_SRC_ALPHA"
-      case_ (ns ["BlendingFactor","tag","OneMinusSrcColor"]) $ return_ "GL_ONE_MINUS_SRC_COLOR"
-      case_ (ns ["BlendingFactor","tag","SrcAlpha"]) $ return_ "GL_SRC_ALPHA"
-      case_ (ns ["BlendingFactor","tag","SrcAlphaSaturate"]) $ return_ "GL_SRC_ALPHA_SATURATE"
-      case_ (ns ["BlendingFactor","tag","SrcColor"]) $ return_ "GL_SRC_COLOR"
-      case_ (ns ["BlendingFactor","tag","Zero"]) $ return_ "GL_ZERO"
+      case_ (nsPat ["BlendingFactor","tag","ConstantAlpha"]) $ return_ "GL_CONSTANT_ALPHA"
+      case_ (nsPat ["BlendingFactor","tag","ConstantColor"]) $ return_ "GL_CONSTANT_COLOR"
+      case_ (nsPat ["BlendingFactor","tag","DstAlpha"]) $ return_ "GL_DST_ALPHA"
+      case_ (nsPat ["BlendingFactor","tag","DstColor"]) $ return_ "GL_DST_COLOR"
+      case_ (nsPat ["BlendingFactor","tag","One"]) $ return_ "GL_ONE"
+      case_ (nsPat ["BlendingFactor","tag","OneMinusConstantAlpha"]) $ return_ "GL_ONE_MINUS_CONSTANT_ALPHA"
+      case_ (nsPat ["BlendingFactor","tag","OneMinusConstantColor"]) $ return_ "GL_ONE_MINUS_CONSTANT_COLOR"
+      case_ (nsPat ["BlendingFactor","tag","OneMinusDstAlpha"]) $ return_ "GL_ONE_MINUS_DST_ALPHA"
+      case_ (nsPat ["BlendingFactor","tag","OneMinusDstColor"]) $ return_ "GL_ONE_MINUS_DST_COLOR"
+      case_ (nsPat ["BlendingFactor","tag","OneMinusSrcAlpha"]) $ return_ "GL_ONE_MINUS_SRC_ALPHA"
+      case_ (nsPat ["BlendingFactor","tag","OneMinusSrcColor"]) $ return_ "GL_ONE_MINUS_SRC_COLOR"
+      case_ (nsPat ["BlendingFactor","tag","SrcAlpha"]) $ return_ "GL_SRC_ALPHA"
+      case_ (nsPat ["BlendingFactor","tag","SrcAlphaSaturate"]) $ return_ "GL_SRC_ALPHA_SATURATE"
+      case_ (nsPat ["BlendingFactor","tag","SrcColor"]) $ return_ "GL_SRC_COLOR"
+      case_ (nsPat ["BlendingFactor","tag","Zero"]) $ return_ "GL_ZERO"
     throw "illegal blending factor"
 
   procedure "blendEquation" ["be" :. SmartPtr "BlendEquation"] Int $ do
     switch ("be"~>"tag") $ do
-      case_ (ns ["BlendEquation","tag","FuncAdd"]) $ return_ "GL_FUNC_ADD"
-      case_ (ns ["BlendEquation","tag","FuncReverseSubtract"]) $ return_ "GL_FUNC_REVERSE_SUBTRACT"
-      case_ (ns ["BlendEquation","tag","FuncSubtract"]) $ return_ "GL_FUNC_SUBTRACT"
+      case_ (nsPat ["BlendEquation","tag","FuncAdd"]) $ return_ "GL_FUNC_ADD"
+      case_ (nsPat ["BlendEquation","tag","FuncReverseSubtract"]) $ return_ "GL_FUNC_REVERSE_SUBTRACT"
+      case_ (nsPat ["BlendEquation","tag","FuncSubtract"]) $ return_ "GL_FUNC_SUBTRACT"
     throw "illegal blend equation"
 
   procedure "comparisonFunction" ["cf" :. SmartPtr "ComparisonFunction"] Int $ do
     switch ("ce"~>"tag") $ do
-      case_ (ns ["ComparisonFunction","tag","Always"]) $ return_ "GL_ALWAYS"
-      case_ (ns ["ComparisonFunction","tag","Equal"]) $ return_ "GL_EQUAL"
-      case_ (ns ["ComparisonFunction","tag","Gequal"]) $ return_ "GL_GEQUAL"
-      case_ (ns ["ComparisonFunction","tag","Greater"]) $ return_ "GL_GREATER"
-      case_ (ns ["ComparisonFunction","tag","Lequal"]) $ return_ "GL_LEQUAL"
-      case_ (ns ["ComparisonFunction","tag","Less"]) $ return_ "GL_LESS"
-      case_ (ns ["ComparisonFunction","tag","Never"]) $ return_ "GL_NEVER"
-      case_ (ns ["ComparisonFunction","tag","Notequal"]) $ return_ "GL_NOTEQUAL"
+      case_ (nsPat ["ComparisonFunction","tag","Always"]) $ return_ "GL_ALWAYS"
+      case_ (nsPat ["ComparisonFunction","tag","Equal"]) $ return_ "GL_EQUAL"
+      case_ (nsPat ["ComparisonFunction","tag","Gequal"]) $ return_ "GL_GEQUAL"
+      case_ (nsPat ["ComparisonFunction","tag","Greater"]) $ return_ "GL_GREATER"
+      case_ (nsPat ["ComparisonFunction","tag","Lequal"]) $ return_ "GL_LEQUAL"
+      case_ (nsPat ["ComparisonFunction","tag","Less"]) $ return_ "GL_LESS"
+      case_ (nsPat ["ComparisonFunction","tag","Never"]) $ return_ "GL_NEVER"
+      case_ (nsPat ["ComparisonFunction","tag","Notequal"]) $ return_ "GL_NOTEQUAL"
     throw "illegal comparison function"
 
   procedure "frontFace" ["ff" :. SmartPtr "FrontFace"] Int $ do
     switch ("ff"~>"tag") $ do
-      case_ (ns ["FrontFace","tag","CCW"]) $ return_ "GL_CCW"
-      case_ (ns ["FrontFace","tag","CW"]) $ return_ "GL_CW"
+      case_ (nsPat ["FrontFace","tag","CCW"]) $ return_ "GL_CCW"
+      case_ (nsPat ["FrontFace","tag","CW"]) $ return_ "GL_CW"
     throw "illegal front face value"
 
   procedure "textureDataTypeToGLType" ["s_" :. SmartPtr "ImageSemantic", "d_" :. SmartPtr "TextureDataType"] Int $ do
     switch ("s_"~>"tag") $ do
-      case_ (ns ["ImageSemantic","tag","Color"]) $ return_ "GL_RGBA"
-      case_ (ns ["ImageSemantic","tag","Depth"]) $ return_ "GL_DEPTH_COMPONENT"
+      case_ (nsPat ["ImageSemantic","tag","Color"]) $ return_ "GL_RGBA"
+      case_ (nsPat ["ImageSemantic","tag","Depth"]) $ return_ "GL_DEPTH_COMPONENT"
     throw "FIXME: This texture format is not yet supported"
 
   procedure "textureDataTypeToGLArityType" ["s_" :. SmartPtr "ImageSemantic", "d_" :. SmartPtr "TextureDataType"] Int $ do
     switch ("s_"~>"tag") $ do
-      case_ (ns ["ImageSemantic","tag","Color"]) $ return_ "GL_RGBA"
-      case_ (ns ["ImageSemantic","tag","Depth"]) $ return_ "GL_DEPTH_COMPONENT"
+      case_ (nsPat ["ImageSemantic","tag","Color"]) $ return_ "GL_RGBA"
+      case_ (nsPat ["ImageSemantic","tag","Depth"]) $ return_ "GL_DEPTH_COMPONENT"
     throw "FIXME: This texture format is not yet supported"
 
   procedure "edgeMode" ["e" :. SmartPtr "EdgeMode"] Int $ do
     switch ("e"~>"tag") $ do
-      case_ (ns ["EdgeMode","tag","ClampToEdge"]) $ return_ "GL_CLAMP_TO_EDGE"
-      case_ (ns ["EdgeMode","tag","Repeat"]) $ return_ "GL_REPEAT"
-      case_ (ns ["EdgeMode","tag","MirroredRepeat"]) $ return_ "GL_MIRRORED_REPEAT"
+      case_ (nsPat ["EdgeMode","tag","ClampToEdge"]) $ return_ "GL_CLAMP_TO_EDGE"
+      case_ (nsPat ["EdgeMode","tag","Repeat"]) $ return_ "GL_REPEAT"
+      case_ (nsPat ["EdgeMode","tag","MirroredRepeat"]) $ return_ "GL_MIRRORED_REPEAT"
       default_ $ throw "unsupported edge mode"
 
   procedure "filterMode" ["f" :. SmartPtr "Filter"] Int $ do
     switch ("f"~>"tag") $ do
-      case_ (ns ["Filter","tag","Nearest"]) $ return_ "GL_NEAREST"
-      case_ (ns ["Filter","tag","Linear"]) $ return_ "GL_LINEAR"
-      case_ (ns ["Filter","tag","NearestMipmapNearest"]) $ return_ "GL_NEAREST_MIPMAP_NEAREST"
-      case_ (ns ["Filter","tag","NearestMipmapLinear"]) $ return_ "GL_NEAREST_MIPMAP_LINEAR"
-      case_ (ns ["Filter","tag","LinearMipmapNearest"]) $ return_ "GL_LINEAR_MIPMAP_NEAREST"
-      case_ (ns ["Filter","tag","LinearMipmapLinear"]) $ return_ "GL_LINEAR_MIPMAP_LINEAR"
+      case_ (nsPat ["Filter","tag","Nearest"]) $ return_ "GL_NEAREST"
+      case_ (nsPat ["Filter","tag","Linear"]) $ return_ "GL_LINEAR"
+      case_ (nsPat ["Filter","tag","NearestMipmapNearest"]) $ return_ "GL_NEAREST_MIPMAP_NEAREST"
+      case_ (nsPat ["Filter","tag","NearestMipmapLinear"]) $ return_ "GL_NEAREST_MIPMAP_LINEAR"
+      case_ (nsPat ["Filter","tag","LinearMipmapNearest"]) $ return_ "GL_LINEAR_MIPMAP_NEAREST"
+      case_ (nsPat ["Filter","tag","LinearMipmapLinear"]) $ return_ "GL_LINEAR_MIPMAP_LINEAR"
       default_ $ throw "unsupported filter mode"
-
+{-
 globalFunctions = do
   procedure "setUniformValue" ["i" :. Int, "v" :. Ref "UniformValue"] Void $ do
     switch ("v"."tag") $ do
@@ -130,8 +130,8 @@ globalFunctions = do
         call "glEnableVertexAttribArray" ["i"]
         call "glVertexAttribPointer"
           [ "i", "s"."glSize"
-          , ("s"."buffer"~>"glType") `vectorLookup` ("s"."index"), false, 0
-          , cast (Const $ Ptr Void) $ ("s"."buffer"~>"offset") `vectorLookup` ("s"."index")
+          , ("s"."buffer"~>"glType") `vector_lookup` ("s"."index"), false, 0
+          , cast (Const $ Ptr Void) $ ("s"."buffer"~>"offset") `vector_lookup` ("s"."index")
           ]
       else_ $ do
         call "glDisableVertexAttribArray" ["i"]
@@ -214,7 +214,7 @@ globalFunctions = do
           varADT "VWordArray" "a" $ value "i"
         case_ (ns ["ArrayValue","tag","VFloatArray"]) $ do
           varADT "VFloatArray" "a" $ value "i"
-        varAssign (SmartPtr "ArrayValue") "type" $ callExp "inputType" ["s"~>"streamType" `mapLookup` key "i"]
+        varAssign (SmartPtr "ArrayValue") "type" $ callExp "inputType" ["s"~>"streamType" `map_lookup` key "i"]
         call ("gls"~>"streams"."add") [key "i", "type", "buffer", callExp ("buffer"~>"add") ["a"~>"_0"]]
     call ("buffer"~>"freeze") []
     call ("gls"~>"streams"."validate") []
@@ -223,7 +223,7 @@ globalFunctions = do
     map_foreach "i" ("gls"~>"streams"."map") $ do
       if_ (value "i"~>"isArray") $ do
         then_ $ do
-          ("gls"~>"glCount") .= ((value "i"~>"buffer"~>"size" `vectorLookup` value "i"~>"index") / value "i"~>"glSize")
+          ("gls"~>"glCount") .= ((value "i"~>"buffer"~>"size" `vector_lookup` value "i"~>"index") / value "i"~>"glSize")
           break_
     return_ "gls"
 
@@ -257,19 +257,19 @@ globalFunctions = do
     map_foreach "i" ("p"~>"programUniforms") $ do
       "loc" .= callExp "glGetUniformLocation" ["po", charPtrFromString $ key "i"]
       if_ ("loc" >= 0) $ do
-        "glp"~>"programUniforms" `mapLookup` (key "i") .= "loc"
+        "glp"~>"programUniforms" `map_lookup` (key "i") .= "loc"
 
     -- query sampler uniforms
     map_foreach "i" ("p"~>"programInTextures") $ do
       "loc" .= callExp "glGetUniformLocation" ["po", charPtrFromString $ key "i"]
       if_ ("loc" >= 0) $ do
-        "glp"~>"programInTextures" `mapLookup` (key "i") .= "loc"
+        "glp"~>"programInTextures" `map_lookup` (key "i") .= "loc"
     -- query vertex attributes
     map_foreach "i" ("p"~>"programStreams") $ do
       "loc" .= callExp "glGetAttribLocation" ["po", charPtrFromString $ key "i"]
       if_ ("loc" >= 0) $ do
         varADT "Parameter" "param" $ value "i"
-        "glp"~>"programStreams" `mapLookup` (key "i") .= recordValue [("name","param"~>"name"),("index","loc")]
+        "glp"~>"programStreams" `map_lookup` (key "i") .= recordValue [("name","param"~>"name"),("index","loc")]
     return_ "glp"
 
   procedure "setupRasterContext" ["ctx_" :. SmartPtr "RasterContext"] Void $ do
@@ -401,7 +401,7 @@ pipelineMethods = do
         then_ $ switch ("i"~>"targetRef"."data"~>"tag") $ do
           case_ (ns ["ImageRef","tag","TextureImage"]) $ do
             varADT "TextureImage" "ti" $ "i"~>"targetRef"."data"
-            "texture" .= ("textures" `vectorLookup` ("ti"~>"_0"))."texture"
+            "texture" .= ("textures" `vector_lookup` ("ti"~>"_0"))."texture"
             "textarget" .= "GL_TEXTURE_2D" -- TODO
             "level" .= "ti"~>"_1"
           case_ (ns ["ImageRef","tag","Framebuffer"]) $ do
@@ -467,15 +467,15 @@ pipelineMethods = do
         case_ (ns ["Command","tag","SetTexture"]) $ do
           varADT "SetTexture" "cmd" $ "i"
           call "glActiveTexture" ["GL_TEXTURE0" + "cmd"~>"_0"]
-          call "glBindTexture" [("textures" `vectorLookup` ("cmd"~>"_1"))."target",("textures" `vectorLookup` ("cmd"~>"_1"))."texture"]
+          call "glBindTexture" [("textures" `vector_lookup` ("cmd"~>"_1"))."target",("textures" `vector_lookup` ("cmd"~>"_1"))."texture"]
         case_ (ns ["Command","tag","SetProgram"]) $ do
           varADT "SetProgram" "cmd" $ "i"
           "hasCurrentProgram" .= true
           "currentProgram" .= "cmd"~>"_0"
-          call "glUseProgram" [("programs" `vectorLookup` "currentProgram")~>"program"]
+          call "glUseProgram" [("programs" `vector_lookup` "currentProgram")~>"program"]
         case_ (ns ["Command","tag","SetRenderTarget"]) $ do
           varADT "SetRenderTarget" "cmd" $ "i"
-          varAssign UInt "t" $ "targets" `vectorLookup` ("cmd"~>"_0")
+          varAssign UInt "t" $ "targets" `vector_lookup` ("cmd"~>"_0")
           call "glBindFramebuffer" ["GL_FRAMEBUFFER", expIf ("t"==0) "screenTarget" "t"]
           if_ (notNull "input") $ do
             then_ $ call "glViewport" [0,0,"input"~>"screenWidth","input"~>"screenHeight"]
@@ -515,36 +515,36 @@ pipelineMethods = do
           call "glClear" ["mask"]
         case_ (ns ["Command","tag","SetSamplerUniform"]) $  if_ "hasCurrentProgram" $ then_ $ do
           varADT "SetSamplerUniform" "cmd" $ "i"
-          varAssign Int "sampler" $ ("programs" `vectorLookup` "currentProgram")~>"programInTextures" `mapLookup` ("cmd"~>"_0")
+          varAssign Int "sampler" $ ("programs" `vector_lookup` "currentProgram")~>"programInTextures" `map_lookup` ("cmd"~>"_0")
           call "glUniform1i" ["sampler","cmd"~>"_1"]
         case_ (ns ["Command","tag","RenderSlot"]) $ if_ (notNull "input" && notNull "pipeline" && "hasCurrentProgram") $ then_ $ do
           varADT "RenderSlot" "cmd" $ "i"
-          varADT "Slot" "slot" $ "pipeline"~>"slots" `vectorLookup` ("cmd"~>"_0")
+          varADT "Slot" "slot" $ "pipeline"~>"slots" `vector_lookup` ("cmd"~>"_0")
           if_ (map_notElem ("input"~>"objectMap") ("slot"~>"slotName")) $ then_ break_
-          map_foreach "o" (deref $ "input"~>"objectMap" `mapLookup` ("slot"~>"slotName")) $ do
+          map_foreach "o" (deref $ "input"~>"objectMap" `map_lookup` ("slot"~>"slotName")) $ do
             if_ (not $ "o"~>"enabled") $ then_ continue_
             -- setup uniforms
-            map_foreach "u" (("programs" `vectorLookup` "currentProgram")~>"programUniforms") $ do
+            map_foreach "u" (("programs" `vector_lookup` "currentProgram")~>"programUniforms") $ do
               if_ (map_elem ("o"~>"uniforms") (key "u")) $ do
-                then_ $ call "setUniformValue" [value "u","o"~>"uniforms" `mapLookup` (key "u")]
-                else_ $ call "setUniformValue" [value "u","input"~>"uniforms" `mapLookup` (key "u")]
+                then_ $ call "setUniformValue" [value "u","o"~>"uniforms" `map_lookup` (key "u")]
+                else_ $ call "setUniformValue" [value "u","input"~>"uniforms" `map_lookup` (key "u")]
             -- setup streams
-            map_foreach "s" (("programs" `vectorLookup` "currentProgram")~>"programStreams") $ do
-              call "setStream" [value "s"."index",deref $ "o"~>"streams"~>"map" `mapLookup` (value "s"."name")]
+            map_foreach "s" (("programs" `vector_lookup` "currentProgram")~>"programStreams") $ do
+              call "setStream" [value "s"."index",deref $ "o"~>"streams"~>"map" `map_lookup` (value "s"."name")]
             -- draw call
             -- TODO: support index buffers
             call "glDrawArrays" ["o"~>"glMode", 0, "o"~>"glCount"]
         case_ (ns ["Command","tag","RenderStream"]) $ if_ (notNull "input" && notNull "pipeline" && "hasCurrentProgram") $ then_ $ do
           varADT "RenderStream" "cmd" $ "i"
-          varAssign (SmartPtr "ArrayValue") "data" $ "streamData" `vectorLookup` ("cmd"~>"_0")
+          varAssign (SmartPtr "ArrayValue") "data" $ "streamData" `vector_lookup` ("cmd"~>"_0")
           -- setup streams
-          map_foreach "s" (("programs" `vectorLookup` "currentProgram")~>"programStreams") $ do
-            call "setStream" [value "s"."index",deref $ "data"~>"streams"~>"map" `mapLookup` (value "s"."name")]
+          map_foreach "s" (("programs" `vector_lookup` "currentProgram")~>"programStreams") $ do
+            call "setStream" [value "s"."index",deref $ "data"~>"streams"~>"map" `map_lookup` (value "s"."name")]
           -- draw call
           -- TODO: support index buffers
           call "glDrawArrays" ["data"~>"glMode", 0, "data"~>"glCount"]
-
+-}
 backend = do
   enumConversions
-  globalFunctions
-  pipelineMethods
+  --globalFunctions
+  --pipelineMethods

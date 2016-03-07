@@ -1,0 +1,59 @@
+oop targets:
+  c++
+  java
+  c#
+  python
+    c++     - pipeline (for better performance)
+    python  - storage
+  swift??
+
+user api:
+  pipeline - focus on performance
+    allocRenderer
+    setStorage
+    renderFrame
+    disposeRenderer
+
+  storage - focus on covenience
+    allocStorage
+    uploadMeshToGPU
+    uploadTexture2DToGPU
+    addMeshToObjectArray
+    setScreenSize
+    updateUniforms
+    disposeStorage
+
+EDSL for pseudo code OOP programming
+  hint: generalize C++ LC backned
+  - class/method definition only (interface files can be derived from definition)
+  - language features
+      enums with namespace
+      switch/case
+      error handling (e.g. exceptions)
+      imports/includes ???
+      if then else
+      statement blocks
+      namespace qualification
+      type cast ???
+      sizeof
+      for loop / foreach
+      record value initialization
+      memory management (GC or ref count, like shared_pointer in C++)
+      pointer cast
+  - types
+      vector
+      pointer
+      reference
+
+EDSL ideas:
+  ADT support
+    - get specific constructor (ADT pattern match on one constructor)
+    - switch on constructor (ADT pattern match on multiple constructors)
+    - builtin support for opengl calls
+    - builtin support for map and array iteration (foreach)
+
+LINKS:
+  android/java - http://developer.android.com/training/graphics/opengl/draw.html
+
+TODO:
+  generate enum conversion functions
