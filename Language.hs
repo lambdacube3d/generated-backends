@@ -25,20 +25,69 @@ type CaseM = Writer [Case]
 
 data Exp
   = Exp :-> Exp
+  | Exp :. Exp
   | Var String
   | Ns [String]
+  | Integer Integer
+  | FloatLit Float
+  | Cast Type Exp
+  | Addr Exp
+  | Deref Exp
+  | BoolLit Bool
+  | Vector_lookup Exp Exp
+  | Map_lookup Exp Exp
+  | Exp :+ Exp
+  | Exp :/ Exp
+  | Exp :!= Exp
+  | Exp :== Exp
+  | Exp :<= Exp
+  | Exp :>= Exp
+  | Exp :&& Exp
+  | IncExp Exp
+  | CallExp Exp [Exp]
+  | ExpIf Exp Exp Exp
+  | NullPtr
+  | CharPtrFromString Exp
+  | New String [Exp]
+  | IteratorValue Exp -- used with foreach
+  | IteratorKey Exp
+  | RecordValue [(String,Exp)]
+  | NotNull Exp
+  | Not Exp
+  | Map_notElem Exp Exp
+  | Map_elem Exp Exp
   deriving Show
 
 data Def
   = Procedure String [Arg] Type [Stmt]
+  | Method String String [Arg] Type [Stmt]
+  | Constructor String [Arg] [Stmt]
+  | Destructor String [Stmt]
   deriving Show
 
-data Arg = String :. Type deriving Show
+data Arg = String :@ Type deriving Show
 
 data Stmt
   = Switch Exp [Case]
   | Return Exp
   | Throw  String
+  | Call Exp [Exp]
+  | If Exp [If]
+  | VarDef Type [String]
+  | VarADTDef String String Exp
+  | VarAssignDef Type String Exp
+  | VarConstructor Type String Exp
+  | VarCharPtrFromString String Exp
+  | Exp := Exp
+  | For [Stmt] Exp Exp [Stmt]
+  | Exp :/= Exp
+  | Exp :|= Exp
+  | Map_foreach String Exp [Stmt]
+  | Vector_foreach String Exp [Stmt]
+  | Vector_pushBack Exp Exp
+  | Break
+  | Continue
+  | Inc Exp
   deriving Show
 
 data Case
@@ -46,7 +95,10 @@ data Case
   | Default [Stmt]
   deriving Show
 
-data If = If
+data If
+  = Then [Stmt]
+  | Else [Stmt]
+  deriving Show
 
 data Pat
   = NsPat [String]
@@ -54,16 +106,16 @@ data Pat
 
 
 method :: String -> String -> [Arg] -> Type -> StmtM () -> DefM ()
-method = error "method"
+method className name args retType stmtM = tell [Method className name args retType (execWriter stmtM)]
 
 procedure :: String -> [Arg] -> Type -> StmtM () -> DefM ()
 procedure name args retType stmtM = tell [Procedure name args retType (execWriter stmtM)]
 
 constructor :: String -> [Arg] -> StmtM () -> DefM ()
-constructor = error "constructor"
+constructor className args stmtM = tell [Constructor className args (execWriter stmtM)]
 
 destructor :: String -> StmtM () -> DefM ()
-destructor = error "destructor"
+destructor className stmtM = tell [Destructor className (execWriter stmtM)]
 
 switch :: Exp -> CaseM () -> StmtM ()
 switch exp caseM = tell [Switch exp (execWriter caseM)]
@@ -87,155 +139,155 @@ return_ :: Exp -> StmtM ()
 return_ exp = tell [Return exp]
 
 continue_ :: StmtM ()
-continue_ = error "continue_"
+continue_ = tell [Continue]
 
 break_ :: StmtM ()
-break_ = error "break_"
+break_ = tell [Break]
 
 map_notElem :: Exp -> Exp -> Exp
-map_notElem = error "map_notElem"
+map_notElem = Map_notElem
 
 map_elem :: Exp -> Exp -> Exp
-map_elem = error "map_elem"
+map_elem = Map_elem
 
 deref :: Exp -> Exp
-deref = error "deref"
+deref = Deref
 
 not :: Exp -> Exp
-not = error "not"
+not = Not
 
 notNull :: Exp -> Exp
-notNull = error "notNull"
+notNull = NotNull
 
 (~>) :: Exp -> Exp -> Exp
 (~>) = (:->)
 
 (.) :: Exp -> Exp -> Exp
-(.) = error "."
+(.) = (:.)
 
 call :: Exp -> [Exp] -> StmtM ()
-call = error "call"
+call fun args = tell [Call fun args]
 
 callExp :: Exp -> [Exp] -> Exp
-callExp = error "callExp"
+callExp = CallExp
 
 new :: String -> [Exp] -> Exp
-new = error "new"
+new = New
 
 cast :: Type -> Exp -> Exp
-cast = error "cast"
+cast = Cast
 
 addr :: Exp -> Exp
-addr = error "addr"
+addr = Addr
 
 false :: Exp
-false = error "false"
+false = BoolLit False
 
 true :: Exp
-true = error "true"
+true = BoolLit True
 
 if_ :: Exp -> IfM () -> StmtM ()
-if_ = error "if_"
+if_ exp ifM = tell [If exp (execWriter ifM)]
 
 then_ :: StmtM () -> IfM ()
-then_ = error "then_"
+then_ stmtM = tell [Then (execWriter stmtM)]
 
 else_ :: StmtM () -> IfM ()
-else_ = error "else_"
+else_ stmtM = tell [Else (execWriter stmtM)]
 
 vector_lookup :: Exp -> Exp -> Exp
-vector_lookup = error "vector_lookup"
+vector_lookup = Vector_lookup
 
 map_lookup :: Exp -> Exp -> Exp
-map_lookup = error "map_lookup"
+map_lookup = Map_lookup
 
 infix 1 .=
 (.=) :: Exp -> Exp -> StmtM ()
-(.=) = error ".="
+a .= b = tell [a := b]
 
 nullptr :: Exp
-nullptr = error "nullptr"
+nullptr = NullPtr
 
 incExp :: Exp -> Exp
-incExp = error "incExp"
+incExp = IncExp
 
 inc :: Exp -> StmtM ()
-inc = error "inc"
+inc e = tell [Inc e]
 
-value :: Exp -> Exp
-value = error "value"
+it_value :: Exp -> Exp
+it_value = IteratorValue
 
 key :: Exp -> Exp
-key = error "key"
+key = IteratorKey
 
 expIf :: Exp -> Exp -> Exp -> Exp
-expIf = error "expIf"
+expIf = ExpIf
 
 recordValue :: [(String,Exp)] -> Exp
-recordValue = error "recordValue"
+recordValue = RecordValue
 
 varCharPtrFromString :: String -> Exp -> StmtM ()
-varCharPtrFromString = error "varCharPtrFromString"
+varCharPtrFromString n e = tell [VarCharPtrFromString n e]
 
 charPtrFromString :: Exp -> Exp
-charPtrFromString = error "charPtrFromString"
+charPtrFromString = CharPtrFromString
 
 var :: Type -> [String] -> StmtM ()
-var = error "var"
+var t n = tell [VarDef t n]
 
 varADT :: String -> String -> Exp -> StmtM ()
-varADT = error "varADT"
+varADT t n e = tell [VarADTDef t n e ]
 
 varAssign :: Type -> String -> Exp -> StmtM ()
-varAssign = error "varAssign"
+varAssign t n e = tell [VarAssignDef t n e]
 
 varConstructor :: Type -> String -> Exp -> StmtM ()
-varConstructor = error "varConstructor"
+varConstructor t n e = tell [VarConstructor t n e]
 
 map_foreach :: String -> Exp -> StmtM () -> StmtM ()
-map_foreach = error "map_foreach"
+map_foreach n e stmtM = tell [Map_foreach n e (execWriter stmtM)]
 
 vector_foreach :: String -> Exp -> StmtM () -> StmtM ()
-vector_foreach = error "vector_foreach"
+vector_foreach n e stmtM = tell [Vector_foreach n e (execWriter stmtM)]
 
 vector_pushBack :: Exp -> Exp -> StmtM ()
-vector_pushBack = error "vector_pushBack"
+vector_pushBack a b = tell [Vector_pushBack a b]
 
 for :: StmtM () -> Exp -> Exp -> StmtM () -> StmtM ()
-for = error "for"
+for loopInitM cond exp stmtM = tell [For (execWriter loopInitM) cond exp (execWriter stmtM)]
 
 (/) :: Exp -> Exp -> Exp
-(/) = error "/"
+(/) = (:/)
 
 (&&) :: Exp -> Exp -> Exp
-(&&) = error "&&"
+(&&) = (:&&)
 
 (==) :: Exp -> Exp -> Exp
-(==) = error "=="
+(==) = (:==)
 
 (<=) :: Exp -> Exp -> Exp
-(<=) = error "<="
+(<=) = (:<=)
 
 (>=) :: Exp -> Exp -> Exp
-(>=) = error ">="
+(>=) = (:>=)
 
 (|=) :: Exp -> Exp -> StmtM ()
-(|=) = error "|="
+a |= b = tell [ a :|= b]
 
 (/=) :: Exp -> Exp -> StmtM ()
-(/=) = error "/="
+a /= b = tell [a :/= b]
 
 (!=) :: Exp -> Exp -> Exp
-(!=) = error "!="
+(!=) = (:!=)
 
 instance Num Exp where
   _ * _ = error "*"
   _ - _ = error "-"
-  _ + _ = error "+"
-  fromInteger _ = error "fromInteger"
+  (+) = (:+)
+  fromInteger i = Integer i
 
 instance Fractional Exp where
-  fromRational _ = error "fromRational"
+  fromRational i = FloatLit $ fromRational i
 
 instance IsString Exp where
   fromString n = Var n
