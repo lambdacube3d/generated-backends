@@ -3,7 +3,7 @@ module PrettyCpp where
 
 import Control.Monad.Writer
 import Data.List
-import Language
+import Language hiding ((.))
 
 pretty :: DefM () -> String
 pretty defM = unlines $ map prettyDef $ execWriter defM
@@ -12,22 +12,22 @@ prettyDef :: Def -> String
 prettyDef = \case
   Procedure name args retType stmts -> unlines
     [ unwords $ [prettyType retType, name, "(", intercalate ", " (map prettyArg args), ") {"]
-    , unlines $ map prettyStmt stmts
+    , unlines $ map (prettyStmt 1) stmts
     , "}"
     ]
   Method className name args retType stmts -> unlines
     [ unwords $ [prettyType retType, className ++ "::" ++ name, "(", intercalate ", " (map prettyArg args), ") {"]
-    , unlines $ map prettyStmt stmts
+    , unlines $ map (prettyStmt 1) stmts
     , "}"
     ]
   Constructor className args stmts -> unlines
     [ unwords $ [className ++ "::" ++ className, "(", intercalate ", " (map prettyArg args), ") {"]
-    , unlines $ map prettyStmt stmts
+    , unlines $ map (prettyStmt 1) stmts
     , "}"
     ]
   Destructor className stmts -> unlines
     [ unwords $ ["~" ++ className ++ "::" ++ className, "{"]
-    , unlines $ map prettyStmt stmts
+    , unlines $ map (prettyStmt 1) stmts
     , "}"
     ]
 
@@ -46,34 +46,33 @@ prettyType = \case
   Ptr t   -> prettyType t ++ "*"
   SmartPtr t -> "shared_ptr<" ++ prettyType t ++ ">"
 
-prettyCase = \case
-  Case p s  -> "case " ++ prettyPat p ++ ":\n" ++ unlines (map prettyStmt s) ++ "break;"
-  Default s -> "default:\n" ++ unlines (map prettyStmt s)
+addIndentation ind s = concat (replicate ind "  ") ++ s
+
+prettyCase ind = addIndentation ind . \case
+  Case p s  -> "case " ++ prettyPat p ++ ": {\n" ++ unlines (map (prettyStmt $ ind + 1) s) ++ addIndentation (ind + 1) "break;\n" ++ addIndentation ind "}"
+  Default s -> "default:\n" ++ unlines (map (prettyStmt $ ind + 1) s)
 
 prettyPat = \case
   NsPat a -> "::" ++ intercalate "::" a
 
-prettyStmt = \case
-  Switch e c -> unlines
-    [ "switch(" ++ prettyExp e ++ ") {"
-    , unlines $ map prettyCase c
-    , "}"
-    ]
+prettyStmt ind = addIndentation ind . \case
+  Switch e c -> "switch(" ++ prettyExp e ++ ") {\n" ++ unlines (map (prettyCase $ ind + 1) c) ++ addIndentation ind "}\n"
   Return e -> "return " ++ prettyExp e ++ ";"
   Throw s -> "throw " ++ show s ++ ";"
   Call a b -> prettyExp a ++ "(" ++ intercalate ", " (map prettyExp b) ++ ");"
-  If a b c -> "if (" ++ prettyExp a ++ ") {\n" ++ unlines (map prettyStmt b) ++ "}" ++ if null c then "" else " else {\n" ++ unlines (map prettyStmt c) ++ "}"
+  If a b c -> "if (" ++ prettyExp a ++ ") {\n" ++ unlines (map (prettyStmt $ ind + 1) b) ++ addIndentation ind "}" ++
+              if null c then "" else " else {\n" ++ unlines (map (prettyStmt $ ind + 1) c) ++ addIndentation ind "}"
   VarDef t n -> prettyType t ++ " " ++ intercalate ", " n ++ ";"
   VarADTDef t n e -> "auto " ++ n ++ " = std::static_pointer_cast<data::" ++ t ++ ">(" ++ prettyExp e ++ ");"
   VarAssignDef t n e -> prettyType t ++ " " ++ n ++ " = " ++ prettyExp e ++ ";"
   VarConstructor t n e -> prettyType t ++ " " ++ n ++ "(" ++ prettyExp e ++ ");"
   VarCharPtrFromString n e -> "const char* " ++ n ++ " = " ++ prettyExp e ++ ".c_str();"
   a := b -> prettyExp a ++ " = " ++ prettyExp b ++ ";"
-  For [a] b c stmts -> "for (" ++ prettyStmt a ++ prettyExp b ++ ";" ++ prettyExp c ++ ") {" ++ unlines (map prettyStmt stmts) ++ "}"
+  For [a] b c stmts -> "for (" ++ prettyStmt 0 a ++ prettyExp b ++ ";" ++ prettyExp c ++ ") {" ++ unlines (map (prettyStmt $ ind + 1) stmts) ++ addIndentation ind "}"
   a :/= b -> prettyExp a ++ " /= " ++ prettyExp b ++ ";"
   a :|= b -> prettyExp a ++ " |= " ++ prettyExp b ++ ";"
-  Map_foreach n e s -> "for (auto " ++ n ++ " : " ++ prettyExp e ++ ") {\n" ++ unlines (map prettyStmt s) ++ "}"
-  Vector_foreach n e s -> "for (auto " ++ n ++ " : " ++ prettyExp e ++ ") {\n" ++ unlines (map prettyStmt s) ++ "}"
+  Map_foreach n e s -> "for (auto " ++ n ++ " : " ++ prettyExp e ++ ") {\n" ++ unlines (map (prettyStmt $ ind + 1) s) ++ addIndentation ind "}"
+  Vector_foreach n e s -> "for (auto " ++ n ++ " : " ++ prettyExp e ++ ") {\n" ++ unlines (map (prettyStmt $ ind + 1) s) ++ addIndentation ind "}"
   Vector_pushBack a b -> prettyExp a ++ ".push_back(" ++ prettyExp b ++ ");"
   Break -> "break;"
   Continue -> "continue;"
