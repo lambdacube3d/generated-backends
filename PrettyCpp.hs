@@ -6,7 +6,8 @@ import Data.List
 import Language hiding ((.))
 
 pretty :: DefM () -> String
-pretty defM = unlines $ map prettyDef $ execWriter defM
+pretty defM = inc ++ (unlines $ map prettyDef $ execWriter defM)
+  where inc = unlines ["#include <iostream>","#include <OpenGL/gl.h>","#include \"LambdaCube.hpp\""]
 
 prettyDef :: Def -> String
 prettyDef = \case
@@ -26,7 +27,7 @@ prettyDef = \case
     , "}"
     ]
   Destructor className stmts -> unlines
-    [ unwords $ ["~" ++ className ++ "::" ++ className, "{"]
+    [ unwords $ [className ++ "::~" ++ className ++ "()", "{"]
     , unlines $ map (prettyStmt 1) stmts
     , "}"
     ]
@@ -44,7 +45,7 @@ prettyType = \case
   Const t -> "const " ++ prettyType t
   Ref t   -> prettyType t ++ "&"
   Ptr t   -> prettyType t ++ "*"
-  SmartPtr t -> "shared_ptr<" ++ prettyType t ++ ">"
+  SmartPtr t -> "std::shared_ptr<" ++ prettyType t ++ ">"
 
 addIndentation ind s = concat (replicate ind "  ") ++ s
 

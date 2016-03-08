@@ -52,7 +52,7 @@ enumConversions = do
     throw "illegal blend equation"
 
   procedure "comparisonFunction" ["cf" :@ SmartPtr "ComparisonFunction"] Int $ do
-    switch ("ce"~>"tag") $ do
+    switch ("cf"~>"tag") $ do
       case_ (nsPat ["ComparisonFunction","tag","Always"]) $ return_ "GL_ALWAYS"
       case_ (nsPat ["ComparisonFunction","tag","Equal"]) $ return_ "GL_EQUAL"
       case_ (nsPat ["ComparisonFunction","tag","Gequal"]) $ return_ "GL_GEQUAL"
@@ -215,7 +215,7 @@ globalFunctions = do
           varADT "VWordArray" "a" $ it_value "i"
         case_ (nsPat ["ArrayValue","tag","VFloatArray"]) $ do
           varADT "VFloatArray" "a" $ it_value "i"
-          varAssign (SmartPtr "ArrayValue") "type" $ callExp "inputType" ["s"~>"streamType" `map_lookup` key "i"]
+          varAssign ("Type") "type" $ callExp "inputType" ["s"~>"streamType" `map_lookup` key "i"]
           call ("gls"~>"streams"."add") [key "i", "type", "buffer", callExp ("buffer"~>"add") ["a"~>"_0"]]
     call ("buffer"~>"freeze") []
     call ("gls"~>"streams"."validate") []
@@ -537,10 +537,10 @@ pipelineMethods = do
             call "glDrawArrays" ["o"~>"glMode", 0, "o"~>"glCount"]
         case_ (nsPat ["Command","tag","RenderStream"]) $ if_ (notNull "input" && notNull "pipeline" && "hasCurrentProgram") $ then_ $ do
           varADT "RenderStream" "cmd" $ "i"
-          varAssign (SmartPtr "ArrayValue") "data" $ "streamData" `vector_lookup` ("cmd"~>"_0")
+          varAssign (SmartPtr "GLStreamData") "data" $ "streamData" `vector_lookup` ("cmd"~>"_0")
           -- setup streams
           map_foreach "s" (("programs" `vector_lookup` "currentProgram")~>"programStreams") $ do
-            call "setStream" [it_value "s"."index",deref $ "data"~>"streams"~>"map" `map_lookup` (it_value "s"."name")]
+            call "setStream" [it_value "s"."index",deref $ "data"~>"streams"."map" `map_lookup` (it_value "s"."name")]
           -- draw call
           -- TODO: support index buffers
           call "glDrawArrays" ["data"~>"glMode", 0, "data"~>"glCount"]
