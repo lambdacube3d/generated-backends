@@ -196,6 +196,9 @@ then_ stmtM = tell [Then (execWriter stmtM)]
 else_ :: StmtM () -> IfM ()
 else_ stmtM = tell [Else (execWriter stmtM)]
 
+infixr 2 `vector_lookup`
+infixr 2 `map_lookup`
+
 vector_lookup :: Exp -> Exp -> Exp
 vector_lookup = Vector_lookup
 
