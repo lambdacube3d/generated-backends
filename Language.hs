@@ -72,7 +72,7 @@ data Stmt
   | Return Exp
   | Throw  String
   | Call Exp [Exp]
-  | If Exp [If]
+  | If Exp [Stmt] [Stmt]
   | VarDef Type [String]
   | VarADTDef String String Exp
   | VarAssignDef Type String Exp
@@ -187,7 +187,8 @@ true :: Exp
 true = BoolLit True
 
 if_ :: Exp -> IfM () -> StmtM ()
-if_ exp ifM = tell [If exp (execWriter ifM)]
+if_ exp ifM = tell [If exp (concat [a | Then a <- l]) (concat [a | Else a <- l])]
+  where l = execWriter ifM
 
 then_ :: StmtM () -> IfM ()
 then_ stmtM = tell [Then (execWriter stmtM)]

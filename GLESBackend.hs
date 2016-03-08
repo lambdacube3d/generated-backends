@@ -1,6 +1,7 @@
 {-# LANGUAGE NoImplicitPrelude, OverloadedStrings #-}
 import Prelude (($),Num (..),return)
 import Language
+import PrettyCpp
 
 enumConversions = do
   procedure "inputType" ["t" :@ SmartPtr "InputType"] (Enum "Type") $ do
