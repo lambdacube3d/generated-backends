@@ -41,7 +41,7 @@ prettyType = \case
   UInt  -> "uint32_t"
   Void  -> "void"
   Class n -> n
-  Enum n  -> n
+  Enum n  -> "enum " ++ n
   Const t -> "const " ++ prettyType t
   Ref t   -> prettyType t ++ "&"
   Ptr t   -> prettyType t ++ "*"

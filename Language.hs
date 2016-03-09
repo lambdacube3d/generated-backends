@@ -8,7 +8,12 @@ data Type
   = Bool
   | Float
   | Int
+  | Int8
+  | Int16
+  | Long
   | UInt
+  | UInt8
+  | UInt16
   | Void
   | Class String
   | Enum String
@@ -16,10 +21,14 @@ data Type
   | Ref Type      -- &
   | Ptr Type      -- *
   | SmartPtr Type -- shared_ptr
+  | Vector Type
+  | String
+  | Map Type Type
   deriving Show
 
 type IfM = Writer [If]
 type DefM = Writer [Def]
+type ClassM = Writer [Class]
 type StmtM = Writer [Stmt]
 type CaseM = Writer [Case]
 
@@ -104,18 +113,40 @@ data Pat
   = NsPat [String]
   deriving Show
 
+data Class = Class_
 
-method :: String -> String -> [Arg] -> Type -> StmtM () -> DefM ()
-method className name args retType stmtM = tell [Method className name args retType (execWriter stmtM)]
+class_ :: String -> ClassM () -> DefM ()
+class_ className classM = return ()
+
+private :: DefM () -> ClassM ()
+private _ = return ()
+
+public :: DefM () -> ClassM ()
+public _ = return ()
+
+memberVar :: Type -> [String] -> DefM ()
+memberVar t n = return ()
+
+enum_ :: String -> [String] -> DefM ()
+enum_ name args = return ()
+
+struct_ :: String -> DefM () -> DefM ()
+struct_ name args = return ()
+
+memberUnion :: [Arg] -> DefM ()
+memberUnion args = return ()
+
+method :: String -> [Arg] -> Type -> StmtM () -> DefM ()
+method name args retType stmtM = tell [Method "" name args retType (execWriter stmtM)]
 
 procedure :: String -> [Arg] -> Type -> StmtM () -> DefM ()
 procedure name args retType stmtM = tell [Procedure name args retType (execWriter stmtM)]
 
-constructor :: String -> [Arg] -> StmtM () -> DefM ()
-constructor className args stmtM = tell [Constructor className args (execWriter stmtM)]
+constructor :: [Arg] -> StmtM () -> DefM ()
+constructor args stmtM = tell [Constructor "" args (execWriter stmtM)]
 
-destructor :: String -> StmtM () -> DefM ()
-destructor className stmtM = tell [Destructor className (execWriter stmtM)]
+destructor :: StmtM () -> DefM ()
+destructor stmtM = tell [Destructor "" (execWriter stmtM)]
 
 switch :: Exp -> CaseM () -> StmtM ()
 switch exp caseM = tell [Switch exp (execWriter caseM)]

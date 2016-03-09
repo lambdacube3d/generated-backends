@@ -1,13 +1,4 @@
 done - indentation
-hpp to EDSL
-  def enum
-  def class
-    public
-    private
-  def typedef struct
-  def struct
-  def union -- TEMP!
-  def vector
-  def map
+done - hpp to EDSL
 storage to EDSL
 include support

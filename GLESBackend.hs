@@ -373,7 +373,7 @@ globalFunctions = do
     if_ "noDepth" $ then_ $ call "glDisable" ["GL_DEPTH_TEST"]
 
 pipelineMethods = do
-  method "GLES20Pipeline" "createRenderTarget" ["t_" :@ SmartPtr "RenderTarget"] UInt $ do
+  method "createRenderTarget" ["t_" :@ SmartPtr "RenderTarget"] UInt $ do
     varADT "RenderTarget" "t" "t_"
     -- does this target have texture attachments?
     varAssign Int "textureCount" 0
@@ -416,7 +416,7 @@ pipelineMethods = do
       call "glFramebufferTexture2D" ["GL_FRAMEBUFFER","attachment","textarget","texture","level"]
     return_ "fb"
 
-  constructor "GLES20Pipeline" ["ppl_" :@ SmartPtr "Pipeline"] $ do
+  constructor ["ppl_" :@ SmartPtr "Pipeline"] $ do
     "screenTarget" .= 0
     "hasCurrentProgram" .= false
     varADT "Pipeline" "ppl" $ "ppl_"
@@ -439,7 +439,7 @@ pipelineMethods = do
       vector_pushBack "streamData" $ callExp "createStreamData" ["i"]
     call "glReleaseShaderCompiler" []
 
-  destructor "GLES20Pipeline" $ do
+  destructor $ do
     -- release resources
     -- textures
     vector_foreach "i" "textures" $ do
@@ -453,10 +453,10 @@ pipelineMethods = do
       call "glDeleteShader" ["i"~>"vertexShader"]
       call "glDeleteShader" ["i"~>"fragmentShader"]
 
-  method "GLES20Pipeline" "setPipelineInput" ["i" :@ SmartPtr "PipelineInput"] Void $ do
+  method "setPipelineInput" ["i" :@ SmartPtr "PipelineInput"] Void $ do
     "input" .= "i"
 
-  method "GLES20Pipeline" "render" [] Void $ do
+  method "render" [] Void $ do
     vector_foreach "i" ("pipeline"~>"commands") $ do
       switch ("i"~>"tag") $ do
         case_ (nsPat ["Command","tag","SetRasterContext"]) $ do
@@ -544,6 +544,211 @@ pipelineMethods = do
           -- draw call
           -- TODO: support index buffers
           call "glDrawArrays" ["data"~>"glMode", 0, "data"~>"glCount"]
+
+hpp = do
+  class_ "Buffer" $ do
+    public $ do
+      memberVar (Vector Int) ["size","byteSize","glType"]
+      memberVar (Vector Long) ["offset"]
+      memberVar (Vector (Ptr Void)) ["data"]
+      memberVar UInt ["bufferObject"]
+
+      method "add" ["v" :@ Ref (Vector Int8)] Int $ return () -- TODO
+      method "add" ["v" :@ Ref (Vector UInt8)] Int $ return () -- TODO
+      method "add" ["v" :@ Ref (Vector Int16)] Int $ return () -- TODO
+      method "add" ["v" :@ Ref (Vector UInt16)] Int $ return () -- TODO
+      method "add" ["v" :@ Ref (Vector Float)] Int $ return () -- TODO
+      method "freeze" [] Void $ return () -- TODO
+      method "update" ["i" :@ Int, "v" :@ Ref (Vector Float)] Void $ return () -- TODO
+
+  enum_ "Type"
+    [ "FLOAT"
+    , "FLOAT_VEC2"
+    , "FLOAT_VEC3"
+    , "FLOAT_VEC4"
+    , "FLOAT_MAT2"
+    , "FLOAT_MAT3"
+    , "FLOAT_MAT4"
+    ]
+
+  class_ "Stream" $ do
+    public $ do
+      memberVar "Type" ["type"]
+      memberVar (SmartPtr "Buffer") ["buffer"]
+      memberVar Int ["index"]
+      memberVar Bool ["isArray"]
+      memberVar Int ["glSize"]
+      memberUnion
+        [ "_float"  :@ Float
+        , "_v2f"    :@ "V2F"
+        , "_v3f"    :@ "V3F"
+        , "_v4f"    :@ "V4F"
+        , "_m22f"   :@ "M22F"
+        , "_m33f"   :@ "M33F"
+        , "_m44f"   :@ "M44F"
+        ]
+
+      constructor ["v" :@ Ref Float] $ return () -- TODO
+      constructor ["v" :@ Ref "V2F"] $ return () -- TODO
+      constructor ["v" :@ Ref "V3F"] $ return () -- TODO
+      constructor ["v" :@ Ref "V4F"] $ return () -- TODO
+      constructor ["v" :@ Ref "M22F"] $ return () -- TODO
+      constructor ["v" :@ Ref "M33F"] $ return () -- TODO
+      constructor ["v" :@ Ref "M44F"] $ return () -- TODO
+      constructor ["b" :@ SmartPtr "Buffer", "index" :@ Int, "t" :@ "Type"] $ return () -- TODO
+
+
+  class_ "StreamMap" $ do
+    public $ do
+      memberVar (Map String (SmartPtr "Stream")) ["map"]
+
+      method "add" ["name" :@ String, "v" :@ Ref Float] Void $ return () -- TODO
+      method "add" ["name" :@ String, "v" :@ Ref "V2F"] Void $ return () -- TODO
+      method "add" ["name" :@ String, "v" :@ Ref "V3F"] Void $ return () -- TODO
+      method "add" ["name" :@ String, "v" :@ Ref "V4F"] Void $ return () -- TODO
+      method "add" ["name" :@ String, "v" :@ Ref "M22F"] Void $ return () -- TODO
+      method "add" ["name" :@ String, "v" :@ Ref "M33F"] Void $ return () -- TODO
+      method "add" ["name" :@ String, "v" :@ Ref "M44F"] Void $ return () -- TODO
+      method "add" ["name" :@ String, "t" :@ "Type", "b" :@ SmartPtr "Buffer", "index" :@ Int] Void $ return () -- TODO
+      method "validate" [] Bool $ return () -- TODO
+
+  enum_ "Primitive"
+    [ "TriangleStrip"
+    , "TriangleList"
+    , "TriangleFan"
+    , "LineStrip"
+    , "LineList"
+    , "LineLoop"
+    , "PointList"
+    ]
+
+  struct_ "UniformValue" $ do
+    memberVar (Enum "InputType::tag") ["tag"] -- TODO
+    memberUnion
+      [ "_int"   :@ Int
+      , "_word"  :@ UInt
+      , "_float" :@ Float
+      , "_bool"  :@ Bool
+      , "_v2i"   :@ "V2I"
+      , "_v2u"   :@ "V2U"
+      , "_v2b"   :@ "V2B"
+      , "_v2f"   :@ "V2F"
+      , "_v3i"   :@ "V3I"
+      , "_v3u"   :@ "V3U"
+      , "_v3b"   :@ "V3B"
+      , "_v3f"   :@ "V3F"
+      , "_v4i"   :@ "V4I"
+      , "_v4u"   :@ "V4U"
+      , "_v4b"   :@ "V4B"
+      , "_v4f"   :@ "V4F"
+      , "_m22f"  :@ "M22F"
+      , "_m33f"  :@ "M33F"
+      , "_m44f"  :@ "M44F"
+      ]
+
+  class_ "Object" $ do
+    public $ do
+      memberVar Bool ["enabled"]
+      memberVar Int ["order","glMode","glCount"]
+      memberVar (Map String "UniformValue") ["uniforms"]
+      memberVar (SmartPtr "StreamMap") ["streams"]
+
+      destructor $ return () -- TODO
+
+      method "enable" ["visible" :@ Bool] Void $ return () -- TODO
+      method "setOrder" ["order" :@ Int] Void $ return () -- TODO
+
+      method "setUniform" ["name" :@ String, "v" :@ Ref Int] Void $ return () -- TODO
+      method "setUniform" ["name" :@ String, "v" :@ Ref UInt] Void $ return () -- TODO
+      method "setUniform" ["name" :@ String, "v" :@ Ref Float] Void $ return () -- TODO
+      method "setUniform" ["name" :@ String, "v" :@ Ref Bool] Void $ return () -- TODO
+      method "setUniform" ["name" :@ String, "v" :@ Ref "V2I"] Void $ return () -- TODO
+      method "setUniform" ["name" :@ String, "v" :@ Ref "V2U"] Void $ return () -- TODO
+      method "setUniform" ["name" :@ String, "v" :@ Ref "V2F"] Void $ return () -- TODO
+      method "setUniform" ["name" :@ String, "v" :@ Ref "V2B"] Void $ return () -- TODO
+      method "setUniform" ["name" :@ String, "v" :@ Ref "V3I"] Void $ return () -- TODO
+      method "setUniform" ["name" :@ String, "v" :@ Ref "V3U"] Void $ return () -- TODO
+      method "setUniform" ["name" :@ String, "v" :@ Ref "V3F"] Void $ return () -- TODO
+      method "setUniform" ["name" :@ String, "v" :@ Ref "V3B"] Void $ return () -- TODO
+      method "setUniform" ["name" :@ String, "v" :@ Ref "V4I"] Void $ return () -- TODO
+      method "setUniform" ["name" :@ String, "v" :@ Ref "V4U"] Void $ return () -- TODO
+      method "setUniform" ["name" :@ String, "v" :@ Ref "V4F"] Void $ return () -- TODO
+      method "setUniform" ["name" :@ String, "v" :@ Ref "V4B"] Void $ return () -- TODO
+      method "setUniform" ["name" :@ String, "v" :@ Ref "M22F"] Void $ return () -- TODO
+      method "setUniform" ["name" :@ String, "v" :@ Ref "M33F"] Void $ return () -- TODO
+      method "setUniform" ["name" :@ String, "v" :@ Ref "M44F"] Void $ return () -- TODO
+
+  class_ "PipelineInput" $ do
+    public $ do
+      memberVar (Map String (SmartPtr (Vector (SmartPtr "Object")))) ["objectMap"]
+      memberVar (Map String "UniformValue") ["uniforms"]
+      memberVar Int ["screenWidth","screenHeight"]
+
+      method "createObject" ["slotName" :@ String, "prim" :@ "Primitive", "attributes" :@ SmartPtr "StreamMap", "objectUniforms" :@ Vector String] (SmartPtr "Object") $ return () -- TODO
+      method "createObject" ["slotName" :@ String, "prim" :@ "Primitive", "attributes" :@ Ref "StreamMap"
+                            , "indexBuffer" :@ Ref "Buffer", "bufferIndex" :@ Int, "objectUniforms" :@ Vector String] (SmartPtr "Object") $ return () -- TODO
+      method "sortSlotObjects" [] Void $ return () -- TODO
+      method "setScreenSize" ["w" :@ Int, "h" :@ Int] Void $ return () -- TODO
+
+      method "setUniform" ["name" :@ String, "v" :@ Ref Int] Void $ return () -- TODO
+      method "setUniform" ["name" :@ String, "v" :@ Ref UInt] Void $ return () -- TODO
+      method "setUniform" ["name" :@ String, "v" :@ Ref Float] Void $ return () -- TODO
+      method "setUniform" ["name" :@ String, "v" :@ Ref Bool] Void $ return () -- TODO
+      method "setUniform" ["name" :@ String, "v" :@ Ref "V2I"] Void $ return () -- TODO
+      method "setUniform" ["name" :@ String, "v" :@ Ref "V2U"] Void $ return () -- TODO
+      method "setUniform" ["name" :@ String, "v" :@ Ref "V2F"] Void $ return () -- TODO
+      method "setUniform" ["name" :@ String, "v" :@ Ref "V2B"] Void $ return () -- TODO
+      method "setUniform" ["name" :@ String, "v" :@ Ref "V3I"] Void $ return () -- TODO
+      method "setUniform" ["name" :@ String, "v" :@ Ref "V3U"] Void $ return () -- TODO
+      method "setUniform" ["name" :@ String, "v" :@ Ref "V3F"] Void $ return () -- TODO
+      method "setUniform" ["name" :@ String, "v" :@ Ref "V3B"] Void $ return () -- TODO
+      method "setUniform" ["name" :@ String, "v" :@ Ref "V4I"] Void $ return () -- TODO
+      method "setUniform" ["name" :@ String, "v" :@ Ref "V4U"] Void $ return () -- TODO
+      method "setUniform" ["name" :@ String, "v" :@ Ref "V4F"] Void $ return () -- TODO
+      method "setUniform" ["name" :@ String, "v" :@ Ref "V4B"] Void $ return () -- TODO
+      method "setUniform" ["name" :@ String, "v" :@ Ref "M22F"] Void $ return () -- TODO
+      method "setUniform" ["name" :@ String, "v" :@ Ref "M33F"] Void $ return () -- TODO
+      method "setUniform" ["name" :@ String, "v" :@ Ref "M44F"] Void $ return () -- TODO
+
+  struct_ "Texture" $ do
+    memberVar Int ["target"]
+    memberVar UInt ["texture"]
+
+  struct_ "StreamInfo" $ do
+    memberVar String ["name"]
+    memberVar Int ["index"]
+
+  class_ "GLProgram" $ do
+    public $ do
+      memberVar UInt ["program","vertexShader","fragmentShader"]
+      memberVar (Map String Int) ["programUniforms","programInTextures"]
+      memberVar (Map String "StreamInfo") ["programStreams"]
+
+  struct_ "GLStreamData" $ do
+    memberVar Int ["glMode","glCount"]
+    memberVar "StreamMap" ["streams"]
+
+  class_ "GLES20Pipeline" $ do
+    public $ do
+      constructor ["ppl" :@ SmartPtr "Pipeline"] $ return () -- TODO
+      destructor $ return () -- TODO
+
+      method "setPipelineInput" ["i" :@ SmartPtr "PipelineInput"] Void $ return () -- TODO
+      method "render" [] Void $ return () -- TODO
+
+      memberVar UInt ["screenTarget"]
+
+    private $ do
+      method "createRenderTarget" ["t_" :@ SmartPtr "RenderTarget"] UInt $ return () -- TODO
+
+      memberVar (SmartPtr "PipelineInput") ["input"]
+      memberVar (SmartPtr "data::Pipeline") ["pipeline"] -- TODO: type namespace
+      memberVar (Vector "Texture") ["textures"]
+      memberVar UInt ["targets"]
+      memberVar (Vector (SmartPtr "GLProgram")) ["programs"]
+      memberVar (Vector (SmartPtr "GLStreamData")) ["streamData"]
+      memberVar UInt ["currentProgram"]
+      memberVar Bool ["hasCurrentProgram"]
 
 backend = do
   enumConversions

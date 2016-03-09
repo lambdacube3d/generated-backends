@@ -54,6 +54,3 @@ EDSL ideas:
 
 LINKS:
   android/java - http://developer.android.com/training/graphics/opengl/draw.html
-
-TODO:
-  generate enum conversion functions
