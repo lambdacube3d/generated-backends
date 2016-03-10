@@ -553,12 +553,62 @@ hpp = do
       memberVar (Vector (Ptr Void)) ["data"]
       memberVar UInt ["bufferObject"]
 
-      method "add" ["v" :@ Ref (Vector Int8)] Int $ return () -- TODO
-      method "add" ["v" :@ Ref (Vector UInt8)] Int $ return () -- TODO
-      method "add" ["v" :@ Ref (Vector Int16)] Int $ return () -- TODO
-      method "add" ["v" :@ Ref (Vector UInt16)] Int $ return () -- TODO
-      method "add" ["v" :@ Ref (Vector Float)] Int $ return () -- TODO
-      method "freeze" [] Void $ return () -- TODO
+      method "add" ["v" :@ Ref (Vector Int8)] Int $ do
+        varAssign Int ["i"] $ vector_size "data"
+        vector_pushBack "data" $ vector_dataPtr "v"
+        vector_pushBack "size" $ vector_size "v"
+        vector_pushBack "byteSize" $ vector_size "v"
+        vector_pushBack "glType" "GL_BYTE"
+        return_ "i"
+
+      method "add" ["v" :@ Ref (Vector UInt8)] Int $ do
+        varAssign Int ["i"] $ vector_size "data"
+        vector_pushBack "data" $ vector_dataPtr "v"
+        vector_pushBack "size" $ vector_size "v"
+        vector_pushBack "byteSize" $ vector_size "v"
+        vector_pushBack "glType" "GL_UNSIGNED_BYTE"
+        return_ "i"
+
+      method "add" ["v" :@ Ref (Vector Int16)] Int $ do
+        varAssign Int ["i"] $ vector_size "data"
+        vector_pushBack "data" $ vector_dataPtr "v"
+        vector_pushBack "size" $ vector_size "v"
+        vector_pushBack "byteSize" $ 2 * vector_size "v"
+        vector_pushBack "glType" "GL_SHORT"
+        return_ "i"
+
+      method "add" ["v" :@ Ref (Vector UInt16)] Int $ do
+        varAssign Int ["i"] $ vector_size "data"
+        vector_pushBack "data" $ vector_dataPtr "v"
+        vector_pushBack "size" $ vector_size "v"
+        vector_pushBack "byteSize" $ 2 * vector_size "v"
+        vector_pushBack "glType" "GL_UNSIGNED_SHORT"
+        return_ "i"
+
+      method "add" ["v" :@ Ref (Vector Float)] Int $ do
+        varAssign Int ["i"] $ vector_size "data"
+        vector_pushBack "data" $ vector_dataPtr "v"
+        vector_pushBack "size" $ vector_size "v"
+        vector_pushBack "byteSize" $ 4 * vector_size "v"
+        vector_pushBack "glType" "GL_FLOAT"
+        return_ "i"
+
+      method "freeze" [] Void $ do
+        varAssign UInt "bufferSize" 0
+        vector_foreach "i" "byteSize" $ do
+          vector_pushBack "offset" "bufferSize"
+          "bufferSize" += "i"
+
+        var UInt ["bo"]
+        call "glGenBuffers" [1,addr "bo"]
+        call "glBindBuffer" ["GL_ARRAY_BUFFER","bo"]
+        call "glBufferData" ["GL_ARRAY_BUFFER","bufferSize",nullptr,"GL_STATIC_DRAW"]
+        varAssign UInt "offset_" 0
+        for_range "i" 0 (vector_size "data") $ do
+          call "glBufferSubData" ["GL_ARRAY_BUFFER","offset_","byteSize" `vector_lookup` "i","data" `vector_lookup` "i"]
+          "offset_" += "byteSize" `vector_lookup` "i"
+        "bufferObject" .= "bo"
+
       method "update" ["i" :@ Int, "v" :@ Ref (Vector Float)] Void $ return () -- TODO
 
   enum_ "Type"
@@ -588,29 +638,70 @@ hpp = do
         , "_m44f"   :@ "M44F"
         ]
 
-      constructor ["v" :@ Ref Float] $ return () -- TODO
-      constructor ["v" :@ Ref "V2F"] $ return () -- TODO
-      constructor ["v" :@ Ref "V3F"] $ return () -- TODO
-      constructor ["v" :@ Ref "V4F"] $ return () -- TODO
-      constructor ["v" :@ Ref "M22F"] $ return () -- TODO
-      constructor ["v" :@ Ref "M33F"] $ return () -- TODO
-      constructor ["v" :@ Ref "M44F"] $ return () -- TODO
-      constructor ["b" :@ SmartPtr "Buffer", "index" :@ Int, "t" :@ "Type"] $ return () -- TODO
-
+      constructor ["v" :@ Ref Float] $ do
+        "type"    .= ns ["Type","FLOAT"]
+        "isArray" .= false
+        "_float"  .= "v"
+        "glSize"  .= 1
+      constructor ["v" :@ Ref "V2F"] $ do
+        "type"    .= ns ["Type","FLOAT_VEC2"]
+        "isArray" .= false
+        "_v2f"    .= "v"
+        "glSize"  .= 2
+      constructor ["v" :@ Ref "V3F"] $ do
+        "type"    .= ns ["Type","FLOAT_VEC3"]
+        "isArray" .= false
+        "_v3f"    .= "v"
+        "glSize"  .= 3
+      constructor ["v" :@ Ref "V4F"] $ do
+        "type"    .= ns ["Type","FLOAT_VEC4"]
+        "isArray" .= false
+        "_v4f"    .= "v"
+        "glSize"  .= 4
+      constructor ["v" :@ Ref "M22F"] $ do
+        "type"    .= ns ["Type","FLOAT_MAT2"]
+        "isArray" .= false
+        "_m22f"    .= "v"
+        "glSize"  .= 4
+      constructor ["v" :@ Ref "M33F"] $ do
+        "type"    .= ns ["Type","FLOAT_MAT3"]
+        "isArray" .= false
+        "_m33f"   .= "v"
+        "glSize"  .= 9
+      constructor ["v" :@ Ref "M44F"] $ do
+        "type"    .= ns ["Type","FLOAT_MAT4"]
+        "isArray" .= false
+        "_m44f"   .= "v"
+        "glSize"  .= 16
+      constructor ["b" :@ SmartPtr "Buffer", "index" :@ Int, "t" :@ "Type"] $ do
+        "type"    .= "t"
+        "buffer"  .= "b"
+        "index"   .= "i"
+        "isArray" .= true
+        "glSize"  .= 16
+        switch "t" $
+          case_ (nsPat ["Type","FLOAT"]) $      "glSize"  .= 1
+          case_ (nsPat ["Type","FLOAT_VEC2"]) $ "glSize"  .= 2
+          case_ (nsPat ["Type","FLOAT_VEC3"]) $ "glSize"  .= 3
+          case_ (nsPat ["Type","FLOAT_VEC4"]) $ "glSize"  .= 4
+          case_ (nsPat ["Type","FLOAT_MAT2"]) $ "glSize"  .= 4
+          case_ (nsPat ["Type","FLOAT_MAT3"]) $ "glSize"  .= 9
+          case_ (nsPat ["Type","FLOAT_MAT4"]) $ "glSize"  .= 16
 
   class_ "StreamMap" $ do
     public $ do
       memberVar (Map String (SmartPtr "Stream")) ["map"]
 
-      method "add" ["name" :@ String, "v" :@ Ref Float] Void $ return () -- TODO
-      method "add" ["name" :@ String, "v" :@ Ref "V2F"] Void $ return () -- TODO
-      method "add" ["name" :@ String, "v" :@ Ref "V3F"] Void $ return () -- TODO
-      method "add" ["name" :@ String, "v" :@ Ref "V4F"] Void $ return () -- TODO
-      method "add" ["name" :@ String, "v" :@ Ref "M22F"] Void $ return () -- TODO
-      method "add" ["name" :@ String, "v" :@ Ref "M33F"] Void $ return () -- TODO
-      method "add" ["name" :@ String, "v" :@ Ref "M44F"] Void $ return () -- TODO
-      method "add" ["name" :@ String, "t" :@ "Type", "b" :@ SmartPtr "Buffer", "index" :@ Int] Void $ return () -- TODO
-      method "validate" [] Bool $ return () -- TODO
+      -- TODO: Map_insert needed
+      method "add" ["name" :@ String, "v" :@ Ref Float] Void $ map_insert "map" "name" $ new_SmartPtr $ new "Stream" ["v"]
+      method "add" ["name" :@ String, "v" :@ Ref "V2F"] Void $ map_insert "map" "name" $ new_SmartPtr $ new "Stream" ["v"]
+      method "add" ["name" :@ String, "v" :@ Ref "V3F"] Void $ map_insert "map" "name" $ new_SmartPtr $ new "Stream" ["v"]
+      method "add" ["name" :@ String, "v" :@ Ref "V4F"] Void $ map_insert "map" "name" $ new_SmartPtr $ new "Stream" ["v"]
+      method "add" ["name" :@ String, "v" :@ Ref "M22F"] Void $ map_insert "map" "name" $ new_SmartPtr $ new "Stream" ["v"]
+      method "add" ["name" :@ String, "v" :@ Ref "M33F"] Void $ map_insert "map" "name" $ new_SmartPtr $ new "Stream" ["v"]
+      method "add" ["name" :@ String, "v" :@ Ref "M44F"] Void $ map_insert "map" "name" $ new_SmartPtr $ new "Stream" ["v"]
+      method "add" ["name" :@ String, "t" :@ "Type", "b" :@ SmartPtr "Buffer", "index" :@ Int] Void $ map_insert "map" "name" $ new_SmartPtr $ new "Stream" ["b","index","t"]
+      method "validate" [] Bool $ return_ true -- TODO
 
   enum_ "Primitive"
     [ "TriangleStrip"
@@ -655,28 +746,28 @@ hpp = do
 
       destructor $ return () -- TODO
 
-      method "enable" ["visible" :@ Bool] Void $ return () -- TODO
-      method "setOrder" ["order" :@ Int] Void $ return () -- TODO
+      method "enable" ["visible" :@ Bool] Void $ "enabled" .= "visible"
+      method "setOrder" ["order" :@ Int] Void $ "order" .= "o"
 
-      method "setUniform" ["name" :@ String, "v" :@ Ref Int] Void $ return () -- TODO
-      method "setUniform" ["name" :@ String, "v" :@ Ref UInt] Void $ return () -- TODO
-      method "setUniform" ["name" :@ String, "v" :@ Ref Float] Void $ return () -- TODO
-      method "setUniform" ["name" :@ String, "v" :@ Ref Bool] Void $ return () -- TODO
-      method "setUniform" ["name" :@ String, "v" :@ Ref "V2I"] Void $ return () -- TODO
-      method "setUniform" ["name" :@ String, "v" :@ Ref "V2U"] Void $ return () -- TODO
-      method "setUniform" ["name" :@ String, "v" :@ Ref "V2F"] Void $ return () -- TODO
-      method "setUniform" ["name" :@ String, "v" :@ Ref "V2B"] Void $ return () -- TODO
-      method "setUniform" ["name" :@ String, "v" :@ Ref "V3I"] Void $ return () -- TODO
-      method "setUniform" ["name" :@ String, "v" :@ Ref "V3U"] Void $ return () -- TODO
-      method "setUniform" ["name" :@ String, "v" :@ Ref "V3F"] Void $ return () -- TODO
-      method "setUniform" ["name" :@ String, "v" :@ Ref "V3B"] Void $ return () -- TODO
-      method "setUniform" ["name" :@ String, "v" :@ Ref "V4I"] Void $ return () -- TODO
-      method "setUniform" ["name" :@ String, "v" :@ Ref "V4U"] Void $ return () -- TODO
-      method "setUniform" ["name" :@ String, "v" :@ Ref "V4F"] Void $ return () -- TODO
-      method "setUniform" ["name" :@ String, "v" :@ Ref "V4B"] Void $ return () -- TODO
-      method "setUniform" ["name" :@ String, "v" :@ Ref "M22F"] Void $ return () -- TODO
-      method "setUniform" ["name" :@ String, "v" :@ Ref "M33F"] Void $ return () -- TODO
-      method "setUniform" ["name" :@ String, "v" :@ Ref "M44F"] Void $ return () -- TODO
+      method "setUniform" ["name" :@ String, "v" :@ Ref Int] Void $   map_insert "uniforms" "name" $ recordValue [("tag",ns ["InputType","tag","Int"]),   ("_int","v")]
+      method "setUniform" ["name" :@ String, "v" :@ Ref UInt] Void $  map_insert "uniforms" "name" $ recordValue [("tag",ns ["InputType","tag","Word"]),  ("_word","v")]
+      method "setUniform" ["name" :@ String, "v" :@ Ref Float] Void $ map_insert "uniforms" "name" $ recordValue [("tag",ns ["InputType","tag","Float"]), ("_float","v")]
+      method "setUniform" ["name" :@ String, "v" :@ Ref Bool] Void $  map_insert "uniforms" "name" $ recordValue [("tag",ns ["InputType","tag","Bool"]),  ("_bool","v")]
+      method "setUniform" ["name" :@ String, "v" :@ Ref "V2I"] Void $ map_insert "uniforms" "name" $ recordValue [("tag",ns ["InputType","tag","V2I"]),   ("_v2i","v")]
+      method "setUniform" ["name" :@ String, "v" :@ Ref "V2U"] Void $ map_insert "uniforms" "name" $ recordValue [("tag",ns ["InputType","tag","V2U"]),   ("_v2u","v")]
+      method "setUniform" ["name" :@ String, "v" :@ Ref "V2F"] Void $ map_insert "uniforms" "name" $ recordValue [("tag",ns ["InputType","tag","V2F"]),   ("_v2f","v")]
+      method "setUniform" ["name" :@ String, "v" :@ Ref "V2B"] Void $ map_insert "uniforms" "name" $ recordValue [("tag",ns ["InputType","tag","V2B"]),   ("_v2b","v")]
+      method "setUniform" ["name" :@ String, "v" :@ Ref "V3I"] Void $ map_insert "uniforms" "name" $ recordValue [("tag",ns ["InputType","tag","V3I"]),   ("_v3i","v")]
+      method "setUniform" ["name" :@ String, "v" :@ Ref "V3U"] Void $ map_insert "uniforms" "name" $ recordValue [("tag",ns ["InputType","tag","V3U"]),   ("_v3u","v")]
+      method "setUniform" ["name" :@ String, "v" :@ Ref "V3F"] Void $ map_insert "uniforms" "name" $ recordValue [("tag",ns ["InputType","tag","V3F"]),   ("_v3f","v")]
+      method "setUniform" ["name" :@ String, "v" :@ Ref "V3B"] Void $ map_insert "uniforms" "name" $ recordValue [("tag",ns ["InputType","tag","V3B"]),   ("_v3b","v")]
+      method "setUniform" ["name" :@ String, "v" :@ Ref "V4I"] Void $ map_insert "uniforms" "name" $ recordValue [("tag",ns ["InputType","tag","V4I"]),   ("_v4i","v")]
+      method "setUniform" ["name" :@ String, "v" :@ Ref "V4U"] Void $ map_insert "uniforms" "name" $ recordValue [("tag",ns ["InputType","tag","V4U"]),   ("_v4u","v")]
+      method "setUniform" ["name" :@ String, "v" :@ Ref "V4F"] Void $ map_insert "uniforms" "name" $ recordValue [("tag",ns ["InputType","tag","V4F"]),   ("_v4f","v")]
+      method "setUniform" ["name" :@ String, "v" :@ Ref "V4B"] Void $ map_insert "uniforms" "name" $ recordValue [("tag",ns ["InputType","tag","V4B"]),   ("_v4b","v")]
+      method "setUniform" ["name" :@ String, "v" :@ Ref "M22F"] Void $ map_insert "uniforms" "name" $ recordValue [("tag",ns ["InputType","tag","M22F"]), ("_m22f","v")]
+      method "setUniform" ["name" :@ String, "v" :@ Ref "M33F"] Void $ map_insert "uniforms" "name" $ recordValue [("tag",ns ["InputType","tag","M33F"]), ("_m33f","v")]
+      method "setUniform" ["name" :@ String, "v" :@ Ref "M44F"] Void $ map_insert "uniforms" "name" $ recordValue [("tag",ns ["InputType","tag","M44F"]), ("_m44f","v")]
 
   class_ "PipelineInput" $ do
     public $ do
@@ -684,31 +775,53 @@ hpp = do
       memberVar (Map String "UniformValue") ["uniforms"]
       memberVar Int ["screenWidth","screenHeight"]
 
-      method "createObject" ["slotName" :@ String, "prim" :@ "Primitive", "attributes" :@ SmartPtr "StreamMap", "objectUniforms" :@ Vector String] (SmartPtr "Object") $ return () -- TODO
+      method "createObject" ["slotName" :@ String, "prim" :@ "Primitive", "attributes" :@ SmartPtr "StreamMap", "objectUniforms" :@ Vector String] (SmartPtr "Object") $ do
+        -- std::shared_ptr<Object> o(new Object());
+        "o"~>"enabled" .= true
+        "o"~>"order" .= 0
+        "o"~>"glMode" .= callExp "primitiveMode" ["prim"]
+        varAssign Int "count" 0
+        map_foreach "i" ("attributes"~>"map") $ do
+          if_ (it_value "i" ~> "isArray") $ then_ $ do
+            "count" .= it_value "i" ~> "buffer" ~> ("size" `vector_lookup` (it_value "i" ~> "index")) / it_value "i" ~> "glSize"
+            break_
+        "o"~>"glCount" .= "count"
+        "o"~>"streams" .= "attributes"
+        if_ (map_elem "objectMap" "slotName") $ do
+          then_ $ do
+            map_insert "objectMap" "slotName" "o"
+          else_ $ do
+            --map_insert "objectMap" "slotName" $ 
+            --objectMap[slotName] = std::shared_ptr<std::vector<std::shared_ptr<Object>>>(new std::vector<std::shared_ptr<Object>>({o}));
+            return () -- TODO
+        return_ "o"
+
       method "createObject" ["slotName" :@ String, "prim" :@ "Primitive", "attributes" :@ Ref "StreamMap"
                             , "indexBuffer" :@ Ref "Buffer", "bufferIndex" :@ Int, "objectUniforms" :@ Vector String] (SmartPtr "Object") $ return () -- TODO
       method "sortSlotObjects" [] Void $ return () -- TODO
-      method "setScreenSize" ["w" :@ Int, "h" :@ Int] Void $ return () -- TODO
+      method "setScreenSize" ["w" :@ Int, "h" :@ Int] Void $ do
+        "screenWidth" .= "w"
+        "screenHeight" .= "h"
 
-      method "setUniform" ["name" :@ String, "v" :@ Ref Int] Void $ return () -- TODO
-      method "setUniform" ["name" :@ String, "v" :@ Ref UInt] Void $ return () -- TODO
-      method "setUniform" ["name" :@ String, "v" :@ Ref Float] Void $ return () -- TODO
-      method "setUniform" ["name" :@ String, "v" :@ Ref Bool] Void $ return () -- TODO
-      method "setUniform" ["name" :@ String, "v" :@ Ref "V2I"] Void $ return () -- TODO
-      method "setUniform" ["name" :@ String, "v" :@ Ref "V2U"] Void $ return () -- TODO
-      method "setUniform" ["name" :@ String, "v" :@ Ref "V2F"] Void $ return () -- TODO
-      method "setUniform" ["name" :@ String, "v" :@ Ref "V2B"] Void $ return () -- TODO
-      method "setUniform" ["name" :@ String, "v" :@ Ref "V3I"] Void $ return () -- TODO
-      method "setUniform" ["name" :@ String, "v" :@ Ref "V3U"] Void $ return () -- TODO
-      method "setUniform" ["name" :@ String, "v" :@ Ref "V3F"] Void $ return () -- TODO
-      method "setUniform" ["name" :@ String, "v" :@ Ref "V3B"] Void $ return () -- TODO
-      method "setUniform" ["name" :@ String, "v" :@ Ref "V4I"] Void $ return () -- TODO
-      method "setUniform" ["name" :@ String, "v" :@ Ref "V4U"] Void $ return () -- TODO
-      method "setUniform" ["name" :@ String, "v" :@ Ref "V4F"] Void $ return () -- TODO
-      method "setUniform" ["name" :@ String, "v" :@ Ref "V4B"] Void $ return () -- TODO
-      method "setUniform" ["name" :@ String, "v" :@ Ref "M22F"] Void $ return () -- TODO
-      method "setUniform" ["name" :@ String, "v" :@ Ref "M33F"] Void $ return () -- TODO
-      method "setUniform" ["name" :@ String, "v" :@ Ref "M44F"] Void $ return () -- TODO
+      method "setUniform" ["name" :@ String, "v" :@ Ref Int] Void $   map_insert "uniforms" "name" $ recordValue [("tag",ns ["InputType","tag","Int"]),   ("_int","v")]
+      method "setUniform" ["name" :@ String, "v" :@ Ref UInt] Void $  map_insert "uniforms" "name" $ recordValue [("tag",ns ["InputType","tag","Word"]),  ("_word","v")]
+      method "setUniform" ["name" :@ String, "v" :@ Ref Float] Void $ map_insert "uniforms" "name" $ recordValue [("tag",ns ["InputType","tag","Float"]), ("_float","v")]
+      method "setUniform" ["name" :@ String, "v" :@ Ref Bool] Void $  map_insert "uniforms" "name" $ recordValue [("tag",ns ["InputType","tag","Bool"]),  ("_bool","v")]
+      method "setUniform" ["name" :@ String, "v" :@ Ref "V2I"] Void $ map_insert "uniforms" "name" $ recordValue [("tag",ns ["InputType","tag","V2I"]),   ("_v2i","v")]
+      method "setUniform" ["name" :@ String, "v" :@ Ref "V2U"] Void $ map_insert "uniforms" "name" $ recordValue [("tag",ns ["InputType","tag","V2U"]),   ("_v2u","v")]
+      method "setUniform" ["name" :@ String, "v" :@ Ref "V2F"] Void $ map_insert "uniforms" "name" $ recordValue [("tag",ns ["InputType","tag","V2F"]),   ("_v2f","v")]
+      method "setUniform" ["name" :@ String, "v" :@ Ref "V2B"] Void $ map_insert "uniforms" "name" $ recordValue [("tag",ns ["InputType","tag","V2B"]),   ("_v2b","v")]
+      method "setUniform" ["name" :@ String, "v" :@ Ref "V3I"] Void $ map_insert "uniforms" "name" $ recordValue [("tag",ns ["InputType","tag","V3I"]),   ("_v3i","v")]
+      method "setUniform" ["name" :@ String, "v" :@ Ref "V3U"] Void $ map_insert "uniforms" "name" $ recordValue [("tag",ns ["InputType","tag","V3U"]),   ("_v3u","v")]
+      method "setUniform" ["name" :@ String, "v" :@ Ref "V3F"] Void $ map_insert "uniforms" "name" $ recordValue [("tag",ns ["InputType","tag","V3F"]),   ("_v3f","v")]
+      method "setUniform" ["name" :@ String, "v" :@ Ref "V3B"] Void $ map_insert "uniforms" "name" $ recordValue [("tag",ns ["InputType","tag","V3B"]),   ("_v3b","v")]
+      method "setUniform" ["name" :@ String, "v" :@ Ref "V4I"] Void $ map_insert "uniforms" "name" $ recordValue [("tag",ns ["InputType","tag","V4I"]),   ("_v4i","v")]
+      method "setUniform" ["name" :@ String, "v" :@ Ref "V4U"] Void $ map_insert "uniforms" "name" $ recordValue [("tag",ns ["InputType","tag","V4U"]),   ("_v4u","v")]
+      method "setUniform" ["name" :@ String, "v" :@ Ref "V4F"] Void $ map_insert "uniforms" "name" $ recordValue [("tag",ns ["InputType","tag","V4F"]),   ("_v4f","v")]
+      method "setUniform" ["name" :@ String, "v" :@ Ref "V4B"] Void $ map_insert "uniforms" "name" $ recordValue [("tag",ns ["InputType","tag","V4B"]),   ("_v4b","v")]
+      method "setUniform" ["name" :@ String, "v" :@ Ref "M22F"] Void $ map_insert "uniforms" "name" $ recordValue [("tag",ns ["InputType","tag","M22F"]), ("_m22f","v")]
+      method "setUniform" ["name" :@ String, "v" :@ Ref "M33F"] Void $ map_insert "uniforms" "name" $ recordValue [("tag",ns ["InputType","tag","M33F"]), ("_m33f","v")]
+      method "setUniform" ["name" :@ String, "v" :@ Ref "M44F"] Void $ map_insert "uniforms" "name" $ recordValue [("tag",ns ["InputType","tag","M44F"]), ("_m44f","v")]
 
   struct_ "Texture" $ do
     memberVar Int ["target"]
