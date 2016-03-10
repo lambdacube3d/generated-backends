@@ -554,7 +554,7 @@ hpp = do
       memberVar UInt ["bufferObject"]
 
       method "add" ["v" :@ Ref (Vector Int8)] Int $ do
-        varAssign Int ["i"] $ vector_size "data"
+        varAssign Int "i" $ vector_size "data"
         vector_pushBack "data" $ vector_dataPtr "v"
         vector_pushBack "size" $ vector_size "v"
         vector_pushBack "byteSize" $ vector_size "v"
@@ -562,7 +562,7 @@ hpp = do
         return_ "i"
 
       method "add" ["v" :@ Ref (Vector UInt8)] Int $ do
-        varAssign Int ["i"] $ vector_size "data"
+        varAssign Int "i" $ vector_size "data"
         vector_pushBack "data" $ vector_dataPtr "v"
         vector_pushBack "size" $ vector_size "v"
         vector_pushBack "byteSize" $ vector_size "v"
@@ -570,7 +570,7 @@ hpp = do
         return_ "i"
 
       method "add" ["v" :@ Ref (Vector Int16)] Int $ do
-        varAssign Int ["i"] $ vector_size "data"
+        varAssign Int "i" $ vector_size "data"
         vector_pushBack "data" $ vector_dataPtr "v"
         vector_pushBack "size" $ vector_size "v"
         vector_pushBack "byteSize" $ 2 * vector_size "v"
@@ -578,7 +578,7 @@ hpp = do
         return_ "i"
 
       method "add" ["v" :@ Ref (Vector UInt16)] Int $ do
-        varAssign Int ["i"] $ vector_size "data"
+        varAssign Int "i" $ vector_size "data"
         vector_pushBack "data" $ vector_dataPtr "v"
         vector_pushBack "size" $ vector_size "v"
         vector_pushBack "byteSize" $ 2 * vector_size "v"
@@ -586,7 +586,7 @@ hpp = do
         return_ "i"
 
       method "add" ["v" :@ Ref (Vector Float)] Int $ do
-        varAssign Int ["i"] $ vector_size "data"
+        varAssign Int "i" $ vector_size "data"
         vector_pushBack "data" $ vector_dataPtr "v"
         vector_pushBack "size" $ vector_size "v"
         vector_pushBack "byteSize" $ 4 * vector_size "v"
@@ -606,7 +606,7 @@ hpp = do
         varAssign UInt "offset_" 0
         for_range "i" 0 (vector_size "data") $ do
           call "glBufferSubData" ["GL_ARRAY_BUFFER","offset_","byteSize" `vector_lookup` "i","data" `vector_lookup` "i"]
-          "offset_" += "byteSize" `vector_lookup` "i"
+          "offset_" += ("byteSize" `vector_lookup` "i")
         "bufferObject" .= "bo"
 
       method "update" ["i" :@ Int, "v" :@ Ref (Vector Float)] Void $ return () -- TODO
@@ -679,7 +679,7 @@ hpp = do
         "index"   .= "i"
         "isArray" .= true
         "glSize"  .= 16
-        switch "t" $
+        switch "t" $ do
           case_ (nsPat ["Type","FLOAT"]) $      "glSize"  .= 1
           case_ (nsPat ["Type","FLOAT_VEC2"]) $ "glSize"  .= 2
           case_ (nsPat ["Type","FLOAT_VEC3"]) $ "glSize"  .= 3

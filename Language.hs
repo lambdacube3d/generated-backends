@@ -65,6 +65,9 @@ data Exp
   | Not Exp
   | Map_notElem Exp Exp
   | Map_elem Exp Exp
+  | Vector_size Exp
+  | Vector_dataPtr Exp
+  | New_SmartPtr Exp
   deriving Show
 
 data Def
@@ -94,6 +97,7 @@ data Stmt
   | Map_foreach String Exp [Stmt]
   | Vector_foreach String Exp [Stmt]
   | Vector_pushBack Exp Exp
+  | Map_insert Exp Exp Exp
   | Break
   | Continue
   | Inc Exp
@@ -116,25 +120,25 @@ data Pat
 data Class = Class_
 
 class_ :: String -> ClassM () -> DefM ()
-class_ className classM = return ()
+class_ className classM = return () -- TODO
 
 private :: DefM () -> ClassM ()
-private _ = return ()
+private _ = return () -- TODO
 
 public :: DefM () -> ClassM ()
-public _ = return ()
+public _ = return () -- TODO
 
 memberVar :: Type -> [String] -> DefM ()
-memberVar t n = return ()
+memberVar t n = return () -- TODO
 
 enum_ :: String -> [String] -> DefM ()
-enum_ name args = return ()
+enum_ name args = return () -- TODO
 
 struct_ :: String -> DefM () -> DefM ()
-struct_ name args = return ()
+struct_ name args = return () -- TODO
 
 memberUnion :: [Arg] -> DefM ()
-memberUnion args = return ()
+memberUnion args = return () -- TODO
 
 method :: String -> [Arg] -> Type -> StmtM () -> DefM ()
 method name args retType stmtM = tell [Method "" name args retType (execWriter stmtM)]
@@ -227,6 +231,18 @@ then_ stmtM = tell [Then (execWriter stmtM)]
 else_ :: StmtM () -> IfM ()
 else_ stmtM = tell [Else (execWriter stmtM)]
 
+new_SmartPtr :: Exp -> Exp
+new_SmartPtr = New_SmartPtr
+
+vector_size :: Exp -> Exp
+vector_size = Vector_size
+
+vector_dataPtr :: Exp -> Exp
+vector_dataPtr = Vector_dataPtr
+
+map_insert :: Exp -> Exp -> Exp -> StmtM ()
+map_insert m k v = tell [Map_insert m k v]
+
 infixr 2 `vector_lookup`
 infixr 2 `map_lookup`
 
@@ -279,6 +295,9 @@ varAssign t n e = tell [VarAssignDef t n e]
 varConstructor :: Type -> String -> Exp -> StmtM ()
 varConstructor t n e = tell [VarConstructor t n e]
 
+for_range :: String -> Exp -> Exp -> StmtM () -> StmtM ()
+for_range _ _ _ _ = return () -- TODO
+
 map_foreach :: String -> Exp -> StmtM () -> StmtM ()
 map_foreach n e stmtM = tell [Map_foreach n e (execWriter stmtM)]
 
@@ -311,6 +330,9 @@ a |= b = tell [ a :|= b]
 
 (/=) :: Exp -> Exp -> StmtM ()
 a /= b = tell [a :/= b]
+
+(+=) :: Exp -> Exp -> StmtM ()
+a += b = return () -- TODO
 
 (!=) :: Exp -> Exp -> Exp
 (!=) = (:!=)
