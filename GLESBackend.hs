@@ -372,186 +372,33 @@ globalFunctions = do
     if_ "noStencil" $ then_ $ call "glDisable" ["GL_STENCIL_TEST"]
     if_ "noDepth" $ then_ $ call "glDisable" ["GL_DEPTH_TEST"]
 
-pipelineMethods = do
-  method "createRenderTarget" ["t_" :@ SmartPtr "RenderTarget"] UInt $ do
-    varADT "RenderTarget" "t" "t_"
-    -- does this target have texture attachments?
-    varAssign Int "textureCount" 0
-    vector_foreach "i_" ("t"~>"renderTargets") $ do
-      varADT "TargetItem" "i" "i_"
-      if_ ("i"~>"targetRef"."valid" && "i"~>"targetRef"."data"~>"tag" == ns ["ImageRef","tag","TextureImage"]) $ then_ $ do
-        inc "textureCount"
-    if_ ("textureCount" == 0) $ then_ $ do
-      return_ 0
-    -- has textures attachment
-    var UInt ["fb"]
-    call "glGenFramebuffers" [1,addr "fb"]
-    call "glBindFramebuffer" ["GL_FRAMEBUFFER", "fb"]
-    var Int ["attachment","textarget","level"]
-    var UInt ["texture"]
-    vector_foreach "i_" ("t"~>"renderTargets") $ do
-      varADT "TargetItem" "i" "i_"
-      switch ("i"~>"targetSemantic"~>"tag") $ do
-        case_ (nsPat ["ImageSemantic","tag","Color"]) $ do 
-          "attachment" .= "GL_COLOR_ATTACHMENT0"
-        case_ (nsPat ["ImageSemantic","tag","Depth"]) $ do 
-          "attachment" .= "GL_DEPTH_ATTACHMENT"
-        case_ (nsPat ["ImageSemantic","tag","Stencil"]) $ do 
-          "attachment" .= "GL_STENCIL_ATTACHMENT"
-      if_ ("i"~>"targetRef"."valid") $ do
-        then_ $ switch ("i"~>"targetRef"."data"~>"tag") $ do
-          case_ (nsPat ["ImageRef","tag","TextureImage"]) $ do
-            varADT "TextureImage" "ti" $ "i"~>"targetRef"."data"
-            "texture" .= ("textures" `vector_lookup` ("ti"~>"_0"))."texture"
-            "textarget" .= "GL_TEXTURE_2D" -- TODO
-            "level" .= "ti"~>"_1"
-          case_ (nsPat ["ImageRef","tag","Framebuffer"]) $ do
-            "texture" .= 0
-            "textarget" .= "GL_TEXTURE_2D"
-            "level" .= 0
-        else_ $ do
-          "texture" .= 0
-          "textarget" .= "GL_TEXTURE_2D"
-          "level" .= 0
-      call "glFramebufferTexture2D" ["GL_FRAMEBUFFER","attachment","textarget","texture","level"]
-    return_ "fb"
+classes = do
+  enum_ "Primitive"
+    [ "TriangleStrip"
+    , "TriangleList"
+    , "TriangleFan"
+    , "LineStrip"
+    , "LineList"
+    , "LineLoop"
+    , "PointList"
+    ]
 
-  constructor ["ppl_" :@ SmartPtr "Pipeline"] $ do
-    "screenTarget" .= 0
-    "hasCurrentProgram" .= false
-    varADT "Pipeline" "ppl" $ "ppl_"
-    "pipeline" .= "ppl"
-    -- check backend compatibility
-    if_ ("ppl"~>"backend"~>"tag" != ns ["Backend","tag","WebGL1"]) $ then_ $ do
-      throw "unsupported backend"
-    -- allocate all resources
-    --  textures
-    vector_foreach "i" ("ppl"~>"textures") $ do
-      vector_pushBack "textures" $ callExp "createTexture" ["i"]
-    --  targets
-    vector_foreach "i" ("ppl"~>"targets") $ do
-      vector_pushBack "targets" $ callExp "createRenderTarget" ["i"]
-    --  programs
-    vector_foreach "i" ("ppl"~>"programs") $ do
-      vector_pushBack "programs" $ callExp "createProgram" ["i"]
-    --  stream data
-    vector_foreach "i" ("ppl"~>"streams") $ do
-      vector_pushBack "streamData" $ callExp "createStreamData" ["i"]
-    call "glReleaseShaderCompiler" []
+  enum_ "Type"
+    [ "FLOAT"
+    , "FLOAT_VEC2"
+    , "FLOAT_VEC3"
+    , "FLOAT_VEC4"
+    , "FLOAT_MAT2"
+    , "FLOAT_MAT3"
+    , "FLOAT_MAT4"
+    ]
 
-  destructor $ do
-    -- release resources
-    -- textures
-    vector_foreach "i" "textures" $ do
-      call "glDeleteTextures" [1,addr "i"."texture"]
-    -- targets
-    vector_foreach "i" "targets" $ do
-      call "glDeleteFramebuffers" [1,addr "i"]
-    -- programs
-    vector_foreach "i" "programs" $ do
-      call "glDeleteProgram" ["i"~>"program"]
-      call "glDeleteShader" ["i"~>"vertexShader"]
-      call "glDeleteShader" ["i"~>"fragmentShader"]
-
-  method "setPipelineInput" ["i" :@ SmartPtr "PipelineInput"] Void $ do
-    "input" .= "i"
-
-  method "render" [] Void $ do
-    vector_foreach "i" ("pipeline"~>"commands") $ do
-      switch ("i"~>"tag") $ do
-        case_ (nsPat ["Command","tag","SetRasterContext"]) $ do
-          varADT "SetRasterContext" "cmd" $ "i"
-          call "setupRasterContext" ["cmd"~>"_0"]
-        case_ (nsPat ["Command","tag","SetAccumulationContext"]) $ do
-          varADT "SetAccumulationContext" "cmd" $ "i"
-          call "setupAccumulationContext" ["cmd"~>"_0"]
-        case_ (nsPat ["Command","tag","SetTexture"]) $ do
-          varADT "SetTexture" "cmd" $ "i"
-          call "glActiveTexture" ["GL_TEXTURE0" + "cmd"~>"_0"]
-          call "glBindTexture" [("textures" `vector_lookup` ("cmd"~>"_1"))."target",("textures" `vector_lookup` ("cmd"~>"_1"))."texture"]
-        case_ (nsPat ["Command","tag","SetProgram"]) $ do
-          varADT "SetProgram" "cmd" $ "i"
-          "hasCurrentProgram" .= true
-          "currentProgram" .= "cmd"~>"_0"
-          call "glUseProgram" [("programs" `vector_lookup` "currentProgram")~>"program"]
-        case_ (nsPat ["Command","tag","SetRenderTarget"]) $ do
-          varADT "SetRenderTarget" "cmd" $ "i"
-          varAssign UInt "t" $ "targets" `vector_lookup` ("cmd"~>"_0")
-          call "glBindFramebuffer" ["GL_FRAMEBUFFER", expIf ("t"==0) "screenTarget" "t"]
-          if_ (notNull "input") $ do
-            then_ $ call "glViewport" [0,0,"input"~>"screenWidth","input"~>"screenHeight"]
-        case_ (nsPat ["Command","tag","ClearRenderTarget"]) $ do
-          varADT "ClearRenderTarget" "cmd" $ "i"
-          varAssign UInt "mask" 0
-          vector_foreach "a" ("cmd"~>"_0") $ do
-            varADT "ClearImage" "image" $ "a"
-            switch ("image"~>"imageSemantic"~>"tag") $ do
-              case_ (nsPat ["ImageSemantic","tag","Depth"]) $ do
-                varADT "VFloat" "v" $ "image"~>"clearValue"
-                call "glDepthMask" [true]
-                call "glClearDepthf" ["v"~>"_0"]
-                "mask" |= "GL_DEPTH_BUFFER_BIT"
-              case_ (nsPat ["ImageSemantic","tag","Stencil"]) $ do
-                varADT "VWord" "v" $ "image"~>"clearValue"
-                call "glClearStencil" ["v"~>"_0"]
-                "mask" |= "GL_STENCIL_BUFFER_BIT"
-              case_ (nsPat ["ImageSemantic","tag","Color"]) $ do
-                switch ("image"~>"clearValue"~>"tag") $ do
-                  case_ (nsPat ["Value","tag","VFloat"]) $ do
-                    varADT "VFloat" "v" $ "image"~>"clearValue"
-                    call "glClearColor" ["v"~>"_0",0.0,0.0,1.0]
-                  case_ (nsPat ["Value","tag","VV2F"]) $ do
-                    varADT "VV2F" "v" $ "image"~>"clearValue"
-                    call "glClearColor" ["v"~>"_0"."x","v"~>"_0"."y",0.0,1.0]
-                  case_ (nsPat ["Value","tag","VV3F"]) $ do
-                    varADT "VV3F" "v" $ "image"~>"clearValue"
-                    call "glClearColor" ["v"~>"_0"."x","v"~>"_0"."y","v"~>"_0"."z",1.0]
-                  case_ (nsPat ["Value","tag","VV4F"]) $ do
-                    varADT "VV4F" "v" $ "image"~>"clearValue"
-                    call "glClearColor" ["v"~>"_0"."x","v"~>"_0"."y","v"~>"_0"."z","v"~>"_0"."w"]
-                  default_ $ do
-                    call "glClearColor" [0.0,0.0,0.0,1.0]
-                call "glColorMask" [true,true,true,true]
-                "mask" |= "GL_COLOR_BUFFER_BIT"
-          call "glClear" ["mask"]
-        case_ (nsPat ["Command","tag","SetSamplerUniform"]) $  if_ "hasCurrentProgram" $ then_ $ do
-          varADT "SetSamplerUniform" "cmd" $ "i"
-          varAssign Int "sampler" $ ("programs" `vector_lookup` "currentProgram")~>"programInTextures" `map_lookup` ("cmd"~>"_0")
-          call "glUniform1i" ["sampler","cmd"~>"_1"]
-        case_ (nsPat ["Command","tag","RenderSlot"]) $ if_ (notNull "input" && notNull "pipeline" && "hasCurrentProgram") $ then_ $ do
-          varADT "RenderSlot" "cmd" $ "i"
-          varADT "Slot" "slot" $ "pipeline"~>"slots" `vector_lookup` ("cmd"~>"_0")
-          if_ (map_notElem ("input"~>"objectMap") ("slot"~>"slotName")) $ then_ break_
-          map_foreach "o" (deref $ "input"~>"objectMap" `map_lookup` ("slot"~>"slotName")) $ do
-            if_ (not $ "o"~>"enabled") $ then_ continue_
-            -- setup uniforms
-            map_foreach "u" (("programs" `vector_lookup` "currentProgram")~>"programUniforms") $ do
-              if_ (map_elem ("o"~>"uniforms") (key "u")) $ do
-                then_ $ call "setUniformValue" [it_value "u","o"~>"uniforms" `map_lookup` (key "u")]
-                else_ $ call "setUniformValue" [it_value "u","input"~>"uniforms" `map_lookup` (key "u")]
-            -- setup streams
-            map_foreach "s" (("programs" `vector_lookup` "currentProgram")~>"programStreams") $ do
-              call "setStream" [it_value "s"."index",deref $ "o"~>"streams"~>"map" `map_lookup` (it_value "s"."name")]
-            -- draw call
-            -- TODO: support index buffers
-            call "glDrawArrays" ["o"~>"glMode", 0, "o"~>"glCount"]
-        case_ (nsPat ["Command","tag","RenderStream"]) $ if_ (notNull "input" && notNull "pipeline" && "hasCurrentProgram") $ then_ $ do
-          varADT "RenderStream" "cmd" $ "i"
-          varAssign (SmartPtr "GLStreamData") "data" $ "streamData" `vector_lookup` ("cmd"~>"_0")
-          -- setup streams
-          map_foreach "s" (("programs" `vector_lookup` "currentProgram")~>"programStreams") $ do
-            call "setStream" [it_value "s"."index",deref $ "data"~>"streams"."map" `map_lookup` (it_value "s"."name")]
-          -- draw call
-          -- TODO: support index buffers
-          call "glDrawArrays" ["data"~>"glMode", 0, "data"~>"glCount"]
-
-hpp = do
   class_ "Buffer" $ do
     public $ do
-      memberVar (Vector Int) ["size","byteSize","glType"]
-      memberVar (Vector Long) ["offset"]
-      memberVar (Vector (Ptr Void)) ["data"]
-      memberVar UInt ["bufferObject"]
+      classVar (Vector Int) ["size","byteSize","glType"]
+      classVar (Vector Long) ["offset"]
+      classVar (Vector (Ptr Void)) ["data"]
+      classVar UInt ["bufferObject"]
 
       method "add" ["v" :@ Ref (Vector Int8)] Int $ do
         varAssign Int "i" $ vector_size "data"
@@ -611,24 +458,14 @@ hpp = do
 
       method "update" ["i" :@ Int, "v" :@ Ref (Vector Float)] Void $ return () -- TODO
 
-  enum_ "Type"
-    [ "FLOAT"
-    , "FLOAT_VEC2"
-    , "FLOAT_VEC3"
-    , "FLOAT_VEC4"
-    , "FLOAT_MAT2"
-    , "FLOAT_MAT3"
-    , "FLOAT_MAT4"
-    ]
-
   class_ "Stream" $ do
     public $ do
-      memberVar "Type" ["type"]
-      memberVar (SmartPtr "Buffer") ["buffer"]
-      memberVar Int ["index"]
-      memberVar Bool ["isArray"]
-      memberVar Int ["glSize"]
-      memberUnion
+      classVar "Type" ["type"]
+      classVar (SmartPtr "Buffer") ["buffer"]
+      classVar Int ["index"]
+      classVar Bool ["isArray"]
+      classVar Int ["glSize"]
+      classUnion
         [ "_float"  :@ Float
         , "_v2f"    :@ "V2F"
         , "_v3f"    :@ "V3F"
@@ -690,7 +527,7 @@ hpp = do
 
   class_ "StreamMap" $ do
     public $ do
-      memberVar (Map String (SmartPtr "Stream")) ["map"]
+      classVar (Map String (SmartPtr "Stream")) ["map"]
 
       -- TODO: Map_insert needed
       method "add" ["name" :@ String, "v" :@ Ref Float] Void $ map_insert "map" "name" $ new_SmartPtr $ new "Stream" ["v"]
@@ -703,19 +540,9 @@ hpp = do
       method "add" ["name" :@ String, "t" :@ "Type", "b" :@ SmartPtr "Buffer", "index" :@ Int] Void $ map_insert "map" "name" $ new_SmartPtr $ new "Stream" ["b","index","t"]
       method "validate" [] Bool $ return_ true -- TODO
 
-  enum_ "Primitive"
-    [ "TriangleStrip"
-    , "TriangleList"
-    , "TriangleFan"
-    , "LineStrip"
-    , "LineList"
-    , "LineLoop"
-    , "PointList"
-    ]
-
   struct_ "UniformValue" $ do
-    memberVar (Enum "InputType::tag") ["tag"] -- TODO
-    memberUnion
+    structVar (Enum "InputType::tag") ["tag"] -- TODO
+    structUnion
       [ "_int"   :@ Int
       , "_word"  :@ UInt
       , "_float" :@ Float
@@ -739,10 +566,10 @@ hpp = do
 
   class_ "Object" $ do
     public $ do
-      memberVar Bool ["enabled"]
-      memberVar Int ["order","glMode","glCount"]
-      memberVar (Map String "UniformValue") ["uniforms"]
-      memberVar (SmartPtr "StreamMap") ["streams"]
+      classVar Bool ["enabled"]
+      classVar Int ["order","glMode","glCount"]
+      classVar (Map String "UniformValue") ["uniforms"]
+      classVar (SmartPtr "StreamMap") ["streams"]
 
       destructor $ return () -- TODO
 
@@ -771,9 +598,9 @@ hpp = do
 
   class_ "PipelineInput" $ do
     public $ do
-      memberVar (Map String (SmartPtr (Vector (SmartPtr "Object")))) ["objectMap"]
-      memberVar (Map String "UniformValue") ["uniforms"]
-      memberVar Int ["screenWidth","screenHeight"]
+      classVar (Map String (SmartPtr (Vector (SmartPtr "Object")))) ["objectMap"]
+      classVar (Map String "UniformValue") ["uniforms"]
+      classVar Int ["screenWidth","screenHeight"]
 
       method "createObject" ["slotName" :@ String, "prim" :@ "Primitive", "attributes" :@ SmartPtr "StreamMap", "objectUniforms" :@ Vector String] (SmartPtr "Object") $ do
         -- std::shared_ptr<Object> o(new Object());
@@ -824,46 +651,210 @@ hpp = do
       method "setUniform" ["name" :@ String, "v" :@ Ref "M44F"] Void $ map_insert "uniforms" "name" $ recordValue [("tag",ns ["InputType","tag","M44F"]), ("_m44f","v")]
 
   struct_ "Texture" $ do
-    memberVar Int ["target"]
-    memberVar UInt ["texture"]
+    structVar Int ["target"]
+    structVar UInt ["texture"]
 
   struct_ "StreamInfo" $ do
-    memberVar String ["name"]
-    memberVar Int ["index"]
+    structVar String ["name"]
+    structVar Int ["index"]
 
   class_ "GLProgram" $ do
     public $ do
-      memberVar UInt ["program","vertexShader","fragmentShader"]
-      memberVar (Map String Int) ["programUniforms","programInTextures"]
-      memberVar (Map String "StreamInfo") ["programStreams"]
+      classVar UInt ["program","vertexShader","fragmentShader"]
+      classVar (Map String Int) ["programUniforms","programInTextures"]
+      classVar (Map String "StreamInfo") ["programStreams"]
 
   struct_ "GLStreamData" $ do
-    memberVar Int ["glMode","glCount"]
-    memberVar "StreamMap" ["streams"]
+    structVar Int ["glMode","glCount"]
+    structVar "StreamMap" ["streams"]
 
   class_ "GLES20Pipeline" $ do
-    public $ do
-      constructor ["ppl" :@ SmartPtr "Pipeline"] $ return () -- TODO
-      destructor $ return () -- TODO
-
-      method "setPipelineInput" ["i" :@ SmartPtr "PipelineInput"] Void $ return () -- TODO
-      method "render" [] Void $ return () -- TODO
-
-      memberVar UInt ["screenTarget"]
-
     private $ do
-      method "createRenderTarget" ["t_" :@ SmartPtr "RenderTarget"] UInt $ return () -- TODO
+      classVar (SmartPtr "PipelineInput") ["input"]
+      classVar (SmartPtr "data::Pipeline") ["pipeline"] -- TODO: type namespace
+      classVar (Vector "Texture") ["textures"]
+      classVar UInt ["targets"]
+      classVar (Vector (SmartPtr "GLProgram")) ["programs"]
+      classVar (Vector (SmartPtr "GLStreamData")) ["streamData"]
+      classVar UInt ["currentProgram"]
+      classVar Bool ["hasCurrentProgram"]
 
-      memberVar (SmartPtr "PipelineInput") ["input"]
-      memberVar (SmartPtr "data::Pipeline") ["pipeline"] -- TODO: type namespace
-      memberVar (Vector "Texture") ["textures"]
-      memberVar UInt ["targets"]
-      memberVar (Vector (SmartPtr "GLProgram")) ["programs"]
-      memberVar (Vector (SmartPtr "GLStreamData")) ["streamData"]
-      memberVar UInt ["currentProgram"]
-      memberVar Bool ["hasCurrentProgram"]
+      method "createRenderTarget" ["t_" :@ SmartPtr "RenderTarget"] UInt $ do
+        varADT "RenderTarget" "t" "t_"
+        -- does this target have texture attachments?
+        varAssign Int "textureCount" 0
+        vector_foreach "i_" ("t"~>"renderTargets") $ do
+          varADT "TargetItem" "i" "i_"
+          if_ ("i"~>"targetRef"."valid" && "i"~>"targetRef"."data"~>"tag" == ns ["ImageRef","tag","TextureImage"]) $ then_ $ do
+            inc "textureCount"
+        if_ ("textureCount" == 0) $ then_ $ do
+          return_ 0
+        -- has textures attachment
+        var UInt ["fb"]
+        call "glGenFramebuffers" [1,addr "fb"]
+        call "glBindFramebuffer" ["GL_FRAMEBUFFER", "fb"]
+        var Int ["attachment","textarget","level"]
+        var UInt ["texture"]
+        vector_foreach "i_" ("t"~>"renderTargets") $ do
+          varADT "TargetItem" "i" "i_"
+          switch ("i"~>"targetSemantic"~>"tag") $ do
+            case_ (nsPat ["ImageSemantic","tag","Color"]) $ do 
+              "attachment" .= "GL_COLOR_ATTACHMENT0"
+            case_ (nsPat ["ImageSemantic","tag","Depth"]) $ do 
+              "attachment" .= "GL_DEPTH_ATTACHMENT"
+            case_ (nsPat ["ImageSemantic","tag","Stencil"]) $ do 
+              "attachment" .= "GL_STENCIL_ATTACHMENT"
+          if_ ("i"~>"targetRef"."valid") $ do
+            then_ $ switch ("i"~>"targetRef"."data"~>"tag") $ do
+              case_ (nsPat ["ImageRef","tag","TextureImage"]) $ do
+                varADT "TextureImage" "ti" $ "i"~>"targetRef"."data"
+                "texture" .= ("textures" `vector_lookup` ("ti"~>"_0"))."texture"
+                "textarget" .= "GL_TEXTURE_2D" -- TODO
+                "level" .= "ti"~>"_1"
+              case_ (nsPat ["ImageRef","tag","Framebuffer"]) $ do
+                "texture" .= 0
+                "textarget" .= "GL_TEXTURE_2D"
+                "level" .= 0
+            else_ $ do
+              "texture" .= 0
+              "textarget" .= "GL_TEXTURE_2D"
+              "level" .= 0
+          call "glFramebufferTexture2D" ["GL_FRAMEBUFFER","attachment","textarget","texture","level"]
+        return_ "fb"
+
+    public $ do
+      classVar UInt ["screenTarget"]
+
+      constructor ["ppl_" :@ SmartPtr "Pipeline"] $ do
+        "screenTarget" .= 0
+        "hasCurrentProgram" .= false
+        varADT "Pipeline" "ppl" $ "ppl_"
+        "pipeline" .= "ppl"
+        -- check backend compatibility
+        if_ ("ppl"~>"backend"~>"tag" != ns ["Backend","tag","WebGL1"]) $ then_ $ do
+          throw "unsupported backend"
+        -- allocate all resources
+        --  textures
+        vector_foreach "i" ("ppl"~>"textures") $ do
+          vector_pushBack "textures" $ callExp "createTexture" ["i"]
+        --  targets
+        vector_foreach "i" ("ppl"~>"targets") $ do
+          vector_pushBack "targets" $ callExp "createRenderTarget" ["i"]
+        --  programs
+        vector_foreach "i" ("ppl"~>"programs") $ do
+          vector_pushBack "programs" $ callExp "createProgram" ["i"]
+        --  stream data
+        vector_foreach "i" ("ppl"~>"streams") $ do
+          vector_pushBack "streamData" $ callExp "createStreamData" ["i"]
+        call "glReleaseShaderCompiler" []
+
+      destructor $ do
+        -- release resources
+        -- textures
+        vector_foreach "i" "textures" $ do
+          call "glDeleteTextures" [1,addr "i"."texture"]
+        -- targets
+        vector_foreach "i" "targets" $ do
+          call "glDeleteFramebuffers" [1,addr "i"]
+        -- programs
+        vector_foreach "i" "programs" $ do
+          call "glDeleteProgram" ["i"~>"program"]
+          call "glDeleteShader" ["i"~>"vertexShader"]
+          call "glDeleteShader" ["i"~>"fragmentShader"]
+
+      method "setPipelineInput" ["i" :@ SmartPtr "PipelineInput"] Void $ do
+        "input" .= "i"
+
+      method "render" [] Void $ do
+        vector_foreach "i" ("pipeline"~>"commands") $ do
+          switch ("i"~>"tag") $ do
+            case_ (nsPat ["Command","tag","SetRasterContext"]) $ do
+              varADT "SetRasterContext" "cmd" $ "i"
+              call "setupRasterContext" ["cmd"~>"_0"]
+            case_ (nsPat ["Command","tag","SetAccumulationContext"]) $ do
+              varADT "SetAccumulationContext" "cmd" $ "i"
+              call "setupAccumulationContext" ["cmd"~>"_0"]
+            case_ (nsPat ["Command","tag","SetTexture"]) $ do
+              varADT "SetTexture" "cmd" $ "i"
+              call "glActiveTexture" ["GL_TEXTURE0" + "cmd"~>"_0"]
+              call "glBindTexture" [("textures" `vector_lookup` ("cmd"~>"_1"))."target",("textures" `vector_lookup` ("cmd"~>"_1"))."texture"]
+            case_ (nsPat ["Command","tag","SetProgram"]) $ do
+              varADT "SetProgram" "cmd" $ "i"
+              "hasCurrentProgram" .= true
+              "currentProgram" .= "cmd"~>"_0"
+              call "glUseProgram" [("programs" `vector_lookup` "currentProgram")~>"program"]
+            case_ (nsPat ["Command","tag","SetRenderTarget"]) $ do
+              varADT "SetRenderTarget" "cmd" $ "i"
+              varAssign UInt "t" $ "targets" `vector_lookup` ("cmd"~>"_0")
+              call "glBindFramebuffer" ["GL_FRAMEBUFFER", expIf ("t"==0) "screenTarget" "t"]
+              if_ (notNull "input") $ do
+                then_ $ call "glViewport" [0,0,"input"~>"screenWidth","input"~>"screenHeight"]
+            case_ (nsPat ["Command","tag","ClearRenderTarget"]) $ do
+              varADT "ClearRenderTarget" "cmd" $ "i"
+              varAssign UInt "mask" 0
+              vector_foreach "a" ("cmd"~>"_0") $ do
+                varADT "ClearImage" "image" $ "a"
+                switch ("image"~>"imageSemantic"~>"tag") $ do
+                  case_ (nsPat ["ImageSemantic","tag","Depth"]) $ do
+                    varADT "VFloat" "v" $ "image"~>"clearValue"
+                    call "glDepthMask" [true]
+                    call "glClearDepthf" ["v"~>"_0"]
+                    "mask" |= "GL_DEPTH_BUFFER_BIT"
+                  case_ (nsPat ["ImageSemantic","tag","Stencil"]) $ do
+                    varADT "VWord" "v" $ "image"~>"clearValue"
+                    call "glClearStencil" ["v"~>"_0"]
+                    "mask" |= "GL_STENCIL_BUFFER_BIT"
+                  case_ (nsPat ["ImageSemantic","tag","Color"]) $ do
+                    switch ("image"~>"clearValue"~>"tag") $ do
+                      case_ (nsPat ["Value","tag","VFloat"]) $ do
+                        varADT "VFloat" "v" $ "image"~>"clearValue"
+                        call "glClearColor" ["v"~>"_0",0.0,0.0,1.0]
+                      case_ (nsPat ["Value","tag","VV2F"]) $ do
+                        varADT "VV2F" "v" $ "image"~>"clearValue"
+                        call "glClearColor" ["v"~>"_0"."x","v"~>"_0"."y",0.0,1.0]
+                      case_ (nsPat ["Value","tag","VV3F"]) $ do
+                        varADT "VV3F" "v" $ "image"~>"clearValue"
+                        call "glClearColor" ["v"~>"_0"."x","v"~>"_0"."y","v"~>"_0"."z",1.0]
+                      case_ (nsPat ["Value","tag","VV4F"]) $ do
+                        varADT "VV4F" "v" $ "image"~>"clearValue"
+                        call "glClearColor" ["v"~>"_0"."x","v"~>"_0"."y","v"~>"_0"."z","v"~>"_0"."w"]
+                      default_ $ do
+                        call "glClearColor" [0.0,0.0,0.0,1.0]
+                    call "glColorMask" [true,true,true,true]
+                    "mask" |= "GL_COLOR_BUFFER_BIT"
+              call "glClear" ["mask"]
+            case_ (nsPat ["Command","tag","SetSamplerUniform"]) $  if_ "hasCurrentProgram" $ then_ $ do
+              varADT "SetSamplerUniform" "cmd" $ "i"
+              varAssign Int "sampler" $ ("programs" `vector_lookup` "currentProgram")~>"programInTextures" `map_lookup` ("cmd"~>"_0")
+              call "glUniform1i" ["sampler","cmd"~>"_1"]
+            case_ (nsPat ["Command","tag","RenderSlot"]) $ if_ (notNull "input" && notNull "pipeline" && "hasCurrentProgram") $ then_ $ do
+              varADT "RenderSlot" "cmd" $ "i"
+              varADT "Slot" "slot" $ "pipeline"~>"slots" `vector_lookup` ("cmd"~>"_0")
+              if_ (map_notElem ("input"~>"objectMap") ("slot"~>"slotName")) $ then_ break_
+              map_foreach "o" (deref $ "input"~>"objectMap" `map_lookup` ("slot"~>"slotName")) $ do
+                if_ (not $ "o"~>"enabled") $ then_ continue_
+                -- setup uniforms
+                map_foreach "u" (("programs" `vector_lookup` "currentProgram")~>"programUniforms") $ do
+                  if_ (map_elem ("o"~>"uniforms") (key "u")) $ do
+                    then_ $ call "setUniformValue" [it_value "u","o"~>"uniforms" `map_lookup` (key "u")]
+                    else_ $ call "setUniformValue" [it_value "u","input"~>"uniforms" `map_lookup` (key "u")]
+                -- setup streams
+                map_foreach "s" (("programs" `vector_lookup` "currentProgram")~>"programStreams") $ do
+                  call "setStream" [it_value "s"."index",deref $ "o"~>"streams"~>"map" `map_lookup` (it_value "s"."name")]
+                -- draw call
+                -- TODO: support index buffers
+                call "glDrawArrays" ["o"~>"glMode", 0, "o"~>"glCount"]
+            case_ (nsPat ["Command","tag","RenderStream"]) $ if_ (notNull "input" && notNull "pipeline" && "hasCurrentProgram") $ then_ $ do
+              varADT "RenderStream" "cmd" $ "i"
+              varAssign (SmartPtr "GLStreamData") "data" $ "streamData" `vector_lookup` ("cmd"~>"_0")
+              -- setup streams
+              map_foreach "s" (("programs" `vector_lookup` "currentProgram")~>"programStreams") $ do
+                call "setStream" [it_value "s"."index",deref $ "data"~>"streams"."map" `map_lookup` (it_value "s"."name")]
+              -- draw call
+              -- TODO: support index buffers
+              call "glDrawArrays" ["data"~>"glMode", 0, "data"~>"glCount"]
 
 backend = do
   enumConversions
   globalFunctions
-  pipelineMethods
+  classes

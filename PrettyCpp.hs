@@ -16,6 +16,7 @@ prettyDef = \case
     , unlines $ map (prettyStmt 1) stmts
     , "}"
     ]
+{-
   Method className name args retType stmts -> unlines
     [ unwords $ [prettyType retType, className ++ "::" ++ name, "(", intercalate ", " (map prettyArg args), ") {"]
     , unlines $ map (prettyStmt 1) stmts
@@ -31,7 +32,7 @@ prettyDef = \case
     , unlines $ map (prettyStmt 1) stmts
     , "}"
     ]
-
+-}
 prettyArg (n :@ t) = unwords [prettyType t,n]
 
 prettyType = \case

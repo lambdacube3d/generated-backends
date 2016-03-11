@@ -26,12 +26,6 @@ data Type
   | Map Type Type
   deriving Show
 
-type IfM = Writer [If]
-type DefM = Writer [Def]
-type ClassM = Writer [Class]
-type StmtM = Writer [Stmt]
-type CaseM = Writer [Case]
-
 data Exp
   = Exp :-> Exp
   | Exp :. Exp
@@ -68,13 +62,6 @@ data Exp
   | Vector_size Exp
   | Vector_dataPtr Exp
   | New_SmartPtr Exp
-  deriving Show
-
-data Def
-  = Procedure String [Arg] Type [Stmt]
-  | Method String String [Arg] Type [Stmt]
-  | Constructor String [Arg] [Stmt]
-  | Destructor String [Stmt]
   deriving Show
 
 data Arg = String :@ Type deriving Show
@@ -117,40 +104,95 @@ data Pat
   = NsPat [String]
   deriving Show
 
-data Class = Class_
+{-
+  done - enum
+  done - function
+  done - class
+    var
+    union
+    consturctor
+    destructor
+    method
+  done - struct
+    var
+    union
+-}
+data ClassDef
+  = Method String [Arg] Type [Stmt]
+  | Constructor [Arg] [Stmt]
+  | Destructor [Stmt]
+  | ClassVar Type [String]
+  | ClassUnion [Arg]
+  deriving Show
 
-class_ :: String -> ClassM () -> DefM ()
+data ClassScope
+  = Public  [ClassDef]
+  | Private [ClassDef]
+  deriving Show
+
+data StructDef
+  = StructVar Type [String]
+  | StructUnion [Arg]
+  deriving Show
+
+data Def
+  = Procedure String [Arg] Type [Stmt]
+  | ClassDef  String [ClassScope]
+  | EnumDef   String [String]
+  | StructDef String [StructDef]
+  deriving Show
+
+type ClassScopeM = Writer [ClassScope]
+type ClassDefM = Writer [ClassDef]
+type StructDefM = Writer [StructDef]
+type DefM = Writer [Def]
+
+type IfM = Writer [If]
+type StmtM = Writer [Stmt]
+type CaseM = Writer [Case]
+
+-- class
+class_ :: String -> ClassScopeM () -> DefM ()
 class_ className classM = return () -- TODO
 
-private :: DefM () -> ClassM ()
+private :: ClassDefM () -> ClassScopeM ()
 private _ = return () -- TODO
 
-public :: DefM () -> ClassM ()
+public :: ClassDefM () -> ClassScopeM ()
 public _ = return () -- TODO
 
-memberVar :: Type -> [String] -> DefM ()
-memberVar t n = return () -- TODO
+classVar :: Type -> [String] -> ClassDefM ()
+classVar t n = return () -- TODO
 
+classUnion :: [Arg] -> ClassDefM ()
+classUnion args = return () -- TODO
+
+constructor :: [Arg] -> StmtM () -> ClassDefM ()
+constructor args stmtM = tell [Constructor args (execWriter stmtM)] -- TODO
+
+destructor :: StmtM () -> ClassDefM ()
+destructor stmtM = tell [Destructor (execWriter stmtM)] -- TODO
+
+method :: String -> [Arg] -> Type -> StmtM () -> ClassDefM ()
+method name args retType stmtM = tell [Method name args retType (execWriter stmtM)] -- TODO
+
+-- struct
+struct_ :: String -> StructDefM () -> DefM ()
+struct_ name args = return () -- TODO
+
+structVar :: Type -> [String] -> StructDefM ()
+structVar t n = return () -- TODO
+
+structUnion :: [Arg] -> StructDefM ()
+structUnion args = return () -- TODO
+
+-- enum
 enum_ :: String -> [String] -> DefM ()
 enum_ name args = return () -- TODO
 
-struct_ :: String -> DefM () -> DefM ()
-struct_ name args = return () -- TODO
-
-memberUnion :: [Arg] -> DefM ()
-memberUnion args = return () -- TODO
-
-method :: String -> [Arg] -> Type -> StmtM () -> DefM ()
-method name args retType stmtM = tell [Method "" name args retType (execWriter stmtM)]
-
+-- function
 procedure :: String -> [Arg] -> Type -> StmtM () -> DefM ()
 procedure name args retType stmtM = tell [Procedure name args retType (execWriter stmtM)]
-
-constructor :: [Arg] -> StmtM () -> DefM ()
-constructor args stmtM = tell [Constructor "" args (execWriter stmtM)]
-
-destructor :: StmtM () -> DefM ()
-destructor stmtM = tell [Destructor "" (execWriter stmtM)]
 
 switch :: Exp -> CaseM () -> StmtM ()
 switch exp caseM = tell [Switch exp (execWriter caseM)]
