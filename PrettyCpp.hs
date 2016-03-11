@@ -5,41 +5,80 @@ import Control.Monad.Writer
 import Data.List
 import Language hiding ((.))
 
-pretty :: DefM () -> String
-pretty defM = inc ++ (unlines $ map prettyDef $ execWriter defM)
-  where inc = unlines ["#include <iostream>","#include <OpenGL/gl.h>","#include \"LambdaCube.hpp\""]
+prettyCpp :: DefM () -> String
+prettyCpp defM = inc ++ (concat $ map (prettyDef True) $ execWriter defM)
+  where inc = unlines ["#include <iostream>","#include <OpenGL/gl.h>","#include \"LambdaCube.hpp\"",""]
 
-prettyDef :: Def -> String
-prettyDef = \case
-  Procedure name args retType stmts -> unlines
-    [ unwords $ [prettyType retType, name, "(", intercalate ", " (map prettyArg args), ") {"]
+prettyHpp :: DefM () -> String
+prettyHpp defM = inc ++ (concat $ map (prettyDef False) $ execWriter defM)
+  where inc = unlines ["#include <iostream>","#include <OpenGL/gl.h>","#include \"LambdaCube.hpp\"",""]
+
+prettyDef :: Bool -> Def -> String
+prettyDef isCpp = \case
+  Procedure name args retType stmts | isCpp -> concat
+    [ unwords $ [prettyType retType, name, "(", intercalate ", " (map prettyArg args), ") {\n"]
     , unlines $ map (prettyStmt 1) stmts
-    , "}"
+    , "}\n\n"
     ]
-{-
-  Method className name args retType stmts -> unlines
-    [ unwords $ [prettyType retType, className ++ "::" ++ name, "(", intercalate ", " (map prettyArg args), ") {"]
-    , unlines $ map (prettyStmt 1) stmts
+  EnumDef name args | Prelude.not isCpp -> unlines
+    [ unwords $ ["enum class", name, "{"]
+    , intercalate ",\n" $ map (addIndentation 1) args
     , "}"
+    , ""
     ]
-  Constructor className args stmts -> unlines
-    [ unwords $ [className ++ "::" ++ className, "(", intercalate ", " (map prettyArg args), ") {"]
-    , unlines $ map (prettyStmt 1) stmts
-    , "}"
+  ClassDef className args | Prelude.not isCpp -> "class " ++ className ++ " {\n" ++ concatMap (prettyClassScope className isCpp 1) args ++ "}\n\n"
+  ClassDef className args | isCpp -> concat $ map (prettyClassScope className isCpp 0) args
+  StructDef structName args | Prelude.not isCpp -> "struct " ++ structName ++ " {\n" ++ concatMap (prettyStructDef 1) args ++ "}\n\n"
+  x -> ""
+
+prettyClassScope className False ind = \case
+  Public args -> addIndentation ind "public:\n" ++ concatMap (prettyClassDef className False $ ind + 1) args
+  Private args -> addIndentation ind "private:\n" ++ concatMap (prettyClassDef className False $ ind + 1) args
+
+prettyClassScope className True ind = \case
+  Public args -> concat $ map (prettyClassDef className True $ ind) args
+  Private args -> concat $ map (prettyClassDef className True $ ind) args
+
+prettyClassDef className isCpp ind = \case
+  Method name args retType stmts -> concat $ cut
+    [ addIndentation ind . unwords $ [prettyType retType, classNS ++ name, "(", intercalate ", " (map prettyArg args), ")", terminator]
+    , unlines $ map (prettyStmt $ ind + 1) stmts
+    , addIndentation ind "}\n\n"
     ]
-  Destructor className stmts -> unlines
-    [ unwords $ [className ++ "::~" ++ className ++ "()", "{"]
-    , unlines $ map (prettyStmt 1) stmts
-    , "}"
+  Constructor args stmts -> concat $ cut
+    [ addIndentation ind . unwords $ [classNS ++ className, "(", intercalate ", " (map prettyArg args), ")", terminator]
+    , unlines $ map (prettyStmt $ ind + 1) stmts
+    , addIndentation ind "}\n\n"
     ]
--}
+  Destructor stmts -> concat $ cut
+    [ addIndentation ind . unwords $ [classNS ++ "~" ++ className ++ "()", terminator]
+    , unlines $ map (prettyStmt $ ind + 1) stmts
+    , addIndentation ind "}\n\n"
+    ]
+  ClassVar t vars -> if isCpp then "" else addIndentation ind $ prettyType t ++ " " ++ intercalate ", " vars ++ ";\n"
+  ClassUnion args -> if isCpp then "" else addIndentation ind "union {\n" ++ concatMap (addIndentation (ind + 1) . (++ ";\n") . prettyArg) args ++ addIndentation ind "}\n"
+  x -> error $ show x
+ where
+  classNS = if isCpp then className ++ "::" else ""
+  terminator = if isCpp then "{\n" else ";\n"
+  cut = if isCpp then id else take 1
+
+prettyStructDef ind = \case
+  StructVar t vars -> addIndentation ind $ prettyType t ++ " " ++ intercalate ", " vars ++ ";\n"
+  StructUnion args -> addIndentation ind "union {\n" ++ concatMap (addIndentation (ind + 1) . (++ ";\n") . prettyArg) args ++ addIndentation ind "}\n"
+
 prettyArg (n :@ t) = unwords [prettyType t,n]
 
 prettyType = \case
   Bool  -> "bool"
   Float -> "float"
   Int   -> "int32_t"
+  Int8  -> "int8_t"
+  Int16 -> "int16_t"
+  Long  -> "int64_t"
   UInt  -> "uint32_t"
+  UInt8 -> "uint8_t"
+  UInt16-> "uint16_t"
   Void  -> "void"
   Class n -> n
   Enum n  -> "enum " ++ n
@@ -47,6 +86,10 @@ prettyType = \case
   Ref t   -> prettyType t ++ "&"
   Ptr t   -> prettyType t ++ "*"
   SmartPtr t -> "std::shared_ptr<" ++ prettyType t ++ ">"
+  Vector t -> "std::vector<" ++ prettyType t ++ ">"
+  Map k v -> "std::map<" ++ prettyType k ++ "," ++ prettyType v ++ ">"
+  String  -> "std::string"
+  x -> error $ show x
 
 addIndentation ind s = concat (replicate ind "  ") ++ s
 
@@ -58,12 +101,12 @@ prettyPat = \case
   NsPat a -> "::" ++ intercalate "::" a
 
 prettyStmt ind = addIndentation ind . \case
-  Switch e c -> "switch(" ++ prettyExp e ++ ") {\n" ++ unlines (map (prettyCase $ ind + 1) c) ++ addIndentation ind "}\n"
+  Switch e c -> "switch(" ++ prettyExp e ++ ") {\n" ++ concatMap ((++"\n") . prettyCase (ind + 1)) c ++ addIndentation ind "}"
   Return e -> "return " ++ prettyExp e ++ ";"
   Throw s -> "throw " ++ show s ++ ";"
   Call a b -> prettyExp a ++ "(" ++ intercalate ", " (map prettyExp b) ++ ");"
-  If a b c -> "if (" ++ prettyExp a ++ ") {\n" ++ unlines (map (prettyStmt $ ind + 1) b) ++ addIndentation ind "}" ++
-              if null c then "" else " else {\n" ++ unlines (map (prettyStmt $ ind + 1) c) ++ addIndentation ind "}"
+  If a b c -> "if (" ++ prettyExp a ++ ") {\n" ++ concatMap ((++"\n") . prettyStmt (ind + 1)) b ++ addIndentation ind "}" ++
+              if null c then "" else " else {\n" ++ concatMap ((++"\n") . prettyStmt (ind + 1)) c ++ addIndentation ind "}"
   VarDef t n -> prettyType t ++ " " ++ intercalate ", " n ++ ";"
   VarADTDef t n e -> "auto " ++ n ++ " = std::static_pointer_cast<data::" ++ t ++ ">(" ++ prettyExp e ++ ");"
   VarAssignDef t n e -> prettyType t ++ " " ++ n ++ " = " ++ prettyExp e ++ ";"
@@ -73,12 +116,16 @@ prettyStmt ind = addIndentation ind . \case
   For [a] b c stmts -> "for (" ++ prettyStmt 0 a ++ prettyExp b ++ ";" ++ prettyExp c ++ ") {" ++ unlines (map (prettyStmt $ ind + 1) stmts) ++ addIndentation ind "}"
   a :/= b -> prettyExp a ++ " /= " ++ prettyExp b ++ ";"
   a :|= b -> prettyExp a ++ " |= " ++ prettyExp b ++ ";"
+  a :+= b -> prettyExp a ++ " += " ++ prettyExp b ++ ";"
+  Map_insert m k v -> prettyExp m ++ "[" ++ prettyExp k ++ "] = " ++ prettyExp v ++ ";"
   Map_foreach n e s -> "for (auto " ++ n ++ " : " ++ prettyExp e ++ ") {\n" ++ unlines (map (prettyStmt $ ind + 1) s) ++ addIndentation ind "}"
+  For_range n a b s -> "for (int " ++ n ++ " = " ++ prettyExp a ++ "; " ++ n ++ " < " ++ prettyExp b ++ "; " ++ n ++ "++) {\n" ++ unlines (map (prettyStmt $ ind + 1) s) ++ addIndentation ind "}"
   Vector_foreach n e s -> "for (auto " ++ n ++ " : " ++ prettyExp e ++ ") {\n" ++ unlines (map (prettyStmt $ ind + 1) s) ++ addIndentation ind "}"
   Vector_pushBack a b -> prettyExp a ++ ".push_back(" ++ prettyExp b ++ ");"
   Break -> "break;"
   Continue -> "continue;"
   Inc e -> prettyExp e ++ "++;"
+  x -> error $ show x
 
 prettyExp = \case
   a :-> b -> prettyExp a ++ "->" ++ prettyExp b
@@ -95,6 +142,8 @@ prettyExp = \case
   Vector_lookup a b -> prettyExp a ++ "[" ++ prettyExp b ++ "]"
   Map_lookup a b    -> prettyExp a ++ "[" ++ prettyExp b ++ "]"
   a :+ b  -> prettyExp a ++ " + " ++ prettyExp b
+  a :- b  -> prettyExp a ++ " - " ++ prettyExp b
+  a :* b  -> prettyExp a ++ " * " ++ prettyExp b
   a :/ b  -> prettyExp a ++ " / " ++ prettyExp b
   a :!= b -> prettyExp a ++ " != " ++ prettyExp b
   a :== b -> prettyExp a ++ " == " ++ prettyExp b
@@ -114,3 +163,7 @@ prettyExp = \case
   Not e -> "!" ++ prettyExp e
   Map_notElem a b -> prettyExp a ++ ".count(" ++ prettyExp b ++ ")<=0"
   Map_elem a b -> prettyExp a ++ ".count(" ++ prettyExp b ++ ")>0"
+  Vector_size a -> prettyExp a ++ ".size()"
+  Vector_dataPtr a -> prettyExp a ++ ".data()"
+  New_SmartPtr a -> "New_SmartPtr" -- TODO
+  x -> error $ show x

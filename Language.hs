@@ -40,6 +40,8 @@ data Exp
   | Vector_lookup Exp Exp
   | Map_lookup Exp Exp
   | Exp :+ Exp
+  | Exp :- Exp
+  | Exp :* Exp
   | Exp :/ Exp
   | Exp :!= Exp
   | Exp :== Exp
@@ -79,8 +81,10 @@ data Stmt
   | VarCharPtrFromString String Exp
   | Exp := Exp
   | For [Stmt] Exp Exp [Stmt]
+  | For_range String Exp Exp [Stmt]
   | Exp :/= Exp
   | Exp :|= Exp
+  | Exp :+= Exp
   | Map_foreach String Exp [Stmt]
   | Vector_foreach String Exp [Stmt]
   | Vector_pushBack Exp Exp
@@ -153,42 +157,42 @@ type CaseM = Writer [Case]
 
 -- class
 class_ :: String -> ClassScopeM () -> DefM ()
-class_ className classM = return () -- TODO
+class_ className classM = tell [ClassDef className (execWriter classM)]
 
 private :: ClassDefM () -> ClassScopeM ()
-private _ = return () -- TODO
+private classDefM = tell [Private (execWriter classDefM)]
 
 public :: ClassDefM () -> ClassScopeM ()
-public _ = return () -- TODO
+public classDefM = tell [Public (execWriter classDefM)]
 
 classVar :: Type -> [String] -> ClassDefM ()
-classVar t n = return () -- TODO
+classVar t n = tell [ClassVar t n]
 
 classUnion :: [Arg] -> ClassDefM ()
-classUnion args = return () -- TODO
+classUnion args = tell [ClassUnion args]
 
 constructor :: [Arg] -> StmtM () -> ClassDefM ()
-constructor args stmtM = tell [Constructor args (execWriter stmtM)] -- TODO
+constructor args stmtM = tell [Constructor args (execWriter stmtM)]
 
 destructor :: StmtM () -> ClassDefM ()
-destructor stmtM = tell [Destructor (execWriter stmtM)] -- TODO
+destructor stmtM = tell [Destructor (execWriter stmtM)]
 
 method :: String -> [Arg] -> Type -> StmtM () -> ClassDefM ()
-method name args retType stmtM = tell [Method name args retType (execWriter stmtM)] -- TODO
+method name args retType stmtM = tell [Method name args retType (execWriter stmtM)]
 
 -- struct
 struct_ :: String -> StructDefM () -> DefM ()
-struct_ name args = return () -- TODO
+struct_ name structDefM = tell [StructDef name (execWriter structDefM)]
 
 structVar :: Type -> [String] -> StructDefM ()
-structVar t n = return () -- TODO
+structVar t n = tell [StructVar t n]
 
 structUnion :: [Arg] -> StructDefM ()
-structUnion args = return () -- TODO
+structUnion args = tell [StructUnion args]
 
 -- enum
 enum_ :: String -> [String] -> DefM ()
-enum_ name args = return () -- TODO
+enum_ name args = tell [EnumDef name args]
 
 -- function
 procedure :: String -> [Arg] -> Type -> StmtM () -> DefM ()
@@ -338,7 +342,7 @@ varConstructor :: Type -> String -> Exp -> StmtM ()
 varConstructor t n e = tell [VarConstructor t n e]
 
 for_range :: String -> Exp -> Exp -> StmtM () -> StmtM ()
-for_range _ _ _ _ = return () -- TODO
+for_range a b c stmtM = tell [For_range a b c (execWriter stmtM)]
 
 map_foreach :: String -> Exp -> StmtM () -> StmtM ()
 map_foreach n e stmtM = tell [Map_foreach n e (execWriter stmtM)]
@@ -374,14 +378,14 @@ a |= b = tell [ a :|= b]
 a /= b = tell [a :/= b]
 
 (+=) :: Exp -> Exp -> StmtM ()
-a += b = return () -- TODO
+a += b = tell [a :+= b]
 
 (!=) :: Exp -> Exp -> Exp
 (!=) = (:!=)
 
 instance Num Exp where
-  _ * _ = error "*"
-  _ - _ = error "-"
+  (*) = (:*)
+  (-) = (:-)
   (+) = (:+)
   fromInteger i = Integer i
 
