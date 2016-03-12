@@ -1,7 +1,28 @@
 done - indentation
 done - hpp to EDSL
 done - storage to EDSL
-pretty print
-  - hpp
-  - cpp
-include support
+done - pretty print
+  done - hpp
+  done - cpp
+done - include support: baked in
+done - c++ - working ipad program with generated backend
+
+android java opengl es 2.0:
+  first handwritten opengl code with android studio
+
+
+backend matrix:
+
+            GLES20  WebGL1  GL33  GL45  GLES30  GLES31  DX11  Vulkan
+C++         X               X     X     X       X       X     X
+C#          ?               ?     ?     ?       ?       X     ?
+Java        X               X     X     X       X       ?     ?
+JavaScript          X
+PureScript          X
+Haskell     ?               X     X     ?       ?       ?     X
+Python      ?               X     X     ?       ?       ?     ?
+
+API similarities:
+  GLES20 ~ WebGL1
+  GL33 ~ GLES30
+  GL45 ~ GLES31

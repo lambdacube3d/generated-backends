@@ -14,29 +14,25 @@ data Type
   | UInt
   | UInt8
   | UInt16
+  | String
   | Void
   | Class String
   | Enum String
   | Const Type
+  | Vector Type
+  | Map Type Type
+  -- for C++
   | Ref Type      -- &
   | Ptr Type      -- *
   | SmartPtr Type -- shared_ptr
-  | Vector Type
-  | String
-  | Map Type Type
   deriving Show
 
 data Exp
-  = Exp :-> Exp
-  | Exp :. Exp
-  | Var String
+  = Var String
   | Ns [String]
   | Integer Integer
   | FloatLit Float
   | BoolLit Bool
-  | Cast Type Exp
-  | Addr Exp
-  | Deref Exp
   | Exp :+ Exp
   | Exp :- Exp
   | Exp :* Exp
@@ -50,7 +46,6 @@ data Exp
   | CallExp Exp [Exp]
   | ExpIf Exp Exp Exp
   | NullPtr
-  | CharPtrFromString Exp
   | New Type [Exp]
   | IteratorValue Exp -- used with foreach
   | IteratorKey Exp
@@ -64,9 +59,14 @@ data Exp
   | Vector_size Exp
   | Vector_dataPtr Exp
   | CallTypeConsructor Type Exp
+  | Exp :. Exp
+  -- for C++
+  | CharPtrFromString Exp
+  | Exp :-> Exp
+  | Cast Type Exp
+  | Addr Exp
+  | Deref Exp
   deriving Show
-
-data Arg = String :@ Type deriving Show
 
 data Stmt
   = Switch Exp [Case]
@@ -78,7 +78,6 @@ data Stmt
   | VarADTDef String String Exp
   | VarAssignDef Type String Exp
   | VarConstructor Type String Exp
-  | VarCharPtrFromString String Exp
   | Exp := Exp
   | For [Stmt] Exp Exp [Stmt]
   | For_range String Exp Exp [Stmt]
@@ -93,7 +92,11 @@ data Stmt
   | Inc Exp
   | Vector_pushBack Exp Exp
   | Vector_pushBackPtr Exp Exp
+  -- for C++
+  | VarCharPtrFromString String Exp
   deriving Show
+
+data Arg = String :@ Type deriving Show
 
 data Case
   = Case Pat [Stmt]
