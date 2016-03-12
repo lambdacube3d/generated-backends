@@ -33,12 +33,10 @@ data Exp
   | Ns [String]
   | Integer Integer
   | FloatLit Float
+  | BoolLit Bool
   | Cast Type Exp
   | Addr Exp
   | Deref Exp
-  | BoolLit Bool
-  | Vector_lookup Exp Exp
-  | Map_lookup Exp Exp
   | Exp :+ Exp
   | Exp :- Exp
   | Exp :* Exp
@@ -61,6 +59,8 @@ data Exp
   | Not Exp
   | Map_notElem Exp Exp
   | Map_elem Exp Exp
+  | Map_lookup Exp Exp
+  | Vector_lookup Exp Exp
   | Vector_size Exp
   | Vector_dataPtr Exp
   | CallTypeConsructor Type Exp
@@ -109,19 +109,6 @@ data Pat
   = NsPat [String]
   deriving Show
 
-{-
-  done - enum
-  done - function
-  done - class
-    var
-    union
-    consturctor
-    destructor
-    method
-  done - struct
-    var
-    union
--}
 data ClassDef
   = Method String [Arg] Type [Stmt]
   | Constructor [Arg] [Stmt]
