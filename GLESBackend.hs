@@ -1,5 +1,6 @@
 {-# LANGUAGE NoImplicitPrelude, OverloadedStrings #-}
 import Prelude (($),Num (..),return)
+import qualified Prelude
 import Language
 import PrettyCpp
 
@@ -402,41 +403,41 @@ classes = do
 
       method "add" ["v" :@ Ref (Vector Int8)] Int $ do
         varAssign Int "i" $ vector_size "data"
-        vector_pushBack "data" $ vector_dataPtr "v"
-        vector_pushBack "size" $ vector_size "v"
-        vector_pushBack "byteSize" $ vector_size "v"
+        vector_pushBack "data" (vector_dataPtr "v")
+        vector_pushBack "size" (vector_size "v")
+        vector_pushBack "byteSize" (vector_size "v")
         vector_pushBack "glType" "GL_BYTE"
         return_ "i"
 
       method "add" ["v" :@ Ref (Vector UInt8)] Int $ do
         varAssign Int "i" $ vector_size "data"
-        vector_pushBack "data" $ vector_dataPtr "v"
-        vector_pushBack "size" $ vector_size "v"
-        vector_pushBack "byteSize" $ vector_size "v"
+        vector_pushBack "data" (vector_dataPtr "v")
+        vector_pushBack "size" (vector_size "v")
+        vector_pushBack "byteSize" (vector_size "v")
         vector_pushBack "glType" "GL_UNSIGNED_BYTE"
         return_ "i"
 
       method "add" ["v" :@ Ref (Vector Int16)] Int $ do
         varAssign Int "i" $ vector_size "data"
-        vector_pushBack "data" $ vector_dataPtr "v"
-        vector_pushBack "size" $ vector_size "v"
-        vector_pushBack "byteSize" $ 2 * vector_size "v"
+        vector_pushBack "data" (vector_dataPtr "v")
+        vector_pushBack "size" (vector_size "v")
+        vector_pushBack "byteSize" (2 * vector_size "v")
         vector_pushBack "glType" "GL_SHORT"
         return_ "i"
 
       method "add" ["v" :@ Ref (Vector UInt16)] Int $ do
         varAssign Int "i" $ vector_size "data"
-        vector_pushBack "data" $ vector_dataPtr "v"
-        vector_pushBack "size" $ vector_size "v"
-        vector_pushBack "byteSize" $ 2 * vector_size "v"
+        vector_pushBack "data" (vector_dataPtr "v")
+        vector_pushBack "size" (vector_size "v")
+        vector_pushBack "byteSize" (2 * vector_size "v")
         vector_pushBack "glType" "GL_UNSIGNED_SHORT"
         return_ "i"
 
       method "add" ["v" :@ Ref (Vector Float)] Int $ do
         varAssign Int "i" $ vector_size "data"
-        vector_pushBack "data" $ vector_dataPtr "v"
-        vector_pushBack "size" $ vector_size "v"
-        vector_pushBack "byteSize" $ 4 * vector_size "v"
+        vector_pushBack "data" (vector_dataPtr "v")
+        vector_pushBack "size" (vector_size "v")
+        vector_pushBack "byteSize" (4 * vector_size "v")
         vector_pushBack "glType" "GL_FLOAT"
         return_ "i"
 
@@ -510,7 +511,7 @@ classes = do
         "isArray" .= false
         "_m44f"   .= "v"
         "glSize"  .= 16
-      constructor ["b" :@ SmartPtr "Buffer", "index" :@ Int, "t" :@ "Type"] $ do
+      constructor ["b" :@ SmartPtr "Buffer", "i" :@ Int, "t" :@ "Type"] $ do
         "type"    .= "t"
         "buffer"  .= "b"
         "index"   .= "i"
@@ -529,15 +530,14 @@ classes = do
     public $ do
       classVar (Map String (SmartPtr "Stream")) ["map"]
 
-      -- TODO: Map_insert needed
-      method "add" ["name" :@ String, "v" :@ Ref Float] Void $ map_insert "map" "name" $ new_SmartPtr $ new "Stream" ["v"]
-      method "add" ["name" :@ String, "v" :@ Ref "V2F"] Void $ map_insert "map" "name" $ new_SmartPtr $ new "Stream" ["v"]
-      method "add" ["name" :@ String, "v" :@ Ref "V3F"] Void $ map_insert "map" "name" $ new_SmartPtr $ new "Stream" ["v"]
-      method "add" ["name" :@ String, "v" :@ Ref "V4F"] Void $ map_insert "map" "name" $ new_SmartPtr $ new "Stream" ["v"]
-      method "add" ["name" :@ String, "v" :@ Ref "M22F"] Void $ map_insert "map" "name" $ new_SmartPtr $ new "Stream" ["v"]
-      method "add" ["name" :@ String, "v" :@ Ref "M33F"] Void $ map_insert "map" "name" $ new_SmartPtr $ new "Stream" ["v"]
-      method "add" ["name" :@ String, "v" :@ Ref "M44F"] Void $ map_insert "map" "name" $ new_SmartPtr $ new "Stream" ["v"]
-      method "add" ["name" :@ String, "t" :@ "Type", "b" :@ SmartPtr "Buffer", "index" :@ Int] Void $ map_insert "map" "name" $ new_SmartPtr $ new "Stream" ["b","index","t"]
+      method "add" ["name" :@ String, "v" :@ Ref Float] Void $ map_insert "map" "name" $ callTypeConsructor (SmartPtr "Stream") $ new "Stream" ["v"]
+      method "add" ["name" :@ String, "v" :@ Ref "V2F"] Void $ map_insert "map" "name" $ callTypeConsructor (SmartPtr "Stream") $ new "Stream" ["v"]
+      method "add" ["name" :@ String, "v" :@ Ref "V3F"] Void $ map_insert "map" "name" $ callTypeConsructor (SmartPtr "Stream") $ new "Stream" ["v"]
+      method "add" ["name" :@ String, "v" :@ Ref "V4F"] Void $ map_insert "map" "name" $ callTypeConsructor (SmartPtr "Stream") $ new "Stream" ["v"]
+      method "add" ["name" :@ String, "v" :@ Ref "M22F"] Void $ map_insert "map" "name" $ callTypeConsructor (SmartPtr "Stream") $ new "Stream" ["v"]
+      method "add" ["name" :@ String, "v" :@ Ref "M33F"] Void $ map_insert "map" "name" $ callTypeConsructor (SmartPtr "Stream") $ new "Stream" ["v"]
+      method "add" ["name" :@ String, "v" :@ Ref "M44F"] Void $ map_insert "map" "name" $ callTypeConsructor (SmartPtr "Stream") $ new "Stream" ["v"]
+      method "add" ["name" :@ String, "t" :@ "Type", "b" :@ SmartPtr "Buffer", "index" :@ Int] Void $ map_insert "map" "name" $ callTypeConsructor (SmartPtr "Stream") $ new "Stream" ["b","index","t"]
       method "validate" [] Bool $ return_ true -- TODO
 
   struct_ "UniformValue" $ do
@@ -574,7 +574,7 @@ classes = do
       destructor $ return () -- TODO
 
       method "enable" ["visible" :@ Bool] Void $ "enabled" .= "visible"
-      method "setOrder" ["order" :@ Int] Void $ "order" .= "o"
+      method "setOrder" ["o" :@ Int] Void $ "order" .= "o"
 
       method "setUniform" ["name" :@ String, "v" :@ Ref Int] Void $   map_insert "uniforms" "name" $ recordValue [("tag",ns ["InputType","tag","Int"]),   ("_int","v")]
       method "setUniform" ["name" :@ String, "v" :@ Ref UInt] Void $  map_insert "uniforms" "name" $ recordValue [("tag",ns ["InputType","tag","Word"]),  ("_word","v")]
@@ -603,7 +603,7 @@ classes = do
       classVar Int ["screenWidth","screenHeight"]
 
       method "createObject" ["slotName" :@ String, "prim" :@ "Primitive", "attributes" :@ SmartPtr "StreamMap", "objectUniforms" :@ Vector String] (SmartPtr "Object") $ do
-        -- std::shared_ptr<Object> o(new Object());
+        varConstructor (SmartPtr "Object") "o" $ new "Object" []
         "o"~>"enabled" .= true
         "o"~>"order" .= 0
         "o"~>"glMode" .= callExp "primitiveMode" ["prim"]
@@ -616,10 +616,11 @@ classes = do
         "o"~>"streams" .= "attributes"
         if_ (map_elem "objectMap" "slotName") $ do
           then_ $ do
-            map_insert "objectMap" "slotName" "o"
+            vector_pushBackPtr ("objectMap" `map_lookup` "slotName") "o"
+            --objectMap[slotName]->push_back(o);
           else_ $ do
             --map_insert "objectMap" "slotName" $ 
-            --objectMap[slotName] = std::shared_ptr<std::vector<std::shared_ptr<Object>>>(new std::vector<std::shared_ptr<Object>>({o}));
+            --objectMap[slotName] = std::shared_ptr<std::vector<std::shared_ptr<Object>>>(new std::vector<std::shared_ptr<Object>>({o})); -- TODO
             return () -- TODO
         return_ "o"
 
@@ -673,7 +674,7 @@ classes = do
       classVar (SmartPtr "PipelineInput") ["input"]
       classVar (SmartPtr "data::Pipeline") ["pipeline"] -- TODO: type namespace
       classVar (Vector "Texture") ["textures"]
-      classVar UInt ["targets"]
+      classVar (Vector UInt) ["targets"]
       classVar (Vector (SmartPtr "GLProgram")) ["programs"]
       classVar (Vector (SmartPtr "GLStreamData")) ["streamData"]
       classVar UInt ["currentProgram"]
@@ -736,16 +737,16 @@ classes = do
         -- allocate all resources
         --  textures
         vector_foreach "i" ("ppl"~>"textures") $ do
-          vector_pushBack "textures" $ callExp "createTexture" ["i"]
+          vector_pushBack "textures" (callExp "createTexture" ["i"])
         --  targets
         vector_foreach "i" ("ppl"~>"targets") $ do
-          vector_pushBack "targets" $ callExp "createRenderTarget" ["i"]
+          vector_pushBack "targets" (callExp "createRenderTarget" ["i"])
         --  programs
         vector_foreach "i" ("ppl"~>"programs") $ do
-          vector_pushBack "programs" $ callExp "createProgram" ["i"]
+          vector_pushBack "programs" (callExp "createProgram" ["i"])
         --  stream data
         vector_foreach "i" ("ppl"~>"streams") $ do
-          vector_pushBack "streamData" $ callExp "createStreamData" ["i"]
+          vector_pushBack "streamData" (callExp "createStreamData" ["i"])
         call "glReleaseShaderCompiler" []
 
       destructor $ do
@@ -858,3 +859,7 @@ backend = do
   enumConversions
   globalFunctions
   classes
+
+main = do
+  Prelude.writeFile "GLES20_gen.hpp" $ prettyHpp backend
+  Prelude.writeFile "GLES20_gen.cpp" $ prettyCpp backend

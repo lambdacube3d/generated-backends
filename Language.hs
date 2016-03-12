@@ -63,7 +63,7 @@ data Exp
   | Map_elem Exp Exp
   | Vector_size Exp
   | Vector_dataPtr Exp
-  | New_SmartPtr Exp
+  | CallTypeConsructor Type Exp
   deriving Show
 
 data Arg = String :@ Type deriving Show
@@ -87,11 +87,12 @@ data Stmt
   | Exp :+= Exp
   | Map_foreach String Exp [Stmt]
   | Vector_foreach String Exp [Stmt]
-  | Vector_pushBack Exp Exp
   | Map_insert Exp Exp Exp
   | Break
   | Continue
   | Inc Exp
+  | Vector_pushBack Exp Exp
+  | Vector_pushBackPtr Exp Exp
   deriving Show
 
 data Case
@@ -277,8 +278,8 @@ then_ stmtM = tell [Then (execWriter stmtM)]
 else_ :: StmtM () -> IfM ()
 else_ stmtM = tell [Else (execWriter stmtM)]
 
-new_SmartPtr :: Exp -> Exp
-new_SmartPtr = New_SmartPtr
+callTypeConsructor :: Type -> Exp -> Exp
+callTypeConsructor = CallTypeConsructor
 
 vector_size :: Exp -> Exp
 vector_size = Vector_size
@@ -352,6 +353,9 @@ vector_foreach n e stmtM = tell [Vector_foreach n e (execWriter stmtM)]
 
 vector_pushBack :: Exp -> Exp -> StmtM ()
 vector_pushBack a b = tell [Vector_pushBack a b]
+
+vector_pushBackPtr :: Exp -> Exp -> StmtM ()
+vector_pushBackPtr a b = tell [Vector_pushBackPtr a b]
 
 for :: StmtM () -> Exp -> Exp -> StmtM () -> StmtM ()
 for loopInitM cond exp stmtM = tell [For (execWriter loopInitM) cond exp (execWriter stmtM)]
