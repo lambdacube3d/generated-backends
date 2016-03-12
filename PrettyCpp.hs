@@ -179,7 +179,7 @@ prettyExp = \case
   ExpIf a b c -> prettyExp a ++ "?" ++ prettyExp b ++ ":" ++ prettyExp c
   NullPtr -> "nullptr"
   CharPtrFromString e -> prettyExp e ++ ".c_str()"
-  New n a -> "new " ++ n ++ "(" ++ intercalate "," (map prettyExp a) ++ ")"
+  New t a -> "new " ++ prettyType t ++ "(" ++ intercalate "," (map prettyExp a) ++ ")"
   IteratorValue e -> prettyExp e ++ ".second" -- used with foreach
   IteratorKey e -> prettyExp e ++ ".first" -- used with foreach
   RecordValue a -> "{" ++ intercalate ", " ["." ++ n ++ " = " ++ prettyExp v | (n,v) <- a] ++ "}"

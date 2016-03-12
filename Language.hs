@@ -53,7 +53,7 @@ data Exp
   | ExpIf Exp Exp Exp
   | NullPtr
   | CharPtrFromString Exp
-  | New String [Exp]
+  | New Type [Exp]
   | IteratorValue Exp -- used with foreach
   | IteratorKey Exp
   | RecordValue [(String,Exp)]
@@ -253,7 +253,7 @@ call fun args = tell [Call fun args]
 callExp :: Exp -> [Exp] -> Exp
 callExp = CallExp
 
-new :: String -> [Exp] -> Exp
+new :: Type -> [Exp] -> Exp
 new = New
 
 cast :: Type -> Exp -> Exp

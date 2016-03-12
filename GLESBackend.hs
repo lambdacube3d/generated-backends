@@ -617,11 +617,10 @@ classes = do
         if_ (map_elem "objectMap" "slotName") $ do
           then_ $ do
             vector_pushBackPtr ("objectMap" `map_lookup` "slotName") "o"
-            --objectMap[slotName]->push_back(o);
           else_ $ do
-            --map_insert "objectMap" "slotName" $ 
-            --objectMap[slotName] = std::shared_ptr<std::vector<std::shared_ptr<Object>>>(new std::vector<std::shared_ptr<Object>>({o})); -- TODO
-            return () -- TODO
+            varAssign (Ptr $ Vector $ SmartPtr "Object") "ov" $ new (Vector $ SmartPtr "Object") []
+            vector_pushBackPtr "ov" "o"
+            map_insert "objectMap" "slotName" $ CallTypeConsructor (SmartPtr $ Vector $ SmartPtr "Object") "ov"
         return_ "o"
 
       method "createObject" ["slotName" :@ String, "prim" :@ "Primitive", "attributes" :@ Ref "StreamMap"
