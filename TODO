@@ -11,7 +11,6 @@ android java opengl es 2.0:
   done - first handwritten opengl code with android studio
   - collect opengl calls into an ADT (reify gl commands)
 
-
 backend matrix:
 
             GLES20  WebGL1  GL33  GL45  GLES30  GLES31  DX11  Vulkan  Metal

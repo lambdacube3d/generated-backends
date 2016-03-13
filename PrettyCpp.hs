@@ -9,8 +9,9 @@ prettyCpp :: DefM () -> String
 prettyCpp defM = inc ++ (concat $ map (prettyDef True) $ execWriter defM)
   where inc = unlines
           [ "#include <iostream>"
-          , "#include <OpenGL/gl.h>"
-          , "#include \"GLES20_gen.hpp\"" -- TODO
+          -- , "#include <OpenGL/gl.h>"
+          , "#include <OpenGLES/ES2/gl.h>"
+          , "#include \"LambdaCube.hpp\"" -- TODO
           , ""
           ]
 
@@ -190,4 +191,6 @@ prettyExp = \case
   Vector_size a -> prettyExp a ++ ".size()"
   Vector_dataPtr a -> prettyExp a ++ ".data()"
   CallTypeConsructor t a -> prettyType t ++ "(" ++ prettyExp a ++ ")"
+  GLConstant a -> show a
+  GLCommand a -> "gl" ++ drop 2 (show a)
   x -> error $ show x

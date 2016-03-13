@@ -1,8 +1,158 @@
-{-# LANGUAGE TypeSynonymInstances #-}
+{-# LANGUAGE TypeSynonymInstances, FlexibleInstances #-}
 module Language where
 
 import Data.String
 import Control.Monad.Writer
+
+data GLCommand -- GL ES 2.0
+  = GLActiveTexture
+  | GLAttachShader
+  | GLBindBuffer
+  | GLBindFramebuffer
+  | GLBindTexture
+  | GLBlendColor
+  | GLBlendEquationSeparate
+  | GLBlendFuncSeparate
+  | GLBufferData
+  | GLBufferSubData
+  | GLClear
+  | GLClearColor
+  | GLClearDepthf
+  | GLClearStencil
+  | GLColorMask
+  | GLCompileShader
+  | GLCreateProgram
+  | GLCreateShader
+  | GLCullFace
+  | GLDeleteFramebuffers
+  | GLDeleteProgram
+  | GLDeleteShader
+  | GLDeleteTextures
+  | GLDepthFunc
+  | GLDepthMask
+  | GLDisable
+  | GLDisableVertexAttribArray
+  | GLDrawArrays
+  | GLEnable
+  | GLEnableVertexAttribArray
+  | GLFramebufferTexture2D
+  | GLFrontFace
+  | GLGenBuffers
+  | GLGenFramebuffers
+  | GLGenTextures
+  | GLGetAttribLocation
+  | GLGetUniformLocation
+  | GLLineWidth
+  | GLLinkProgram
+  | GLPolygonOffset
+  | GLReleaseShaderCompiler
+  | GLShaderSource
+  | GLTexImage2D
+  | GLTexParameteri
+  | GLUniform1f
+  | GLUniform1i
+  | GLUniform2fv
+  | GLUniform2iv
+  | GLUniform3fv
+  | GLUniform3iv
+  | GLUniform4fv
+  | GLUniform4iv
+  | GLUniformMatrix2fv
+  | GLUniformMatrix3fv
+  | GLUniformMatrix4fv
+  | GLUseProgram
+  | GLVertexAttrib1f
+  | GLVertexAttrib2fv
+  | GLVertexAttrib3fv
+  | GLVertexAttrib4fv
+  | GLVertexAttribPointer
+  | GLViewport
+  deriving Show
+
+data GLConstant -- GL ES 2.0
+  = GL_ALWAYS
+  | GL_ARRAY_BUFFER
+  | GL_BACK
+  | GL_BLEND
+  | GL_BYTE
+  | GL_CCW
+  | GL_CLAMP_TO_EDGE
+  | GL_COLOR_ATTACHMENT0
+  | GL_COLOR_BUFFER_BIT
+  | GL_CONSTANT_ALPHA
+  | GL_CONSTANT_COLOR
+  | GL_CULL_FACE
+  | GL_CW
+  | GL_DEPTH_ATTACHMENT
+  | GL_DEPTH_BUFFER_BIT
+  | GL_DEPTH_COMPONENT
+  | GL_DEPTH_TEST
+  | GL_DST_ALPHA
+  | GL_DST_COLOR
+  | GL_EQUAL
+  | GL_FLOAT
+  | GL_FRAGMENT_SHADER
+  | GL_FRAMEBUFFER
+  | GL_FRONT
+  | GL_FUNC_ADD
+  | GL_FUNC_REVERSE_SUBTRACT
+  | GL_FUNC_SUBTRACT
+  | GL_GEQUAL
+  | GL_GREATER
+  | GL_LEQUAL
+  | GL_LESS
+  | GL_LINEAR
+  | GL_LINEAR_MIPMAP_LINEAR
+  | GL_LINEAR_MIPMAP_NEAREST
+  | GL_LINES
+  | GL_LINE_LOOP
+  | GL_LINE_STRIP
+  | GL_MIRRORED_REPEAT
+  | GL_NEAREST
+  | GL_NEAREST_MIPMAP_LINEAR
+  | GL_NEAREST_MIPMAP_NEAREST
+  | GL_NEVER
+  | GL_NOTEQUAL
+  | GL_ONE
+  | GL_ONE_MINUS_CONSTANT_ALPHA
+  | GL_ONE_MINUS_CONSTANT_COLOR
+  | GL_ONE_MINUS_DST_ALPHA
+  | GL_ONE_MINUS_DST_COLOR
+  | GL_ONE_MINUS_SRC_ALPHA
+  | GL_ONE_MINUS_SRC_COLOR
+  | GL_POINTS
+  | GL_POLYGON_OFFSET_FILL
+  | GL_REPEAT
+  | GL_RGBA
+  | GL_SHORT
+  | GL_SRC_ALPHA
+  | GL_SRC_ALPHA_SATURATE
+  | GL_SRC_COLOR
+  | GL_STATIC_DRAW
+  | GL_STENCIL_ATTACHMENT
+  | GL_STENCIL_BUFFER_BIT
+  | GL_STENCIL_TEST
+  | GL_TEXTURE0
+  | GL_TEXTURE_2D
+  | GL_TEXTURE_CUBE_MAP
+  | GL_TEXTURE_CUBE_MAP_NEGATIVE_X
+  | GL_TEXTURE_CUBE_MAP_NEGATIVE_Y
+  | GL_TEXTURE_CUBE_MAP_NEGATIVE_Z
+  | GL_TEXTURE_CUBE_MAP_POSITIVE_X
+  | GL_TEXTURE_CUBE_MAP_POSITIVE_Y
+  | GL_TEXTURE_CUBE_MAP_POSITIVE_Z
+  | GL_TEXTURE_MAG_FILTER
+  | GL_TEXTURE_MIN_FILTER
+  | GL_TEXTURE_WRAP_S
+  | GL_TEXTURE_WRAP_T
+  | GL_TRIANGLES
+  | GL_TRIANGLE_FAN
+  | GL_TRIANGLE_STRIP
+  | GL_UNSIGNED_BYTE
+  | GL_UNSIGNED_SHORT
+  | GL_VERTEX_SHADER
+  | GL_ZERO
+  deriving Show
 
 data Type
   = Bool
@@ -66,6 +216,9 @@ data Exp
   | Cast Type Exp
   | Addr Exp
   | Deref Exp
+  -- GL stuff
+  | GLCommand   GLCommand
+  | GLConstant  GLConstant
   deriving Show
 
 data Stmt
@@ -237,11 +390,17 @@ notNull = NotNull
 (.) :: Exp -> Exp -> Exp
 (.) = (:.)
 
+callGL :: GLCommand -> [Exp] -> StmtM ()
+callGL fun args = tell [Call (GLCommand fun) args]
+
+callExpGL :: GLCommand -> [Exp] -> Exp
+callExpGL a b = CallExp (GLCommand a) b
+
 call :: Exp -> [Exp] -> StmtM ()
 call fun args = tell [Call fun args]
 
 callExp :: Exp -> [Exp] -> Exp
-callExp = CallExp
+callExp a b = CallExp a b
 
 new :: Type -> [Exp] -> Exp
 new = New
@@ -309,7 +468,7 @@ key :: Exp -> Exp
 key = IteratorKey
 
 expIf :: Exp -> Exp -> Exp -> Exp
-expIf = ExpIf
+expIf a b c = ExpIf a b c
 
 recordValue :: [(String,Exp)] -> Exp
 recordValue = RecordValue
@@ -357,7 +516,7 @@ for loopInitM cond exp stmtM = tell [For (execWriter loopInitM) cond exp (execWr
 (&&) = (:&&)
 
 (==) :: Exp -> Exp -> Exp
-(==) = (:==)
+a == b = a :== b
 
 (<=) :: Exp -> Exp -> Exp
 (<=) = (:<=)
@@ -391,3 +550,9 @@ instance IsString Exp where
 
 instance IsString Type where
   fromString n = Class n
+
+class ToExp a where
+  toExp :: a -> Exp
+
+instance ToExp GLConstant where 
+  toExp a = GLConstant a
