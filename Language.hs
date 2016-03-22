@@ -179,7 +179,8 @@ data Type
 
 data Exp
   = Var String
-  | Ns [String]
+  | EnumVal String String
+  | EnumADT String String
   | Integer Integer
   | FloatLit Float
   | BoolLit Bool
@@ -194,6 +195,7 @@ data Exp
   | Exp :&& Exp
   | IncExp Exp
   | CallExp Exp [Exp]
+  | CallProcExp Exp [Exp]
   | ExpIf Exp Exp Exp
   | NullPtr
   | New Type [Exp]
@@ -226,9 +228,10 @@ data Stmt
   | Return Exp
   | Throw  String
   | Call Exp [Exp]
+  | CallProc Exp [Exp]
   | If Exp [Stmt] [Stmt]
   | VarDef Type [String]
-  | VarADTDef String String Exp
+  | VarADTDef String String String Exp
   | VarAssignDef Type String Exp
   | VarConstructor Type String Exp
   | Exp := Exp
@@ -237,8 +240,8 @@ data Stmt
   | Exp :/= Exp
   | Exp :|= Exp
   | Exp :+= Exp
-  | Map_foreach String Exp [Stmt]
-  | Vector_foreach String Exp [Stmt]
+  | Map_foreach Type Type String Exp [Stmt]
+  | Vector_foreach Type String Exp [Stmt]
   | Map_insert Exp Exp Exp
   | Break
   | Continue
@@ -262,11 +265,12 @@ data If
   deriving Show
 
 data Pat
-  = NsPat [String]
+  = NsPat String String
+  | NsPatADT String String
   deriving Show
 
 data ClassDef
-  = Method String [Arg] Type [Stmt]
+  = Method Bool{- isStatic -} String [Arg] Type [Stmt]
   | Constructor [Arg] [Stmt]
   | Destructor [Stmt]
   | ClassVar Type [String]
@@ -322,7 +326,7 @@ destructor :: StmtM () -> ClassDefM ()
 destructor stmtM = tell [Destructor (execWriter stmtM)]
 
 method :: String -> [Arg] -> Type -> StmtM () -> ClassDefM ()
-method name args retType stmtM = tell [Method name args retType (execWriter stmtM)]
+method name args retType stmtM = tell [Method False name args retType (execWriter stmtM)]
 
 -- struct
 struct_ :: String -> StructDefM () -> DefM ()
@@ -354,10 +358,7 @@ default_ stmtM = tell [Default (execWriter stmtM)]
 throw :: String -> StmtM ()
 throw msg = tell [Throw msg]
 
-ns :: [String] -> Exp
-ns = Ns
-
-nsPat :: [String] -> Pat
+nsPat :: String -> String -> Pat
 nsPat = NsPat
 
 return_ :: Exp -> StmtM ()
@@ -395,6 +396,12 @@ callGL fun args = tell [Call (GLCommand fun) args]
 
 callExpGL :: GLCommand -> [Exp] -> Exp
 callExpGL a b = CallExp (GLCommand a) b
+
+callProc :: Exp -> [Exp] -> StmtM ()
+callProc fun args = tell [CallProc fun args]
+
+callProcExp :: Exp -> [Exp] -> Exp
+callProcExp a b = CallProcExp a b
 
 call :: Exp -> [Exp] -> StmtM ()
 call fun args = tell [Call fun args]
@@ -482,8 +489,8 @@ charPtrFromString = CharPtrFromString
 var :: Type -> [String] -> StmtM ()
 var t n = tell [VarDef t n]
 
-varADT :: String -> String -> Exp -> StmtM ()
-varADT t n e = tell [VarADTDef t n e ]
+varADT :: String -> String -> String -> Exp -> StmtM ()
+varADT t c n e = tell [VarADTDef t c n e ]
 
 varAssign :: Type -> String -> Exp -> StmtM ()
 varAssign t n e = tell [VarAssignDef t n e]
@@ -494,11 +501,11 @@ varConstructor t n e = tell [VarConstructor t n e]
 for_range :: String -> Exp -> Exp -> StmtM () -> StmtM ()
 for_range a b c stmtM = tell [For_range a b c (execWriter stmtM)]
 
-map_foreach :: String -> Exp -> StmtM () -> StmtM ()
-map_foreach n e stmtM = tell [Map_foreach n e (execWriter stmtM)]
+map_foreach :: Type -> Type -> String -> Exp -> StmtM () -> StmtM ()
+map_foreach tk tv n e stmtM = tell [Map_foreach tk tv n e (execWriter stmtM)]
 
-vector_foreach :: String -> Exp -> StmtM () -> StmtM ()
-vector_foreach n e stmtM = tell [Vector_foreach n e (execWriter stmtM)]
+vector_foreach :: Type -> String -> Exp -> StmtM () -> StmtM ()
+vector_foreach t n e stmtM = tell [Vector_foreach t n e (execWriter stmtM)]
 
 vector_pushBack :: Exp -> Exp -> StmtM ()
 vector_pushBack a b = tell [Vector_pushBack a b]
@@ -556,3 +563,13 @@ class ToExp a where
 
 instance ToExp GLConstant where 
   toExp a = GLConstant a
+
+-- enum related
+nsPatADT :: String -> String -> Pat
+nsPatADT = NsPatADT
+
+enumVal :: String -> String -> Exp
+enumVal = EnumVal
+
+enumADT :: String -> String -> Exp
+enumADT = EnumADT

@@ -1,5 +1,5 @@
 {-# LANGUAGE LambdaCase #-}
-module PrettyCpp where
+module PrettyCpp (prettyCpp,prettyHpp) where
 
 import Control.Monad.Writer
 import Data.List
@@ -51,7 +51,7 @@ prettyClassScope className True ind = \case
   Private args -> concat $ map (prettyClassDef className True $ ind) args
 
 prettyClassDef className isCpp ind = \case
-  Method name args retType stmts -> concat $ cut
+  Method isStatic name args retType stmts -> concat $ cut
     [ addIndentation ind $ prettyType retType ++ " " ++ classNS ++ name ++ "(" ++ intercalate ", " (map prettyArg args) ++ ")" ++ terminator
     , unlines $ map (prettyStmt $ ind + 1) stmts
     , addIndentation ind "}\n\n"
@@ -122,17 +122,19 @@ prettyCase ind = addIndentation ind . \case
   Default s -> "default:\n" ++ unlines (map (prettyStmt $ ind + 1) s)
 
 prettyPat = \case
-  NsPat a -> "::" ++ intercalate "::" a
+  NsPat a b -> "::" ++ a ++ "::" ++ b
+  NsPatADT a b -> "::" ++ a ++ "::tag::" ++ b
 
 prettyStmt ind = addIndentation ind . \case
   Switch e c -> "switch (" ++ prettyExp e ++ ") {\n" ++ concatMap ((++"\n") . prettyCase (ind + 1)) c ++ addIndentation ind "}"
   Return e -> "return " ++ prettyExp e ++ ";"
   Throw s -> "throw " ++ show s ++ ";"
   Call a b -> prettyExp a ++ "(" ++ intercalate ", " (map prettyExp b) ++ ");"
+  CallProc a b -> prettyExp a ++ "(" ++ intercalate ", " (map prettyExp b) ++ ");"
   If a b c -> "if (" ++ prettyExp a ++ ") {\n" ++ concatMap ((++"\n") . prettyStmt (ind + 1)) b ++ addIndentation ind "}" ++
               if null c then "" else " else {\n" ++ concatMap ((++"\n") . prettyStmt (ind + 1)) c ++ addIndentation ind "}"
   VarDef t n -> prettyType t ++ " " ++ intercalate ", " n ++ ";"
-  VarADTDef t n e -> "auto " ++ n ++ " = std::static_pointer_cast<data::" ++ t ++ ">(" ++ prettyExp e ++ ");"
+  VarADTDef t c n e -> "auto " ++ n ++ " = std::static_pointer_cast<data::" ++ c ++ ">(" ++ prettyExp e ++ ");"
   VarAssignDef t n e -> prettyType t ++ " " ++ n ++ " = " ++ prettyExp e ++ ";"
   VarConstructor t n e -> prettyType t ++ " " ++ n ++ "(" ++ prettyExp e ++ ");"
   VarCharPtrFromString n e -> "const char* " ++ n ++ " = " ++ prettyExp e ++ ".c_str();"
@@ -142,9 +144,9 @@ prettyStmt ind = addIndentation ind . \case
   a :|= b -> prettyExp a ++ " |= " ++ prettyExp b ++ ";"
   a :+= b -> prettyExp a ++ " += " ++ prettyExp b ++ ";"
   Map_insert m k v -> prettyExp m ++ "[" ++ prettyExp k ++ "] = " ++ prettyExp v ++ ";"
-  Map_foreach n e s -> "for (auto " ++ n ++ " : " ++ prettyExp e ++ ") {\n" ++ unlines (map (prettyStmt $ ind + 1) s) ++ addIndentation ind "}"
+  Map_foreach tk tv n e s -> "for (auto " ++ n ++ " : " ++ prettyExp e ++ ") {\n" ++ unlines (map (prettyStmt $ ind + 1) s) ++ addIndentation ind "}"
   For_range n a b s -> "for (int " ++ n ++ " = " ++ prettyExp a ++ "; " ++ n ++ " < " ++ prettyExp b ++ "; " ++ n ++ "++) {\n" ++ unlines (map (prettyStmt $ ind + 1) s) ++ addIndentation ind "}"
-  Vector_foreach n e s -> "for (auto " ++ n ++ " : " ++ prettyExp e ++ ") {\n" ++ unlines (map (prettyStmt $ ind + 1) s) ++ addIndentation ind "}"
+  Vector_foreach t n e s -> "for (auto " ++ n ++ " : " ++ prettyExp e ++ ") {\n" ++ unlines (map (prettyStmt $ ind + 1) s) ++ addIndentation ind "}"
   Vector_pushBack a b -> prettyExp a ++ ".push_back(" ++ prettyExp b ++ ");"
   Vector_pushBackPtr a b -> prettyExp a ++ "->push_back(" ++ prettyExp b ++ ");"
   Break -> "break;"
@@ -156,7 +158,8 @@ prettyExp = \case
   a :-> b -> prettyExp a ++ "->" ++ prettyExp b
   a :. b  -> prettyExp a ++ "." ++ prettyExp b
   Var n   -> n
-  Ns a    -> "::" ++ intercalate "::" a
+  EnumVal a b -> "::" ++ a ++ "::" ++ b
+  EnumADT a b -> "::" ++ a ++ "::tag::" ++ b
   Integer a   -> show a
   FloatLit a  -> show a
   Cast t e    -> "(" ++ prettyType t ++ ")" ++ prettyExp e
@@ -177,6 +180,7 @@ prettyExp = \case
   a :&& b -> prettyExp a ++ " && " ++ prettyExp b
   IncExp a -> prettyExp a ++ "++ "
   CallExp n a -> prettyExp n ++ "(" ++ intercalate ", " (map prettyExp a) ++ ")"
+  CallProcExp n a -> prettyExp n ++ "(" ++ intercalate ", " (map prettyExp a) ++ ")"
   ExpIf a b c -> prettyExp a ++ "?" ++ prettyExp b ++ ":" ++ prettyExp c
   NullPtr -> "nullptr"
   CharPtrFromString e -> prettyExp e ++ ".c_str()"
