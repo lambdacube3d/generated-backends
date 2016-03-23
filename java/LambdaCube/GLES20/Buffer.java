@@ -11,7 +11,7 @@ public class Buffer {
   public ArrayList<Integer> offset;
   public ArrayList<void> data;
   public Integer bufferObject;
-  public Integer add(ArrayList<Integer> v) {
+  public Integer add(ArrayList<Integer> v) throws Exception {
     Integer i = data.size();
     data.add(v.data());
     size.add(v.size());
@@ -20,7 +20,7 @@ public class Buffer {
     return i;
   }
 
-  public Integer add(ArrayList<Integer> v) {
+  public Integer add(ArrayList<Integer> v) throws Exception {
     Integer i = data.size();
     data.add(v.data());
     size.add(v.size());
@@ -29,7 +29,7 @@ public class Buffer {
     return i;
   }
 
-  public Integer add(ArrayList<Integer> v) {
+  public Integer add(ArrayList<Integer> v) throws Exception {
     Integer i = data.size();
     data.add(v.data());
     size.add(v.size());
@@ -38,7 +38,7 @@ public class Buffer {
     return i;
   }
 
-  public Integer add(ArrayList<Integer> v) {
+  public Integer add(ArrayList<Integer> v) throws Exception {
     Integer i = data.size();
     data.add(v.data());
     size.add(v.size());
@@ -47,7 +47,7 @@ public class Buffer {
     return i;
   }
 
-  public Integer add(ArrayList<Float> v) {
+  public Integer add(ArrayList<Float> v) throws Exception {
     Integer i = data.size();
     data.add(v.data());
     size.add(v.size());
@@ -56,14 +56,14 @@ public class Buffer {
     return i;
   }
 
-  public void freeze() {
+  public void freeze() throws Exception {
     Integer bufferSize = 0;
     for (Integer i : byteSize) {
       offset.add(bufferSize);
       bufferSize += i;
     }
     Integer bo;
-    GLES20.glGenBuffers(1, bo);
+    { int[] glObj = new int[1]; GLES20.glGenBuffers(1, glObj, 0); bo = glObj[0]; }
     GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, bo);
     GLES20.glBufferData(GLES20.GL_ARRAY_BUFFER, bufferSize, null, GLES20.GL_STATIC_DRAW);
     Integer offset_ = 0;
@@ -74,7 +74,7 @@ public class Buffer {
     bufferObject = bo;
   }
 
-  public void update(Integer i, ArrayList<Float> v) {
+  public void update(Integer i, ArrayList<Float> v) throws Exception {
   }
 
 }

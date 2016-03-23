@@ -100,6 +100,8 @@ prettyType = \case
   Vector t -> "std::vector<" ++ prettyType t ++ ">"
   Map k v -> "std::map<" ++ prettyType k ++ "," ++ prettyType v ++ ">"
   String  -> "std::string"
+  ADTEnum a -> "::" ++ a ++ "::tag"
+  ADTCons a b -> "::data::" ++ b
   x -> error $ show x
 
 addIndentation ind s = concat (replicate ind "  ") ++ s
@@ -129,6 +131,7 @@ prettyStmt ind = addIndentation ind . \case
   Switch e c -> "switch (" ++ prettyExp e ++ ") {\n" ++ concatMap ((++"\n") . prettyCase (ind + 1)) c ++ addIndentation ind "}"
   Return e -> "return " ++ prettyExp e ++ ";"
   Throw s -> "throw " ++ show s ++ ";"
+  CallGLPrim prim -> prettyGLPrim prim
   Call a b -> prettyExp a ++ "(" ++ intercalate ", " (map prettyExp b) ++ ");"
   CallProc a b -> prettyExp a ++ "(" ++ intercalate ", " (map prettyExp b) ++ ");"
   If a b c -> "if (" ++ prettyExp a ++ ") {\n" ++ concatMap ((++"\n") . prettyStmt (ind + 1)) b ++ addIndentation ind "}" ++
@@ -137,7 +140,6 @@ prettyStmt ind = addIndentation ind . \case
   VarADTDef t c n e -> "auto " ++ n ++ " = std::static_pointer_cast<data::" ++ c ++ ">(" ++ prettyExp e ++ ");"
   VarAssignDef t n e -> prettyType t ++ " " ++ n ++ " = " ++ prettyExp e ++ ";"
   VarConstructor t n e -> prettyType t ++ " " ++ n ++ "(" ++ prettyExp e ++ ");"
-  VarCharPtrFromString n e -> "const char* " ++ n ++ " = " ++ prettyExp e ++ ".c_str();"
   a := b -> prettyExp a ++ " = " ++ prettyExp b ++ ";"
   For [a] b c stmts -> "for (" ++ prettyStmt 0 a ++ " " ++ prettyExp b ++ "; " ++ prettyExp c ++ ") {\n" ++ unlines (map (prettyStmt $ ind + 1) stmts) ++ addIndentation ind "}"
   a :/= b -> prettyExp a ++ " /= " ++ prettyExp b ++ ";"
@@ -183,7 +185,6 @@ prettyExp = \case
   CallProcExp n a -> prettyExp n ++ "(" ++ intercalate ", " (map prettyExp a) ++ ")"
   ExpIf a b c -> prettyExp a ++ "?" ++ prettyExp b ++ ":" ++ prettyExp c
   NullPtr -> "nullptr"
-  CharPtrFromString e -> prettyExp e ++ ".c_str()"
   New t a -> "new " ++ prettyType t ++ "(" ++ intercalate "," (map prettyExp a) ++ ")"
   IteratorValue e -> prettyExp e ++ ".second" -- used with foreach
   IteratorKey e -> prettyExp e ++ ".first" -- used with foreach
@@ -197,4 +198,15 @@ prettyExp = \case
   CallTypeConsructor t a -> prettyType t ++ "(" ++ prettyExp a ++ ")"
   GLConstant a -> show a
   GLCommand a -> "gl" ++ drop 2 (show a)
+  x -> error $ show x
+
+prettyGLPrim = \case
+  GLGenTexture e -> "{ int glObj; glGenTextures(1, &glObj); " ++ prettyExp e ++ " = glObj; }"
+  GLGenFramebuffer e -> "{ int glObj; glGenFramebuffers(1, &glObj); " ++ prettyExp e ++ " = glObj; }"
+  GLGenBuffer e -> "{ int glObj; glGenBuffers(1, &glObj); " ++ prettyExp e ++ " = glObj; }"
+  GLDeleteTexture e -> "{ int glObj = " ++ prettyExp e ++ "; glDeleteTextures(1, &glObj); }"
+  GLDeleteFramebuffer e -> "{ int glObj = " ++ prettyExp e ++ "; glDeleteFramebuffers(1, &glObj); }"
+  GLShaderSource vs src -> "{ char* glslSrc = " ++ prettyExp src ++ ".c_str(); glShaderSource(" ++ prettyExp vs ++ ", 1, &glslSrc, 0); }"
+  GLGetUniformLocation p n v -> prettyExp v ++ " = glGetUniformLocation(" ++ prettyExp p ++ ", " ++ prettyExp n ++ ".c_str());"
+  GLGetAttribLocation p n v -> prettyExp v ++ " = glGetAttribLocation(" ++ prettyExp p ++ ", " ++ prettyExp n ++ ".c_str());"
   x -> error $ show x

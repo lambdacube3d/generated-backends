@@ -13,25 +13,27 @@ android java opengl es 2.0:
   done - generate IR ADT for Java
   done - write LambdaCube.RT Java package
   done - generate enum functions
-  - generate global functions into a special class
+  done - generate global functions into a special class
 
 java backend:
   problematic things to solve:
-    switch on ADT (should be a primitive)
-    remove `auto` type, instead use explicit type annotation
+    done - switch on ADT (should be a primitive)
+    done - remove `auto` type, instead use explicit type annotation
+    done - union in: Stream, UniformValue (used in c++)
     void* type (used in c++, can not be used in Java)
-    union in: Stream, UniformValue (used in c++)
     remove record value (used in setUniform methods)
 
   done - nsPat for DDL ADT constructor enum
   done - nsPat for custom
   done - use explicit type for foreach iterator
-  mark methods that throws exception
-  higher level: glGenTextures, glGenFramebuffers, glDeleteTextures, glDeleteFramebuffers
+  done - handle Util procedure calls (static methods)
+  done - mark methods that throws exception (marks all)
+  done - higher level: glGenTextures, glGenFramebuffers, glDeleteTextures, glDeleteFramebuffers
+  done - higher level: glShaderSource, glGetUniformLocation, glGetAttribLocation
   higher level: glUniform2iv, glUniformMatrix2fv, glVertexAttrib2fv
-  higher level: glShaderSource, glGetUniformLocation, glGetAttribLocation
   remove struct record construction/handle it properly in heap
-  handle Util procedure calls (static methos)
+  handle type synonyms for: V2F, V2I, etc
+  variable initialization
 
 now focus:
   GLES20: C++, Java

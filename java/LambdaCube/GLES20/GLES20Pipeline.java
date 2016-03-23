@@ -8,14 +8,14 @@ import java.util.Map;
 
 public class GLES20Pipeline {
   protected PipelineInput input;
-  protected data::Pipeline pipeline;
+  protected Pipeline.Pipeline_ pipeline;
   protected ArrayList<Texture> textures;
   protected ArrayList<Integer> targets;
   protected ArrayList<GLProgram> programs;
   protected ArrayList<GLStreamData> streamData;
   protected Integer currentProgram;
   protected Boolean hasCurrentProgram;
-  protected Integer createRenderTarget(RenderTarget t_) {
+  protected Integer createRenderTarget(RenderTarget t_) throws Exception {
     RenderTarget.RenderTarget_ t = (RenderTarget.RenderTarget_)t_;
     Integer textureCount = 0;
     for (TargetItem i_ : t.renderTargets) {
@@ -28,10 +28,12 @@ public class GLES20Pipeline {
       return 0;
     }
     Integer fb;
-    GLES20.glGenFramebuffers(1, fb);
+    { int[] glObj = new int[1]; GLES20.glGenFramebuffers(1, glObj, 0); fb = glObj[0]; }
     GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, fb);
-    Integer attachment, textarget, level;
-    Integer texture;
+    Integer attachment = 0;
+    Integer textarget = 0;
+    Integer level = 0;
+    Integer texture = 0;
     for (TargetItem i_ : t.renderTargets) {
       TargetItem.TargetItem_ i = (TargetItem.TargetItem_)i_;
       switch (i.targetSemantic.tag) {
@@ -66,7 +68,7 @@ public class GLES20Pipeline {
   }
 
   public Integer screenTarget;
-  public GLES20Pipeline(Pipeline ppl_) {
+  public GLES20Pipeline(Pipeline ppl_) throws Exception {
     screenTarget = 0;
     hasCurrentProgram = false;
     Pipeline.Pipeline_ ppl = (Pipeline.Pipeline_)ppl_;
@@ -91,10 +93,10 @@ public class GLES20Pipeline {
 
   protected void finalize() {
     for (Texture i : textures) {
-      GLES20.glDeleteTextures(1, i.texture);
+      { int[] glObj = new int[1]; glObj[0] = i.texture; GLES20.glDeleteTextures(1, glObj, 0);}
     }
     for (Integer i : targets) {
-      GLES20.glDeleteFramebuffers(1, i);
+      { int[] glObj = new int[1]; glObj[0] = i; GLES20.glDeleteFramebuffers(1, glObj, 0);}
     }
     for (GLProgram i : programs) {
       GLES20.glDeleteProgram(i.program);
@@ -103,11 +105,11 @@ public class GLES20Pipeline {
     }
   }
 
-  public void setPipelineInput(PipelineInput i) {
+  public void setPipelineInput(PipelineInput i) throws Exception {
     input = i;
   }
 
-  public void render() {
+  public void render() throws Exception {
     for (Command i : pipeline.commands) {
       switch (i.tag) {
         case SetRasterContext: {
@@ -165,17 +167,17 @@ public class GLES20Pipeline {
                 switch (image.clearValue.tag) {
                   case VFloat: {
                     Value.VFloat_ v = (Value.VFloat_)image.clearValue;
-                    GLES20.glClearColor(v._0, 0.0, 0.0, 1.0);
+                    GLES20.glClearColor(v._0, 0.0f, 0.0f, 1.0f);
                     break;
                   }
                   case VV2F: {
                     Value.VV2F_ v = (Value.VV2F_)image.clearValue;
-                    GLES20.glClearColor(v._0.x, v._0.y, 0.0, 1.0);
+                    GLES20.glClearColor(v._0.x, v._0.y, 0.0f, 1.0f);
                     break;
                   }
                   case VV3F: {
                     Value.VV3F_ v = (Value.VV3F_)image.clearValue;
-                    GLES20.glClearColor(v._0.x, v._0.y, v._0.z, 1.0);
+                    GLES20.glClearColor(v._0.x, v._0.y, v._0.z, 1.0f);
                     break;
                   }
                   case VV4F: {
@@ -184,7 +186,7 @@ public class GLES20Pipeline {
                     break;
                   }
                   default:
-                    GLES20.glClearColor(0.0, 0.0, 0.0, 1.0);
+                    GLES20.glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 
                 }
                 GLES20.glColorMask(true, true, true, true);

@@ -7,7 +7,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class UniformValue {
-  public InputType::tag tag;
+  public InputType.Tag tag;
   public Integer _int;
   public Integer _word;
   public Float _float;

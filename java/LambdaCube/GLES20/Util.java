@@ -7,7 +7,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class Util {
-  static public Type inputType(InputType t) {
+  static public Type inputType(InputType t) throws Exception {
     switch (t.tag) {
       case Float: return Type.FLOAT;
       case V2F: return Type.FLOAT_VEC2;
@@ -20,7 +20,7 @@ public class Util {
     throw new Exception("illegal input type");
   }
 
-  static public Integer primitiveMode(Primitive p) {
+  static public Integer primitiveMode(Primitive p) throws Exception {
     switch (p) {
       case TriangleStrip: return GLES20.GL_TRIANGLE_STRIP;
       case TriangleList: return GLES20.GL_TRIANGLES;
@@ -30,9 +30,10 @@ public class Util {
       case LineLoop: return GLES20.GL_LINE_LOOP;
       case PointList: return GLES20.GL_POINTS;
     }
+    throw new Exception("illegal primitive mode");
   }
 
-  static public Integer blendingFactor(BlendingFactor bf) {
+  static public Integer blendingFactor(BlendingFactor bf) throws Exception {
     switch (bf.tag) {
       case ConstantAlpha: return GLES20.GL_CONSTANT_ALPHA;
       case ConstantColor: return GLES20.GL_CONSTANT_COLOR;
@@ -53,7 +54,7 @@ public class Util {
     throw new Exception("illegal blending factor");
   }
 
-  static public Integer blendEquation(BlendEquation be) {
+  static public Integer blendEquation(BlendEquation be) throws Exception {
     switch (be.tag) {
       case FuncAdd: return GLES20.GL_FUNC_ADD;
       case FuncReverseSubtract: return GLES20.GL_FUNC_REVERSE_SUBTRACT;
@@ -62,7 +63,7 @@ public class Util {
     throw new Exception("illegal blend equation");
   }
 
-  static public Integer comparisonFunction(ComparisonFunction cf) {
+  static public Integer comparisonFunction(ComparisonFunction cf) throws Exception {
     switch (cf.tag) {
       case Always: return GLES20.GL_ALWAYS;
       case Equal: return GLES20.GL_EQUAL;
@@ -76,7 +77,7 @@ public class Util {
     throw new Exception("illegal comparison function");
   }
 
-  static public Integer frontFace(FrontFace ff) {
+  static public Integer frontFace(FrontFace ff) throws Exception {
     switch (ff.tag) {
       case CCW: return GLES20.GL_CCW;
       case CW: return GLES20.GL_CW;
@@ -84,7 +85,7 @@ public class Util {
     throw new Exception("illegal front face value");
   }
 
-  static public Integer textureDataTypeToGLType(ImageSemantic s_, TextureDataType d_) {
+  static public Integer textureDataTypeToGLType(ImageSemantic s_, TextureDataType d_) throws Exception {
     switch (s_.tag) {
       case Color: return GLES20.GL_RGBA;
       case Depth: return GLES20.GL_DEPTH_COMPONENT;
@@ -92,7 +93,7 @@ public class Util {
     throw new Exception("FIXME: This texture format is not yet supported");
   }
 
-  static public Integer textureDataTypeToGLArityType(ImageSemantic s_, TextureDataType d_) {
+  static public Integer textureDataTypeToGLArityType(ImageSemantic s_, TextureDataType d_) throws Exception {
     switch (s_.tag) {
       case Color: return GLES20.GL_RGBA;
       case Depth: return GLES20.GL_DEPTH_COMPONENT;
@@ -100,7 +101,7 @@ public class Util {
     throw new Exception("FIXME: This texture format is not yet supported");
   }
 
-  static public Integer edgeMode(EdgeMode e) {
+  static public Integer edgeMode(EdgeMode e) throws Exception {
     switch (e.tag) {
       case ClampToEdge: return GLES20.GL_CLAMP_TO_EDGE;
       case Repeat: return GLES20.GL_REPEAT;
@@ -111,7 +112,7 @@ public class Util {
     }
   }
 
-  static public Integer filterMode(Filter f) {
+  static public Integer filterMode(Filter f) throws Exception {
     switch (f.tag) {
       case Nearest: return GLES20.GL_NEAREST;
       case Linear: return GLES20.GL_LINEAR;
@@ -125,7 +126,7 @@ public class Util {
     }
   }
 
-  static public void setUniformValue(Integer i, UniformValue v) {
+  static public void setUniformValue(Integer i, UniformValue v) throws Exception {
     switch (v.tag) {
       case Int: GLES20.glUniform1i(i, v._int); break;
       case Word: GLES20.glUniform1i(i, v._word); break;
@@ -149,7 +150,7 @@ public class Util {
     }
   }
 
-  static public void setStream(Integer i, Stream s) {
+  static public void setStream(Integer i, Stream s) throws Exception {
     if (s.isArray) {
       GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, s.buffer.bufferObject);
       GLES20.glEnableVertexAttribArray(i);
@@ -183,9 +184,9 @@ public class Util {
     }
   }
 
-  static public Texture createTexture(TextureDescriptor tx_) {
+  static public Texture createTexture(TextureDescriptor tx_) throws Exception {
     Texture t;
-    GLES20.glGenTextures(1, t.texture);
+    { int[] glObj = new int[1]; GLES20.glGenTextures(1, glObj, 0); t.texture = glObj[0]; }
     TextureDescriptor.TextureDescriptor_ tx = (TextureDescriptor.TextureDescriptor_)tx_;
     Value.VV2U_ size = (Value.VV2U_)tx.textureSize;
     Integer width = size._0.x;
@@ -234,7 +235,7 @@ public class Util {
     return t;
   }
 
-  static public GLStreamData createStreamData(StreamData s_) {
+  static public GLStreamData createStreamData(StreamData s_) throws Exception {
     StreamData.StreamData_ s = (StreamData.StreamData_)s_;
     GLStreamData gls = new GLStreamData();
     switch (s.streamPrimitive.tag) {
@@ -277,15 +278,13 @@ public class Util {
     return gls;
   }
 
-  static public GLProgram createProgram(Program p_) {
+  static public GLProgram createProgram(Program p_) throws Exception {
     Program.Program_ p = (Program.Program_)p_;
     Integer vs = GLES20.glCreateShader(GLES20.GL_VERTEX_SHADER);
-    const char* vsSrc = p.vertexShader.c_str();
-    GLES20.glShaderSource(vs, 1, vsSrc, null);
+    GLES20.glShaderSource(vs, p.vertexShader);
     GLES20.glCompileShader(vs);
     Integer fs = GLES20.glCreateShader(GLES20.GL_FRAGMENT_SHADER);
-    const char* fsSrc = p.fragmentShader.c_str();
-    GLES20.glShaderSource(fs, 1, fsSrc, null);
+    GLES20.glShaderSource(fs, p.fragmentShader);
     GLES20.glCompileShader(fs);
     Integer po = GLES20.glCreateProgram();
     GLES20.glAttachShader(po, vs);
@@ -296,20 +295,20 @@ public class Util {
     glp.vertexShader = vs;
     glp.fragmentShader = fs;
     Integer loc;
-    for (Map.Entry<String,Integer> i : p.programUniforms.entrySet()) {
-      loc = GLES20.glGetUniformLocation(po, i.getKey().c_str());
+    for (Map.Entry<String,InputType> i : p.programUniforms.entrySet()) {
+      loc = GLES20.glGetUniformLocation(po, i.getKey());
       if (loc >= 0) {
         glp.programUniforms.put(i.getKey(), loc);
       }
     }
-    for (Map.Entry<String,Integer> i : p.programInTextures.entrySet()) {
-      loc = GLES20.glGetUniformLocation(po, i.getKey().c_str());
+    for (Map.Entry<String,InputType> i : p.programInTextures.entrySet()) {
+      loc = GLES20.glGetUniformLocation(po, i.getKey());
       if (loc >= 0) {
         glp.programInTextures.put(i.getKey(), loc);
       }
     }
     for (Map.Entry<String,Parameter> i : p.programStreams.entrySet()) {
-      loc = GLES20.glGetAttribLocation(po, i.getKey().c_str());
+      loc = GLES20.glGetAttribLocation(po, i.getKey());
       if (loc >= 0) {
         Parameter.Parameter_ param = (Parameter.Parameter_)i.getValue();
         glp.programStreams.put(i.getKey(), {.name = param.name, .index = loc});
@@ -318,7 +317,7 @@ public class Util {
     return glp;
   }
 
-  static public void setupRasterContext(RasterContext ctx_) {
+  static public void setupRasterContext(RasterContext ctx_) throws Exception {
     switch (ctx_.tag) {
       case PointCtx: {
         RasterContext.PointCtx_ ctx = (RasterContext.PointCtx_)ctx_;
@@ -373,7 +372,7 @@ public class Util {
     }
   }
 
-  static public void setupAccumulationContext(AccumulationContext ctx_) {
+  static public void setupAccumulationContext(AccumulationContext ctx_) throws Exception {
     AccumulationContext.AccumulationContext_ ctx = (AccumulationContext.AccumulationContext_)ctx_;
     Boolean noDepth = true;
     Boolean noStencil = true;

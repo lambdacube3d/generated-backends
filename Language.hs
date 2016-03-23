@@ -4,6 +4,17 @@ module Language where
 import Data.String
 import Control.Monad.Writer
 
+data GLPrim
+  = GLGenTexture Exp
+  | GLGenFramebuffer Exp
+  | GLGenBuffer Exp
+  | GLDeleteTexture Exp
+  | GLDeleteFramebuffer Exp
+  | GLShaderSource Exp Exp
+  | GLGetUniformLocation Exp Exp Exp
+  | GLGetAttribLocation Exp Exp Exp
+  deriving Show
+
 data GLCommand -- GL ES 2.0
   = GLActiveTexture
   | GLAttachShader
@@ -37,16 +48,10 @@ data GLCommand -- GL ES 2.0
   | GLEnableVertexAttribArray
   | GLFramebufferTexture2D
   | GLFrontFace
-  | GLGenBuffers
-  | GLGenFramebuffers
-  | GLGenTextures
-  | GLGetAttribLocation
-  | GLGetUniformLocation
   | GLLineWidth
   | GLLinkProgram
   | GLPolygonOffset
   | GLReleaseShaderCompiler
-  | GLShaderSource
   | GLTexImage2D
   | GLTexParameteri
   | GLUniform1f
@@ -168,6 +173,8 @@ data Type
   | Void
   | Class String
   | Enum String
+  | ADTEnum String
+  | ADTCons String String
   | Const Type
   | Vector Type
   | Map Type Type
@@ -213,7 +220,6 @@ data Exp
   | CallTypeConsructor Type Exp
   | Exp :. Exp
   -- for C++
-  | CharPtrFromString Exp
   | Exp :-> Exp
   | Cast Type Exp
   | Addr Exp
@@ -229,6 +235,7 @@ data Stmt
   | Throw  String
   | Call Exp [Exp]
   | CallProc Exp [Exp]
+  | CallGLPrim GLPrim
   | If Exp [Stmt] [Stmt]
   | VarDef Type [String]
   | VarADTDef String String String Exp
@@ -248,8 +255,6 @@ data Stmt
   | Inc Exp
   | Vector_pushBack Exp Exp
   | Vector_pushBackPtr Exp Exp
-  -- for C++
-  | VarCharPtrFromString String Exp
   deriving Show
 
 data Arg = String :@ Type deriving Show
@@ -391,6 +396,9 @@ notNull = NotNull
 (.) :: Exp -> Exp -> Exp
 (.) = (:.)
 
+callGLPrim :: GLPrim -> StmtM ()
+callGLPrim prim = tell [CallGLPrim prim]
+
 callGL :: GLCommand -> [Exp] -> StmtM ()
 callGL fun args = tell [Call (GLCommand fun) args]
 
@@ -479,12 +487,6 @@ expIf a b c = ExpIf a b c
 
 recordValue :: [(String,Exp)] -> Exp
 recordValue = RecordValue
-
-varCharPtrFromString :: String -> Exp -> StmtM ()
-varCharPtrFromString n e = tell [VarCharPtrFromString n e]
-
-charPtrFromString :: Exp -> Exp
-charPtrFromString = CharPtrFromString
 
 var :: Type -> [String] -> StmtM ()
 var t n = tell [VarDef t n]

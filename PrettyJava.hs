@@ -63,12 +63,12 @@ prettyClassScope className ind = \case
 
 prettyClassDef isPublic className ind = \case
   Method isStatic name args retType stmts -> concat
-    [ addIndentation ind $ (if isStatic then "static " else "") ++ visibility ++ prettyType retType ++ " " ++ name ++ "(" ++ intercalate ", " (map prettyArg args) ++ ") {\n"
+    [ addIndentation ind $ (if isStatic then "static " else "") ++ visibility ++ prettyType retType ++ " " ++ name ++ "(" ++ intercalate ", " (map prettyArg args) ++ ") throws Exception {\n"
     , unlines $ map (prettyStmt $ ind + 1) stmts
     , addIndentation ind "}\n\n"
     ]
   Constructor args stmts -> concat
-    [ addIndentation ind $ visibility ++ className ++ "(" ++ intercalate ", " (map prettyArg args) ++ ") {\n"
+    [ addIndentation ind $ visibility ++ className ++ "(" ++ intercalate ", " (map prettyArg args) ++ ") throws Exception {\n"
     , unlines $ map (prettyStmt $ ind + 1) stmts
     , addIndentation ind "}\n\n"
     ]
@@ -109,6 +109,8 @@ prettyType = \case
   Vector t -> "ArrayList<" ++ prettyType t ++ ">"
   Map k v -> "HashMap<" ++ prettyType k ++ "," ++ prettyType v ++ ">"
   String  -> "String"
+  ADTEnum a -> a ++ ".Tag"
+  ADTCons a b -> a ++ "." ++ b ++ "_"
   x -> error $ show x
 
 addIndentation ind s = concat (replicate ind "  ") ++ s
@@ -138,6 +140,7 @@ prettyStmt ind = addIndentation ind . \case
   Switch e c -> "switch (" ++ prettyExp e ++ ") {\n" ++ concatMap ((++"\n") . prettyCase (ind + 1)) c ++ addIndentation ind "}"
   Return e -> "return " ++ prettyExp e ++ ";"
   Throw s -> "throw new Exception(" ++ show s ++ ");"
+  CallGLPrim prim -> prettyGLPrim prim
   Call a b -> prettyExp a ++ "(" ++ intercalate ", " (map prettyExp b) ++ ");"
   CallProc a b -> "Util." ++ prettyExp a ++ "(" ++ intercalate ", " (map prettyExp b) ++ ");"
   If a b c -> "if (" ++ prettyExp a ++ ") {\n" ++ concatMap ((++"\n") . prettyStmt (ind + 1)) b ++ addIndentation ind "}" ++
@@ -146,7 +149,6 @@ prettyStmt ind = addIndentation ind . \case
   VarADTDef t c n e -> t ++ "." ++ c ++ "_ " ++ n ++ " = (" ++ t ++ "." ++ c ++ "_)" ++ prettyExp e ++ ";"
   VarAssignDef t n e -> prettyType t ++ " " ++ n ++ " = " ++ prettyExp e ++ ";"
   VarConstructor t n e -> prettyType t ++ " " ++ n ++ " = " ++ prettyExp e ++ ";"
-  VarCharPtrFromString n e -> "const char* " ++ n ++ " = " ++ prettyExp e ++ ".c_str();"
   a := b -> prettyExp a ++ " = " ++ prettyExp b ++ ";"
   For [a] b c stmts -> "for (" ++ prettyStmt 0 a ++ " " ++ prettyExp b ++ "; " ++ prettyExp c ++ ") {\n" ++ unlines (map (prettyStmt $ ind + 1) stmts) ++ addIndentation ind "}"
   a :/= b -> prettyExp a ++ " /= " ++ prettyExp b ++ ";"
@@ -170,7 +172,7 @@ prettyExp = \case
   EnumVal a b -> a ++ "." ++ b
   EnumADT a b -> a ++ ".Tag." ++ b
   Integer a   -> show a
-  FloatLit a  -> show a
+  FloatLit a  -> show a ++ "f"
   Cast t e    -> "(" ++ prettyType t ++ ")" ++ prettyExp e
   Addr e      -> prettyExp e
   Deref e     -> prettyExp e
@@ -192,7 +194,6 @@ prettyExp = \case
   CallProcExp n a -> "Util." ++ prettyExp n ++ "(" ++ intercalate ", " (map prettyExp a) ++ ")"
   ExpIf a b c -> prettyExp a ++ "?" ++ prettyExp b ++ ":" ++ prettyExp c
   NullPtr -> "null"
-  CharPtrFromString e -> prettyExp e ++ ".c_str()"
   New t a -> "new " ++ prettyType t ++ "(" ++ intercalate "," (map prettyExp a) ++ ")"
   IteratorValue e -> prettyExp e ++ ".getValue()" -- used with foreach
   IteratorKey e -> prettyExp e ++ ".getKey()" -- used with foreach
@@ -206,4 +207,15 @@ prettyExp = \case
   CallTypeConsructor t a -> prettyType t ++ "(" ++ prettyExp a ++ ")"
   GLConstant a -> "GLES20." ++ show a
   GLCommand a -> "GLES20.gl" ++ drop 2 (show a)
+  x -> error $ show x
+
+prettyGLPrim = \case
+  GLGenTexture e -> "{ int[] glObj = new int[1]; GLES20.glGenTextures(1, glObj, 0); " ++ prettyExp e ++ " = glObj[0]; }"
+  GLGenFramebuffer e -> "{ int[] glObj = new int[1]; GLES20.glGenFramebuffers(1, glObj, 0); " ++ prettyExp e ++ " = glObj[0]; }"
+  GLGenBuffer e -> "{ int[] glObj = new int[1]; GLES20.glGenBuffers(1, glObj, 0); " ++ prettyExp e ++ " = glObj[0]; }"
+  GLDeleteTexture e -> "{ int[] glObj = new int[1]; glObj[0] = " ++ prettyExp e ++ "; GLES20.glDeleteTextures(1, glObj, 0);}"
+  GLDeleteFramebuffer e -> "{ int[] glObj = new int[1]; glObj[0] = " ++ prettyExp e ++ "; GLES20.glDeleteFramebuffers(1, glObj, 0);}"
+  GLShaderSource vs src -> "GLES20.glShaderSource(" ++ prettyExp vs ++ ", " ++ prettyExp src ++ ");"
+  GLGetUniformLocation p n v -> prettyExp v ++ " = GLES20.glGetUniformLocation(" ++ prettyExp p ++ ", " ++ prettyExp n ++ ");"
+  GLGetAttribLocation p n v -> prettyExp v ++ " = GLES20.glGetAttribLocation(" ++ prettyExp p ++ ", " ++ prettyExp n ++ ");"
   x -> error $ show x

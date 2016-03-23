@@ -26,6 +26,7 @@ enumConversions = do
       case_ (nsPat "Primitive" "LineList")      $ return_ $ toExp GL_LINES
       case_ (nsPat "Primitive" "LineLoop")      $ return_ $ toExp GL_LINE_LOOP
       case_ (nsPat "Primitive" "PointList")     $ return_ $ toExp GL_POINTS
+    throw "illegal primitive mode"
 
   procedure "blendingFactor" ["bf" :@ SmartPtr "BlendingFactor"] Int $ do
     switch ("bf"~>"tag") $ do -- TODO: ADT switch
@@ -155,7 +156,7 @@ globalFunctions = do
 
   procedure "createTexture" ["tx_" :@ SmartPtr "TextureDescriptor"] "Texture" $ do
     var "Texture" ["t"]
-    callGL GLGenTextures [1,addr $ "t"."texture"]
+    callGLPrim $ GLGenTexture ("t"."texture")
     varADT "TextureDescriptor" "TextureDescriptor" "tx" "tx_"
     varADT "Value" "VV2U" "size" $ "tx"~>"textureSize"
     varAssign Int "width" $ "size"~>"_0"."x"
@@ -234,14 +235,12 @@ globalFunctions = do
     varADT "Program" "Program" "p" "p_"
     -- vertex shader
     varAssign UInt "vs" $ callExpGL GLCreateShader [toExp GL_VERTEX_SHADER]
-    varCharPtrFromString "vsSrc" $ "p"~>"vertexShader"
-    callGL GLShaderSource ["vs",1,addr "vsSrc",nullptr]
+    callGLPrim $ GLShaderSource "vs" ("p"~>"vertexShader")
     callGL GLCompileShader ["vs"]
 
     -- fragment shader
     varAssign UInt "fs" $ callExpGL GLCreateShader [toExp GL_FRAGMENT_SHADER]
-    varCharPtrFromString "fsSrc" $ "p"~>"fragmentShader"
-    callGL GLShaderSource ["fs",1,addr "fsSrc",nullptr]
+    callGLPrim $ GLShaderSource "fs" ("p"~>"fragmentShader")
     callGL GLCompileShader ["fs"]
 
     -- create program
@@ -257,19 +256,19 @@ globalFunctions = do
 
     -- query uniforms
     var Int ["loc"]
-    map_foreach String Int "i" ("p"~>"programUniforms") $ do
-      "loc" .= callExpGL GLGetUniformLocation ["po", charPtrFromString $ key "i"]
+    map_foreach String "InputType" "i" ("p"~>"programUniforms") $ do
+      callGLPrim $ GLGetUniformLocation "po" (key "i") "loc"
       if_ ("loc" >= 0) $ then_ $ do
         map_insert ("glp"~>"programUniforms") (key "i") "loc"
 
     -- query sampler uniforms
-    map_foreach String Int "i" ("p"~>"programInTextures") $ do
-      "loc" .= callExpGL GLGetUniformLocation ["po", charPtrFromString $ key "i"]
+    map_foreach String "InputType" "i" ("p"~>"programInTextures") $ do
+      callGLPrim $ GLGetUniformLocation "po" (key "i") "loc"
       if_ ("loc" >= 0) $ then_ $ do
         map_insert ("glp"~>"programInTextures") (key "i") "loc"
     -- query vertex attributes
     map_foreach String "Parameter" "i" ("p"~>"programStreams") $ do
-      "loc" .= callExpGL GLGetAttribLocation ["po", charPtrFromString $ key "i"]
+      callGLPrim $ GLGetAttribLocation "po" (key "i") "loc"
       if_ ("loc" >= 0) $ then_ $ do
         varADT "Parameter" "Parameter" "param" $ it_value "i"
         map_insert ("glp"~>"programStreams") (key "i") (recordValue [("name","param"~>"name"),("index","loc")])
@@ -449,7 +448,7 @@ classes = do
           "bufferSize" += "i"
 
         var UInt ["bo"]
-        callGL GLGenBuffers [1,addr "bo"]
+        callGLPrim $ GLGenBuffer "bo"
         callGL GLBindBuffer [toExp GL_ARRAY_BUFFER,"bo"]
         callGL GLBufferData [toExp GL_ARRAY_BUFFER,"bufferSize",nullptr,toExp GL_STATIC_DRAW]
         varAssign UInt "offset_" 0
@@ -542,7 +541,7 @@ classes = do
       method "validate" [] Bool $ return_ true -- TODO
 
   struct_ "UniformValue" $ do
-    structVar (Enum "InputType::tag") ["tag"] -- TODO
+    structVar (ADTEnum "InputType") ["tag"] -- TODO
     structUnion
       [ "_int"   :@ Int
       , "_word"  :@ UInt
@@ -676,7 +675,7 @@ classes = do
   class_ "GLES20Pipeline" $ do
     private $ do
       classVar (SmartPtr "PipelineInput") ["input"]
-      classVar (SmartPtr "data::Pipeline") ["pipeline"] -- TODO: type namespace
+      classVar (SmartPtr $ ADTCons "Pipeline" "Pipeline") ["pipeline"]
       classVar (Vector "Texture") ["textures"]
       classVar (Vector UInt) ["targets"]
       classVar (Vector (SmartPtr "GLProgram")) ["programs"]
@@ -696,10 +695,12 @@ classes = do
           return_ 0
         -- has textures attachment
         var UInt ["fb"]
-        callGL GLGenFramebuffers [1,addr "fb"]
+        callGLPrim $ GLGenFramebuffer "fb"
         callGL GLBindFramebuffer [toExp GL_FRAMEBUFFER, "fb"]
-        var Int ["attachment","textarget","level"]
-        var UInt ["texture"]
+        varAssign Int "attachment" 0
+        varAssign Int "textarget" 0
+        varAssign Int "level" 0
+        varAssign UInt "texture" 0
         vector_foreach "TargetItem" "i_" ("t"~>"renderTargets") $ do
           varADT "TargetItem" "TargetItem" "i" "i_"
           switch ("i"~>"targetSemantic"~>"tag") $ do -- TODO: ADT switch
@@ -757,10 +758,10 @@ classes = do
         -- release resources
         -- textures
         vector_foreach "Texture" "i" "textures" $ do
-          callGL GLDeleteTextures [1,addr "i"."texture"]
+          callGLPrim $ GLDeleteTexture $ "i"."texture"
         -- targets
         vector_foreach Int "i" "targets" $ do
-          callGL GLDeleteFramebuffers [1,addr "i"]
+          callGLPrim $ GLDeleteFramebuffer "i"
         -- programs
         vector_foreach "GLProgram" "i" "programs" $ do
           callGL GLDeleteProgram ["i"~>"program"]

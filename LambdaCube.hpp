@@ -79,7 +79,7 @@ class StreamMap {
 };
 
 struct UniformValue {
-  enum InputType::tag tag;
+  ::InputType::tag tag;
   union {
     int32_t _int;
     uint32_t _word;
@@ -188,7 +188,7 @@ struct GLStreamData {
 class GLES20Pipeline {
   private:
     std::shared_ptr<PipelineInput> input;
-    std::shared_ptr<data::Pipeline> pipeline;
+    std::shared_ptr<::data::Pipeline> pipeline;
     std::vector<Texture> textures;
     std::vector<uint32_t> targets;
     std::vector<std::shared_ptr<GLProgram>> programs;

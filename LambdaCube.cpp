@@ -25,6 +25,7 @@ int32_t primitiveMode(Primitive p) {
     case ::Primitive::LineLoop: return GL_LINE_LOOP;
     case ::Primitive::PointList: return GL_POINTS;
   }
+  throw "illegal primitive mode";
 }
 
 int32_t blendingFactor(std::shared_ptr<BlendingFactor> bf) {
@@ -180,7 +181,7 @@ void setStream(int32_t i, Stream& s) {
 
 Texture createTexture(std::shared_ptr<TextureDescriptor> tx_) {
   Texture t;
-  glGenTextures(1, &t.texture);
+  { int glObj; glGenTextures(1, &glObj); t.texture = glObj; }
   auto tx = std::static_pointer_cast<data::TextureDescriptor>(tx_);
   auto size = std::static_pointer_cast<data::VV2U>(tx->textureSize);
   int32_t width = size->_0.x;
@@ -275,12 +276,10 @@ std::shared_ptr<GLStreamData> createStreamData(std::shared_ptr<StreamData> s_) {
 std::shared_ptr<GLProgram> createProgram(std::shared_ptr<Program> p_) {
   auto p = std::static_pointer_cast<data::Program>(p_);
   uint32_t vs = glCreateShader(GL_VERTEX_SHADER);
-  const char* vsSrc = p->vertexShader.c_str();
-  glShaderSource(vs, 1, &vsSrc, nullptr);
+  { char* glslSrc = p->vertexShader.c_str(); glShaderSource(vs, 1, &glslSrc, 0); }
   glCompileShader(vs);
   uint32_t fs = glCreateShader(GL_FRAGMENT_SHADER);
-  const char* fsSrc = p->fragmentShader.c_str();
-  glShaderSource(fs, 1, &fsSrc, nullptr);
+  { char* glslSrc = p->fragmentShader.c_str(); glShaderSource(fs, 1, &glslSrc, 0); }
   glCompileShader(fs);
   uint32_t po = glCreateProgram();
   glAttachShader(po, vs);
@@ -505,7 +504,7 @@ void Buffer::freeze() {
     bufferSize += i;
   }
   uint32_t bo;
-  glGenBuffers(1, &bo);
+  { int glObj; glGenBuffers(1, &glObj); bo = glObj; }
   glBindBuffer(GL_ARRAY_BUFFER, bo);
   glBufferData(GL_ARRAY_BUFFER, bufferSize, nullptr, GL_STATIC_DRAW);
   uint32_t offset_ = 0;
@@ -834,10 +833,12 @@ uint32_t GLES20Pipeline::createRenderTarget(std::shared_ptr<RenderTarget> t_) {
     return 0;
   }
   uint32_t fb;
-  glGenFramebuffers(1, &fb);
+  { int glObj; glGenFramebuffers(1, &glObj); fb = glObj; }
   glBindFramebuffer(GL_FRAMEBUFFER, fb);
-  int32_t attachment, textarget, level;
-  uint32_t texture;
+  int32_t attachment = 0;
+  int32_t textarget = 0;
+  int32_t level = 0;
+  uint32_t texture = 0;
   for (auto i_ : t->renderTargets) {
     auto i = std::static_pointer_cast<data::TargetItem>(i_);
     switch (i->targetSemantic->tag) {
@@ -896,10 +897,10 @@ GLES20Pipeline::GLES20Pipeline(std::shared_ptr<Pipeline> ppl_) {
 
 GLES20Pipeline::~GLES20Pipeline() {
   for (auto i : textures) {
-    glDeleteTextures(1, &i.texture);
+    { int glObj = i.texture; glDeleteTextures(1, &glObj); }
   }
   for (auto i : targets) {
-    glDeleteFramebuffers(1, &i);
+    { int glObj = i; glDeleteFramebuffers(1, &glObj); }
   }
   for (auto i : programs) {
     glDeleteProgram(i->program);
