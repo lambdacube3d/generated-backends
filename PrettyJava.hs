@@ -19,8 +19,10 @@ prettyJava path defM = do
   let inc = unlines
           [ "package LambdaCube.GLES20;"
           , ""
+          , "import java.nio.*;"
           , "import android.opengl.GLES20;"
           , "import LambdaCube.IR.*;"
+          , "import RT.*;"
           , "import java.util.ArrayList;"
           , "import java.util.HashMap;"
           , "import java.util.Map;"
@@ -78,14 +80,12 @@ prettyClassDef isPublic className ind = \case
     , addIndentation ind "}\n\n"
     ]
   ClassVar t vars -> addIndentation ind $ visibility ++ prettyType t ++ " " ++ intercalate ", " vars ++ ";\n"
-  ClassUnion args -> concatMap (addIndentation ind . (visibility ++) . (++ ";\n") . prettyArg) args -- TODO
-  x -> error $ show x
+  x -> error $ "java - prettyClassDef: " ++ show x
  where
   visibility = if isPublic then "public " else "protected "
 
 prettyStructDef ind = \case
   StructVar t vars -> addIndentation ind $ "public " ++ prettyType t ++ " " ++ intercalate ", " vars ++ ";\n"
-  StructUnion args -> concatMap (addIndentation ind . ("public " ++) . (++ ";\n") . prettyArg) args -- TODO: remove union
 
 prettyArg (n :@ t) = unwords [prettyType t,n]
 
@@ -111,7 +111,10 @@ prettyType = \case
   String  -> "String"
   ADTEnum a -> a ++ ".Tag"
   ADTCons a b -> a ++ "." ++ b ++ "_"
-  x -> error $ show x
+  NativeArray Int -> "int[]"
+  NativeArray Float -> "float[]"
+  NativeBuffer -> "Buffer"
+  x -> error $ "java - prettyType: " ++ show x
 
 addIndentation ind s = concat (replicate ind "  ") ++ s
 
@@ -135,6 +138,7 @@ prettyCase ind = addIndentation ind . \case
 prettyPat = \case
   NsPat a b -> b
   NsPatADT a b -> b
+  GLPat a -> "GLES20." ++ show a
 
 prettyStmt ind = addIndentation ind . \case
   Switch e c -> "switch (" ++ prettyExp e ++ ") {\n" ++ concatMap ((++"\n") . prettyCase (ind + 1)) c ++ addIndentation ind "}"
@@ -149,6 +153,11 @@ prettyStmt ind = addIndentation ind . \case
   VarADTDef t c n e -> t ++ "." ++ c ++ "_ " ++ n ++ " = (" ++ t ++ "." ++ c ++ "_)" ++ prettyExp e ++ ";"
   VarAssignDef t n e -> prettyType t ++ " " ++ n ++ " = " ++ prettyExp e ++ ";"
   VarConstructor t n e -> prettyType t ++ " " ++ n ++ " = " ++ prettyExp e ++ ";"
+  VarRecordValue t x a -> prettyType t ++ " " ++ x ++ " = new " ++ prettyType t ++ "();\n" ++ intercalate "\n" [addIndentation ind $ x ++ "." ++ n ++ " = " ++ prettyExp v ++ ";" | (n,v) <- a]
+  VarNativeBufferFrom t n a -> let tStr = case t of
+                                    Vector Float -> "FloatBuffer"
+                                   populate = "for (Float vec_elem : " ++ prettyExp a ++ ") " ++ n ++ ".put(vec_elem);\n" ++ addIndentation ind (n ++ ".rewind();")
+                               in tStr ++ " " ++ n ++ " = " ++ tStr ++ ".allocate(" ++ prettyExp a ++ ".size());\n" ++ addIndentation ind populate
   a := b -> prettyExp a ++ " = " ++ prettyExp b ++ ";"
   For [a] b c stmts -> "for (" ++ prettyStmt 0 a ++ " " ++ prettyExp b ++ "; " ++ prettyExp c ++ ") {\n" ++ unlines (map (prettyStmt $ ind + 1) stmts) ++ addIndentation ind "}"
   a :/= b -> prettyExp a ++ " /= " ++ prettyExp b ++ ";"
@@ -163,19 +172,17 @@ prettyStmt ind = addIndentation ind . \case
   Break -> "break;"
   Continue -> "continue;"
   Inc e -> prettyExp e ++ "++;"
-  x -> error $ show x
+  x -> error $ "java - prettyStmt: " ++ show x
 
 prettyExp = \case
   a :-> b -> prettyExp a ++ "." ++ prettyExp b
   a :. b  -> prettyExp a ++ "." ++ prettyExp b
+  Deref e     -> prettyExp e
   Var n   -> n
   EnumVal a b -> a ++ "." ++ b
   EnumADT a b -> a ++ ".Tag." ++ b
   Integer a   -> show a
   FloatLit a  -> show a ++ "f"
-  Cast t e    -> "(" ++ prettyType t ++ ")" ++ prettyExp e
-  Addr e      -> prettyExp e
-  Deref e     -> prettyExp e
   BoolLit True  -> "true"
   BoolLit False -> "false"
   Vector_lookup a b -> prettyExp a ++ ".get(" ++ prettyExp b ++ ")"
@@ -197,17 +204,15 @@ prettyExp = \case
   New t a -> "new " ++ prettyType t ++ "(" ++ intercalate "," (map prettyExp a) ++ ")"
   IteratorValue e -> prettyExp e ++ ".getValue()" -- used with foreach
   IteratorKey e -> prettyExp e ++ ".getKey()" -- used with foreach
-  RecordValue a -> "{" ++ intercalate ", " ["." ++ n ++ " = " ++ prettyExp v | (n,v) <- a] ++ "}"
   NotNull e -> prettyExp e ++ "!= null"
   Not e -> "!" ++ prettyExp e
   Map_notElem a b -> "!" ++ prettyExp a ++ ".containsKey(" ++ prettyExp b ++ ")"
   Map_elem a b -> prettyExp a ++ ".containsKey(" ++ prettyExp b ++ ")"
   Vector_size a -> prettyExp a ++ ".size()"
-  Vector_dataPtr a -> prettyExp a ++ ".data()"
-  CallTypeConsructor t a -> prettyType t ++ "(" ++ prettyExp a ++ ")"
+  CallTypeConsructor t a -> prettyExp a
   GLConstant a -> "GLES20." ++ show a
   GLCommand a -> "GLES20.gl" ++ drop 2 (show a)
-  x -> error $ show x
+  x -> error $ "java - prettyExp: " ++ show x
 
 prettyGLPrim = \case
   GLGenTexture e -> "{ int[] glObj = new int[1]; GLES20.glGenTextures(1, glObj, 0); " ++ prettyExp e ++ " = glObj[0]; }"
@@ -218,4 +223,20 @@ prettyGLPrim = \case
   GLShaderSource vs src -> "GLES20.glShaderSource(" ++ prettyExp vs ++ ", " ++ prettyExp src ++ ");"
   GLGetUniformLocation p n v -> prettyExp v ++ " = GLES20.glGetUniformLocation(" ++ prettyExp p ++ ", " ++ prettyExp n ++ ");"
   GLGetAttribLocation p n v -> prettyExp v ++ " = GLES20.glGetAttribLocation(" ++ prettyExp p ++ ", " ++ prettyExp n ++ ");"
-  x -> error $ show x
+  GLUniform1iv a b c -> "GLES20.glUniform1iv(" ++ prettyExp a ++ ", " ++ prettyExp b ++ ", " ++ prettyExp c ++ ", 0);"
+  GLUniform1fv a b c -> "GLES20.glUniform1fv(" ++ prettyExp a ++ ", " ++ prettyExp b ++ ", " ++ prettyExp c ++ ", 0);"
+  GLUniform2iv a b c -> "GLES20.glUniform2iv(" ++ prettyExp a ++ ", " ++ prettyExp b ++ ", " ++ prettyExp c ++ ", 0);"
+  GLUniform2fv a b c -> "GLES20.glUniform2fv(" ++ prettyExp a ++ ", " ++ prettyExp b ++ ", " ++ prettyExp c ++ ", 0);"
+  GLUniform3iv a b c -> "GLES20.glUniform3iv(" ++ prettyExp a ++ ", " ++ prettyExp b ++ ", " ++ prettyExp c ++ ", 0);"
+  GLUniform3fv a b c -> "GLES20.glUniform3fv(" ++ prettyExp a ++ ", " ++ prettyExp b ++ ", " ++ prettyExp c ++ ", 0);"
+  GLUniform4iv a b c -> "GLES20.glUniform4iv(" ++ prettyExp a ++ ", " ++ prettyExp b ++ ", " ++ prettyExp c ++ ", 0);"
+  GLUniform4fv a b c -> "GLES20.glUniform4fv(" ++ prettyExp a ++ ", " ++ prettyExp b ++ ", " ++ prettyExp c ++ ", 0);"
+  GLUniformMatrix2fv a b c d -> "GLES20.glUniformMatrix2fv(" ++ prettyExp a ++ ", " ++ prettyExp b ++ ", " ++ prettyExp c ++ ", " ++ prettyExp d ++ ", 0);"
+  GLUniformMatrix3fv a b c d -> "GLES20.glUniformMatrix3fv(" ++ prettyExp a ++ ", " ++ prettyExp b ++ ", " ++ prettyExp c ++ ", " ++ prettyExp d ++ ", 0);"
+  GLUniformMatrix4fv a b c d -> "GLES20.glUniformMatrix4fv(" ++ prettyExp a ++ ", " ++ prettyExp b ++ ", " ++ prettyExp c ++ ", " ++ prettyExp d ++ ", 0);"
+  GLVertexAttribPointer a b c d e f -> "GLES20.glVertexAttribPointer(" ++ intercalate ", " (map prettyExp [a,b,c,d,e,f]) ++ ");"
+  GLVertexAttrib1fv a b c -> "GLES20.glVertexAttrib1fv(" ++ intercalate ", " (map prettyExp [a,b,c]) ++ ");"
+  GLVertexAttrib2fv a b c -> "GLES20.glVertexAttrib2fv(" ++ intercalate ", " (map prettyExp [a,b,c]) ++ ");"
+  GLVertexAttrib3fv a b c -> "GLES20.glVertexAttrib3fv(" ++ intercalate ", " (map prettyExp [a,b,c]) ++ ");"
+  GLVertexAttrib4fv a b c -> "GLES20.glVertexAttrib4fv(" ++ intercalate ", " (map prettyExp [a,b,c]) ++ ");"
+  x -> error $ "java - prettyGLPrim: " ++ show x

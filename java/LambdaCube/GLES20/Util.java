@@ -1,7 +1,9 @@
 package LambdaCube.GLES20;
 
+import java.nio.*;
 import android.opengl.GLES20;
 import LambdaCube.IR.*;
+import RT.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -128,25 +130,66 @@ public class Util {
 
   static public void setUniformValue(Integer i, UniformValue v) throws Exception {
     switch (v.tag) {
-      case Int: GLES20.glUniform1i(i, v._int); break;
-      case Word: GLES20.glUniform1i(i, v._word); break;
-      case Float: GLES20.glUniform1f(i, v._float); break;
-      case Bool: GLES20.glUniform1i(i, v._bool); break;
-      case V2I: GLES20.glUniform2iv(i, 1, (Integer)v._v2i); break;
-      case V2U: GLES20.glUniform2iv(i, 1, (Integer)v._v2u); break;
-      case V2F: GLES20.glUniform2fv(i, 1, (Float)v._v2f); break;
-      case V2B: GLES20.glUniform2iv(i, 1, (Integer)v._v2b); break;
-      case V3I: GLES20.glUniform3iv(i, 1, (Integer)v._v3i); break;
-      case V3U: GLES20.glUniform3iv(i, 1, (Integer)v._v3u); break;
-      case V3F: GLES20.glUniform3fv(i, 1, (Float)v._v3f); break;
-      case V3B: GLES20.glUniform3iv(i, 1, (Integer)v._v3b); break;
-      case V4I: GLES20.glUniform4iv(i, 1, (Integer)v._v4i); break;
-      case V4U: GLES20.glUniform4iv(i, 1, (Integer)v._v4u); break;
-      case V4F: GLES20.glUniform4fv(i, 1, (Float)v._v4f); break;
-      case V4B: GLES20.glUniform4iv(i, 1, (Integer)v._v4b); break;
-      case M22F: GLES20.glUniformMatrix2fv(i, 1, false, (Float)v._m22f); break;
-      case M33F: GLES20.glUniformMatrix3fv(i, 1, false, (Float)v._m33f); break;
-      case M44F: GLES20.glUniformMatrix4fv(i, 1, false, (Float)v._m44f); break;
+      case Int: {
+        GLES20.glUniform1iv(i, 1, v._int, 0);
+        break;
+      }
+      case Bool: {
+        GLES20.glUniform1iv(i, 1, v._int, 0);
+        break;
+      }
+      case Float: {
+        GLES20.glUniform1fv(i, 1, v._float, 0);
+        break;
+      }
+      case V2I: {
+        GLES20.glUniform2iv(i, 1, v._int, 0);
+        break;
+      }
+      case V2B: {
+        GLES20.glUniform2iv(i, 1, v._int, 0);
+        break;
+      }
+      case V2F: {
+        GLES20.glUniform2fv(i, 1, v._float, 0);
+        break;
+      }
+      case V3I: {
+        GLES20.glUniform3iv(i, 1, v._int, 0);
+        break;
+      }
+      case V3B: {
+        GLES20.glUniform3iv(i, 1, v._int, 0);
+        break;
+      }
+      case V3F: {
+        GLES20.glUniform3fv(i, 1, v._float, 0);
+        break;
+      }
+      case V4I: {
+        GLES20.glUniform4iv(i, 1, v._int, 0);
+        break;
+      }
+      case V4B: {
+        GLES20.glUniform4iv(i, 1, v._int, 0);
+        break;
+      }
+      case V4F: {
+        GLES20.glUniform4fv(i, 1, v._float, 0);
+        break;
+      }
+      case M22F: {
+        GLES20.glUniformMatrix2fv(i, 1, false, v._float, 0);
+        break;
+      }
+      case M33F: {
+        GLES20.glUniformMatrix3fv(i, 1, false, v._float, 0);
+        break;
+      }
+      case M44F: {
+        GLES20.glUniformMatrix4fv(i, 1, false, v._float, 0);
+        break;
+      }
     }
   }
 
@@ -154,30 +197,42 @@ public class Util {
     if (s.isArray) {
       GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, s.buffer.bufferObject);
       GLES20.glEnableVertexAttribArray(i);
-      GLES20.glVertexAttribPointer(i, s.glSize, s.buffer.glType.get(s.index), false, 0, (void)s.buffer.offset.get(s.index));
+      GLES20.glVertexAttribPointer(i, s.glSize, s.buffer.glType.get(s.index), false, 0, s.buffer.offset.get(s.index));
     } else {
       GLES20.glDisableVertexAttribArray(i);
       switch (s.type) {
-        case FLOAT: GLES20.glVertexAttrib1f(i, s._float); break;
-        case FLOAT_VEC2: GLES20.glVertexAttrib2fv(i, (Float)s._v2f); break;
-        case FLOAT_VEC3: GLES20.glVertexAttrib3fv(i, (Float)s._v3f); break;
-        case FLOAT_VEC4: GLES20.glVertexAttrib4fv(i, (Float)s._v4f); break;
+        case FLOAT: {
+          GLES20.glVertexAttrib1fv(i, s.attributeValue._float, 0);
+          break;
+        }
+        case FLOAT_VEC2: {
+          GLES20.glVertexAttrib2fv(i, s.attributeValue._float, 0);
+          break;
+        }
+        case FLOAT_VEC3: {
+          GLES20.glVertexAttrib3fv(i, s.attributeValue._float, 0);
+          break;
+        }
+        case FLOAT_VEC4: {
+          GLES20.glVertexAttrib4fv(i, s.attributeValue._float, 0);
+          break;
+        }
         case FLOAT_MAT2: {
-          GLES20.glVertexAttrib2fv(i, (Float)s._m22f.x);
-          GLES20.glVertexAttrib2fv(i + 1, (Float)s._m22f.y);
+          GLES20.glVertexAttrib2fv(i, s.attributeValue._float, 0);
+          GLES20.glVertexAttrib2fv(i + 1, s.attributeValue._float, 2);
           break;
         }
         case FLOAT_MAT3: {
-          GLES20.glVertexAttrib3fv(i, (Float)s._m33f.x);
-          GLES20.glVertexAttrib3fv(i + 1, (Float)s._m33f.y);
-          GLES20.glVertexAttrib3fv(i + 2, (Float)s._m33f.z);
+          GLES20.glVertexAttrib3fv(i, s.attributeValue._float, 0);
+          GLES20.glVertexAttrib3fv(i + 1, s.attributeValue._float, 3);
+          GLES20.glVertexAttrib3fv(i + 2, s.attributeValue._float, 6);
           break;
         }
         case FLOAT_MAT4: {
-          GLES20.glVertexAttrib4fv(i, (Float)s._m44f.x);
-          GLES20.glVertexAttrib4fv(i + 1, (Float)s._m44f.y);
-          GLES20.glVertexAttrib4fv(i + 2, (Float)s._m44f.z);
-          GLES20.glVertexAttrib4fv(i + 3, (Float)s._m44f.w);
+          GLES20.glVertexAttrib4fv(i, s.attributeValue._float, 0);
+          GLES20.glVertexAttrib4fv(i + 1, s.attributeValue._float, 4);
+          GLES20.glVertexAttrib4fv(i + 2, s.attributeValue._float, 8);
+          GLES20.glVertexAttrib4fv(i + 3, s.attributeValue._float, 12);
           break;
         }
       }
@@ -185,7 +240,7 @@ public class Util {
   }
 
   static public Texture createTexture(TextureDescriptor tx_) throws Exception {
-    Texture t;
+    Texture t = new Texture();
     { int[] glObj = new int[1]; GLES20.glGenTextures(1, glObj, 0); t.texture = glObj[0]; }
     TextureDescriptor.TextureDescriptor_ tx = (TextureDescriptor.TextureDescriptor_)tx_;
     Value.VV2U_ size = (Value.VV2U_)tx.textureSize;
@@ -243,7 +298,7 @@ public class Util {
       case Lines: gls.glMode = GLES20.GL_LINES; break;
       case Triangles: gls.glMode = GLES20.GL_TRIANGLES; break;
     }
-    Buffer buffer = new Buffer();
+    GLBuffer buffer = new GLBuffer();
     for (Map.Entry<String,ArrayValue> i : s.streamData.entrySet()) {
       switch (i.getValue().tag) {
         case VBoolArray: {
@@ -261,7 +316,10 @@ public class Util {
         case VFloatArray: {
           ArrayValue.VFloatArray_ a = (ArrayValue.VFloatArray_)i.getValue();
           Type type = inputType(s.streamType.get(i.getKey()));
-          gls.streams.add(i.getKey(), type, buffer, buffer.add(a._0));
+          FloatBuffer buf = FloatBuffer.allocate(a._0.size());
+          for (Float vec_elem : a._0) buf.put(vec_elem);
+          buf.rewind();
+          gls.streams.add(i.getKey(), type, buffer, buffer.add(buf, GLES20.GL_FLOAT, a._0.size()));
           break;
         }
       }
@@ -311,7 +369,10 @@ public class Util {
       loc = GLES20.glGetAttribLocation(po, i.getKey());
       if (loc >= 0) {
         Parameter.Parameter_ param = (Parameter.Parameter_)i.getValue();
-        glp.programStreams.put(i.getKey(), {.name = param.name, .index = loc});
+        StreamInfo s = new StreamInfo();
+        s.name = param.name;
+        s.index = loc;
+        glp.programStreams.put(i.getKey(), s);
       }
     }
     return glp;

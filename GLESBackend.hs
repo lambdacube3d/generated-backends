@@ -104,59 +104,56 @@ enumConversions = do
 globalFunctions = do
   procedure "setUniformValue" ["i" :@ Int, "v" :@ Ref "UniformValue"] Void $ do
     switch ("v"."tag") $ do -- TODO: ADT switch
-      case_ (nsPatADT "InputType" "Int")    $ callGL GLUniform1i ["i","v"."_int"]
-      case_ (nsPatADT "InputType" "Word")   $ callGL GLUniform1i ["i","v"."_word"]
-      case_ (nsPatADT "InputType" "Float")  $ callGL GLUniform1f ["i","v"."_float"]
-      case_ (nsPatADT "InputType" "Bool")   $ callGL GLUniform1i ["i","v"."_bool"]
-      case_ (nsPatADT "InputType" "V2I")    $ callGL GLUniform2iv ["i",1,cast (Ptr Int) $ addr $ "v"."_v2i"]
-      case_ (nsPatADT "InputType" "V2U")    $ callGL GLUniform2iv ["i",1,cast (Ptr Int) $ addr $ "v"."_v2u"]
-      case_ (nsPatADT "InputType" "V2F")    $ callGL GLUniform2fv ["i",1,cast (Ptr Float) $ addr $ "v"."_v2f"]
-      case_ (nsPatADT "InputType" "V2B")    $ callGL GLUniform2iv ["i",1,cast (Ptr Int) $ addr $ "v"."_v2b"]
+      case_ (nsPatADT "InputType" "Int")    $ callGLPrim $ GLUniform1iv "i" 1 ("v"."_int")
+      case_ (nsPatADT "InputType" "Bool")   $ callGLPrim $ GLUniform1iv "i" 1 ("v"."_int")
+      case_ (nsPatADT "InputType" "Float")  $ callGLPrim $ GLUniform1fv "i" 1 ("v"."_float")
+      case_ (nsPatADT "InputType" "V2I")    $ callGLPrim $ GLUniform2iv "i" 1 ("v"."_int")
+      case_ (nsPatADT "InputType" "V2B")    $ callGLPrim $ GLUniform2iv "i" 1 ("v"."_int")
+      case_ (nsPatADT "InputType" "V2F")    $ callGLPrim $ GLUniform2fv "i" 1 ("v"."_float")
 
-      case_ (nsPatADT "InputType" "V3I")    $ callGL GLUniform3iv ["i",1,cast (Ptr Int) $ addr $ "v"."_v3i"]
-      case_ (nsPatADT "InputType" "V3U")    $ callGL GLUniform3iv ["i",1,cast (Ptr Int) $ addr $ "v"."_v3u"]
-      case_ (nsPatADT "InputType" "V3F")    $ callGL GLUniform3fv ["i",1,cast (Ptr Float) $ addr $ "v"."_v3f"]
-      case_ (nsPatADT "InputType" "V3B")    $ callGL GLUniform3iv ["i",1,cast (Ptr Int) $ addr $ "v"."_v3b"]
+      case_ (nsPatADT "InputType" "V3I")    $ callGLPrim $ GLUniform3iv "i" 1 ("v"."_int")
+      case_ (nsPatADT "InputType" "V3B")    $ callGLPrim $ GLUniform3iv "i" 1 ("v"."_int")
+      case_ (nsPatADT "InputType" "V3F")    $ callGLPrim $ GLUniform3fv "i" 1 ("v"."_float")
 
-      case_ (nsPatADT "InputType" "V4I")    $ callGL GLUniform4iv ["i",1,cast (Ptr Int) $ addr $ "v"."_v4i"]
-      case_ (nsPatADT "InputType" "V4U")    $ callGL GLUniform4iv ["i",1,cast (Ptr Int) $ addr $ "v"."_v4u"]
-      case_ (nsPatADT "InputType" "V4F")    $ callGL GLUniform4fv ["i",1,cast (Ptr Float) $ addr $ "v"."_v4f"]
-      case_ (nsPatADT "InputType" "V4B")    $ callGL GLUniform4iv ["i",1,cast (Ptr Int) $ addr $ "v"."_v4b"]
+      case_ (nsPatADT "InputType" "V4I")    $ callGLPrim $ GLUniform4iv "i" 1 ("v"."_int")
+      case_ (nsPatADT "InputType" "V4B")    $ callGLPrim $ GLUniform4iv "i" 1 ("v"."_int")
+      case_ (nsPatADT "InputType" "V4F")    $ callGLPrim $ GLUniform4fv "i" 1 ("v"."_float")
 
-      case_ (nsPatADT "InputType" "M22F")   $ callGL GLUniformMatrix2fv ["i",1,false,cast (Ptr Float) $ addr $ "v"."_m22f"]
-      case_ (nsPatADT "InputType" "M33F")   $ callGL GLUniformMatrix3fv ["i",1,false,cast (Ptr Float) $ addr $ "v"."_m33f"]
-      case_ (nsPatADT "InputType" "M44F")   $ callGL GLUniformMatrix4fv ["i",1,false,cast (Ptr Float) $ addr $ "v"."_m44f"]
+      case_ (nsPatADT "InputType" "M22F")   $ callGLPrim $ GLUniformMatrix2fv "i" 1 false ("v"."_float")
+      case_ (nsPatADT "InputType" "M33F")   $ callGLPrim $ GLUniformMatrix3fv "i" 1 false ("v"."_float")
+      case_ (nsPatADT "InputType" "M44F")   $ callGLPrim $ GLUniformMatrix4fv "i" 1 false ("v"."_float")
 
   procedure "setStream" ["i" :@ Int, "s" :@ Ref "Stream"] Void $ do
     if_ ("s"."isArray") $ do
       then_ $ do
         callGL GLBindBuffer [toExp GL_ARRAY_BUFFER,"s"."buffer"~>"bufferObject"]
         callGL GLEnableVertexAttribArray ["i"]
-        callGL GLVertexAttribPointer
-          [ "i", "s"."glSize"
-          , ("s"."buffer"~>"glType") `vector_lookup` ("s"."index"), false, 0
-          , cast (Const $ Ptr Void) $ ("s"."buffer"~>"offset") `vector_lookup` ("s"."index")
-          ]
+        callGLPrim $ GLVertexAttribPointer "i" ("s"."glSize")
+          (("s"."buffer"~>"glType") `vector_lookup` ("s"."index")) false 0
+          (("s"."buffer"~>"offset") `vector_lookup` ("s"."index"))
       else_ $ do
         callGL GLDisableVertexAttribArray ["i"]
         switch ("s"."type") $ do
-          case_ (nsPat "Type" "FLOAT") $ callGL GLVertexAttrib1f ["i","s"."_float"]
-          case_ (nsPat "Type" "FLOAT_VEC2") $ callGL GLVertexAttrib2fv ["i", cast (Ptr Float) $ addr $ "s"."_v2f"]
-          case_ (nsPat "Type" "FLOAT_VEC3") $ callGL GLVertexAttrib3fv ["i", cast (Ptr Float) $ addr $ "s"."_v3f"]
-          case_ (nsPat "Type" "FLOAT_VEC4") $ callGL GLVertexAttrib4fv ["i", cast (Ptr Float) $ addr $ "s"."_v4f"]
-          case_ (nsPat "Type" "FLOAT_MAT2") $ do callGL GLVertexAttrib2fv ["i",     cast (Ptr Float) $ addr $ "s"."_m22f"."x"]
-                                                 callGL GLVertexAttrib2fv ["i" + 1, cast (Ptr Float) $ addr $ "s"."_m22f"."y"]
-          case_ (nsPat "Type" "FLOAT_MAT3") $ do callGL GLVertexAttrib3fv ["i",     cast (Ptr Float) $ addr $ "s"."_m33f"."x"]
-                                                 callGL GLVertexAttrib3fv ["i" + 1, cast (Ptr Float) $ addr $ "s"."_m33f"."y"]
-                                                 callGL GLVertexAttrib3fv ["i" + 2, cast (Ptr Float) $ addr $ "s"."_m33f"."z"]
-          case_ (nsPat "Type" "FLOAT_MAT4") $ do callGL GLVertexAttrib4fv ["i",     cast (Ptr Float) $ addr $ "s"."_m44f"."x"]
-                                                 callGL GLVertexAttrib4fv ["i" + 1, cast (Ptr Float) $ addr $ "s"."_m44f"."y"]
-                                                 callGL GLVertexAttrib4fv ["i" + 2, cast (Ptr Float) $ addr $ "s"."_m44f"."z"]
-                                                 callGL GLVertexAttrib4fv ["i" + 3, cast (Ptr Float) $ addr $ "s"."_m44f"."w"]
+          case_ (nsPat "Type" "FLOAT")      $ callGLPrim $ GLVertexAttrib1fv "i" ("s"."attributeValue"."_float") 0
+          case_ (nsPat "Type" "FLOAT_VEC2") $ callGLPrim $ GLVertexAttrib2fv "i" ("s"."attributeValue"."_float") 0
+          case_ (nsPat "Type" "FLOAT_VEC3") $ callGLPrim $ GLVertexAttrib3fv "i" ("s"."attributeValue"."_float") 0
+          case_ (nsPat "Type" "FLOAT_VEC4") $ callGLPrim $ GLVertexAttrib4fv "i" ("s"."attributeValue"."_float") 0
+          case_ (nsPat "Type" "FLOAT_MAT2") $ do
+                                              callGLPrim $ GLVertexAttrib2fv "i"       ("s"."attributeValue"."_float") 0
+                                              callGLPrim $ GLVertexAttrib2fv ("i" + 1) ("s"."attributeValue"."_float") 2
+          case_ (nsPat "Type" "FLOAT_MAT3") $ do
+                                              callGLPrim $ GLVertexAttrib3fv "i"       ("s"."attributeValue"."_float") 0
+                                              callGLPrim $ GLVertexAttrib3fv ("i" + 1) ("s"."attributeValue"."_float") 3
+                                              callGLPrim $ GLVertexAttrib3fv ("i" + 2) ("s"."attributeValue"."_float") 6
+          case_ (nsPat "Type" "FLOAT_MAT4") $ do
+                                              callGLPrim $ GLVertexAttrib4fv "i"       ("s"."attributeValue"."_float") 0
+                                              callGLPrim $ GLVertexAttrib4fv ("i" + 1) ("s"."attributeValue"."_float") 4
+                                              callGLPrim $ GLVertexAttrib4fv ("i" + 2) ("s"."attributeValue"."_float") 8
+                                              callGLPrim $ GLVertexAttrib4fv ("i" + 3) ("s"."attributeValue"."_float") 12
 
-  procedure "createTexture" ["tx_" :@ SmartPtr "TextureDescriptor"] "Texture" $ do
-    var "Texture" ["t"]
-    callGLPrim $ GLGenTexture ("t"."texture")
+  procedure "createTexture" ["tx_" :@ SmartPtr "TextureDescriptor"] (SmartPtr "Texture") $ do
+    varConstructor (SmartPtr "Texture") "t" $ new "Texture" []
+    callGLPrim $ GLGenTexture ("t"~>"texture")
     varADT "TextureDescriptor" "TextureDescriptor" "tx" "tx_"
     varADT "Value" "VV2U" "size" $ "tx"~>"textureSize"
     varAssign Int "width" $ "size"~>"_0"."x"
@@ -164,23 +161,23 @@ globalFunctions = do
     var Int ["internalFormat","dataFormat"]
     switch ("tx"~>"textureType"~>"tag") $ do -- TODO: ADT switch
       case_ (nsPatADT "TextureType" "Texture2D") $ do
-        "t"."target" .= toExp GL_TEXTURE_2D
+        "t"~>"target" .= toExp GL_TEXTURE_2D
         varADT "TextureType" "Texture2D" "tx2D" $ "tx"~>"textureType"
         "internalFormat" .= callExp "textureDataTypeToGLType" ["tx"~>"textureSemantic","tx2D"~>"_0"]
         "dataFormat" .= callExp "textureDataTypeToGLArityType" ["tx"~>"textureSemantic","tx2D"~>"_0"]
       case_ (nsPatADT "TextureType" "TextureCube") $ do
-        "t"."target" .= toExp GL_TEXTURE_CUBE_MAP
+        "t"~>"target" .= toExp GL_TEXTURE_CUBE_MAP
         varADT "TextureType" "TextureCube" "txCube" $ "tx"~>"textureType"
         "internalFormat" .= callExp "textureDataTypeToGLType" ["tx"~>"textureSemantic","txCube"~>"_0"]
         "dataFormat" .= callExp "textureDataTypeToGLArityType" ["tx"~>"textureSemantic","txCube"~>"_0"]
       default_ $ throw "unsupported texture type"
 
-    callGL GLBindTexture ["t"."target", "t"."texture"]
+    callGL GLBindTexture ["t"~>"target", "t"~>"texture"]
     varAssign Int "dataType" $ expIf ("dataFormat" == toExp GL_DEPTH_COMPONENT) (toExp GL_UNSIGNED_SHORT) (toExp GL_UNSIGNED_BYTE)
     for (varAssign Int "level" $ "tx"~>"textureBaseLevel") ("level" <= "tx"~>"textureMaxLevel") (incExp "level") $ do
-      if_ ("t"."target" == toExp GL_TEXTURE_2D) $ do
+      if_ ("t"~>"target" == toExp GL_TEXTURE_2D) $ do
         then_ $ do
-          callGL GLTexImage2D ["t"."target","level","internalFormat", "width", "height", 0, "dataFormat", "dataType", nullptr]
+          callGL GLTexImage2D ["t"~>"target","level","internalFormat", "width", "height", 0, "dataFormat", "dataType", nullptr]
         else_ $ do
           callGL GLTexImage2D [toExp GL_TEXTURE_CUBE_MAP_POSITIVE_X,"level","internalFormat", "width", "height", 0, "dataFormat", "dataType", nullptr]
           callGL GLTexImage2D [toExp GL_TEXTURE_CUBE_MAP_NEGATIVE_X,"level","internalFormat", "width", "height", 0, "dataFormat", "dataType", nullptr]
@@ -193,10 +190,10 @@ globalFunctions = do
 
     -- setup texture sampling
     varADT "SamplerDescriptor" "SamplerDescriptor" "s" $ "tx"~>"textureSampler"
-    callGL GLTexParameteri ["t"."target", toExp GL_TEXTURE_WRAP_S, callExp "edgeMode" ["s"~>"samplerWrapS"]]
-    callGL GLTexParameteri ["t"."target", toExp GL_TEXTURE_WRAP_T, callExp "edgeMode" ["s"~>"samplerWrapT"."data"]]
-    callGL GLTexParameteri ["t"."target", toExp GL_TEXTURE_MIN_FILTER, callExp "filterMode" ["s"~>"samplerMinFilter"]]
-    callGL GLTexParameteri ["t"."target", toExp GL_TEXTURE_MAG_FILTER, callExp "filterMode" ["s"~>"samplerMagFilter"]]
+    callGL GLTexParameteri ["t"~>"target", toExp GL_TEXTURE_WRAP_S, callExp "edgeMode" ["s"~>"samplerWrapS"]]
+    callGL GLTexParameteri ["t"~>"target", toExp GL_TEXTURE_WRAP_T, callExp "edgeMode" ["s"~>"samplerWrapT"."data"]]
+    callGL GLTexParameteri ["t"~>"target", toExp GL_TEXTURE_MIN_FILTER, callExp "filterMode" ["s"~>"samplerMinFilter"]]
+    callGL GLTexParameteri ["t"~>"target", toExp GL_TEXTURE_MAG_FILTER, callExp "filterMode" ["s"~>"samplerMagFilter"]]
     return_ "t"
 
   procedure "createStreamData" ["s_" :@ SmartPtr "StreamData"] (SmartPtr "GLStreamData") $ do
@@ -207,7 +204,7 @@ globalFunctions = do
       case_ (nsPatADT "FetchPrimitive" "Points")    $ "gls"~>"glMode" .= toExp GL_POINTS
       case_ (nsPatADT "FetchPrimitive" "Lines")     $ "gls"~>"glMode" .= toExp GL_LINES
       case_ (nsPatADT "FetchPrimitive" "Triangles") $ "gls"~>"glMode" .= toExp GL_TRIANGLES
-    varConstructor (SmartPtr "Buffer") "buffer" $ new "Buffer" []
+    varConstructor (SmartPtr "GLBuffer") "buffer" $ new "GLBuffer" []
     map_foreach String "ArrayValue" "i" ("s"~>"streamData") $ do
       switch (it_value "i"~>"tag") $ do -- TODO: ADT switch
         case_ (nsPatADT "ArrayValue" "VBoolArray") $ do
@@ -219,7 +216,8 @@ globalFunctions = do
         case_ (nsPatADT "ArrayValue" "VFloatArray") $ do
           varADT "ArrayValue" "VFloatArray" "a" $ it_value "i"
           varAssign ("Type") "type" $ callExp "inputType" ["s"~>"streamType" `map_lookup` key "i"]
-          call ("gls"~>"streams"."add") [key "i", "type", "buffer", callExp ("buffer"~>"add") ["a"~>"_0"]]
+          varNativeBufferFrom (Vector Float) "buf" ("a"~>"_0")
+          call ("gls"~>"streams"."add") [key "i", "type", "buffer", callExp ("buffer"~>"add") ["buf",toExp GL_FLOAT,vector_size $ "a"~>"_0"]]
     call ("buffer"~>"freeze") []
     call ("gls"~>"streams"."validate") []
 
@@ -271,7 +269,8 @@ globalFunctions = do
       callGLPrim $ GLGetAttribLocation "po" (key "i") "loc"
       if_ ("loc" >= 0) $ then_ $ do
         varADT "Parameter" "Parameter" "param" $ it_value "i"
-        map_insert ("glp"~>"programStreams") (key "i") (recordValue [("name","param"~>"name"),("index","loc")])
+        varRecordValue "StreamInfo" "s" [("name","param"~>"name"),("index","loc")]
+        map_insert ("glp"~>"programStreams") (key "i") "s"
     return_ "glp"
 
   procedure "setupRasterContext" ["ctx_" :@ SmartPtr "RasterContext"] Void $ do
@@ -394,13 +393,29 @@ classes = do
     , "FLOAT_MAT4"
     ]
 
-  class_ "Buffer" $ do
+  class_ "GLBuffer" $ do
     public $ do
       classVar (Vector Int) ["size","byteSize","glType"]
       classVar (Vector Long) ["offset"]
-      classVar (Vector (Ptr Void)) ["data"]
+      classVar (Vector NativeBuffer) ["data"]
       classVar UInt ["bufferObject"]
 
+      method "add" ["buf" :@ NativeBuffer, "elemGLType" :@ Int, "elemCount" :@ Int] Int $ do
+        varAssign Int "i" $ vector_size "data"
+        varAssign Int "elemSize" 1
+        switch ("elemGLType") $ do
+          case_ (glPat GL_UNSIGNED_BYTE) $ "elemSize" .= 1
+          case_ (glPat GL_BYTE) $ "elemSize" .= 1
+          case_ (glPat GL_UNSIGNED_SHORT) $ "elemSize" .= 2
+          case_ (glPat GL_SHORT) $ "elemSize" .= 2
+          default_ $ "elemSize" .= 4
+        vector_pushBack "data" "buf"
+        vector_pushBack "size" "elemCount"
+        vector_pushBack "byteSize" ("elemSize" * "elemCount")
+        vector_pushBack "glType" "elemGLType"
+        return_ "i"
+      -- TODO
+      {-
       method "add" ["v" :@ Ref (Vector Int8)] Int $ do
         varAssign Int "i" $ vector_size "data"
         vector_pushBack "data" (vector_dataPtr "v")
@@ -440,7 +455,7 @@ classes = do
         vector_pushBack "byteSize" (4 * vector_size "v")
         vector_pushBack "glType" $ toExp GL_FLOAT
         return_ "i"
-
+      -}
       method "freeze" [] Void $ do
         varAssign UInt "bufferSize" 0
         vector_foreach Int "i" "byteSize" $ do
@@ -462,56 +477,48 @@ classes = do
   class_ "Stream" $ do
     public $ do
       classVar "Type" ["type"]
-      classVar (SmartPtr "Buffer") ["buffer"]
+      classVar (SmartPtr "GLBuffer") ["buffer"]
       classVar Int ["index"]
       classVar Bool ["isArray"]
       classVar Int ["glSize"]
-      classUnion
-        [ "_float"  :@ Float
-        , "_v2f"    :@ "V2F"
-        , "_v3f"    :@ "V3F"
-        , "_v4f"    :@ "V4F"
-        , "_m22f"   :@ "M22F"
-        , "_m33f"   :@ "M33F"
-        , "_m44f"   :@ "M44F"
-        ]
+      classVar "UniformValue" ["attributeValue"]
 
       constructor ["v" :@ Ref Float] $ do
         "type"    .= enumVal "Type" "FLOAT"
         "isArray" .= false
-        "_float"  .= "v"
+        -- FIXME: "_float"  .= "v"
         "glSize"  .= 1
       constructor ["v" :@ Ref "V2F"] $ do
         "type"    .= enumVal "Type" "FLOAT_VEC2"
         "isArray" .= false
-        "_v2f"    .= "v"
+        -- FIXME: "_v2f"    .= "v"
         "glSize"  .= 2
       constructor ["v" :@ Ref "V3F"] $ do
         "type"    .= enumVal "Type" "FLOAT_VEC3"
         "isArray" .= false
-        "_v3f"    .= "v"
+        -- FIXME: "_v3f"    .= "v"
         "glSize"  .= 3
       constructor ["v" :@ Ref "V4F"] $ do
         "type"    .= enumVal "Type" "FLOAT_VEC4"
         "isArray" .= false
-        "_v4f"    .= "v"
+        -- FIXME: "_v4f"    .= "v"
         "glSize"  .= 4
       constructor ["v" :@ Ref "M22F"] $ do
         "type"    .= enumVal "Type" "FLOAT_MAT2"
         "isArray" .= false
-        "_m22f"    .= "v"
+        -- FIXME: "_m22f"    .= "v"
         "glSize"  .= 4
       constructor ["v" :@ Ref "M33F"] $ do
         "type"    .= enumVal "Type" "FLOAT_MAT3"
         "isArray" .= false
-        "_m33f"   .= "v"
+        -- FIXME: "_m33f"   .= "v"
         "glSize"  .= 9
       constructor ["v" :@ Ref "M44F"] $ do
         "type"    .= enumVal "Type" "FLOAT_MAT4"
         "isArray" .= false
-        "_m44f"   .= "v"
+        -- FIXME: "_m44f"   .= "v"
         "glSize"  .= 16
-      constructor ["b" :@ SmartPtr "Buffer", "i" :@ Int, "t" :@ "Type"] $ do
+      constructor ["b" :@ SmartPtr "GLBuffer", "i" :@ Int, "t" :@ "Type"] $ do
         "type"    .= "t"
         "buffer"  .= "b"
         "index"   .= "i"
@@ -537,32 +544,13 @@ classes = do
       method "add" ["name" :@ String, "v" :@ Ref "M22F"] Void $ map_insert "map" "name" $ callTypeConsructor (SmartPtr "Stream") $ new "Stream" ["v"]
       method "add" ["name" :@ String, "v" :@ Ref "M33F"] Void $ map_insert "map" "name" $ callTypeConsructor (SmartPtr "Stream") $ new "Stream" ["v"]
       method "add" ["name" :@ String, "v" :@ Ref "M44F"] Void $ map_insert "map" "name" $ callTypeConsructor (SmartPtr "Stream") $ new "Stream" ["v"]
-      method "add" ["name" :@ String, "t" :@ "Type", "b" :@ SmartPtr "Buffer", "index" :@ Int] Void $ map_insert "map" "name" $ callTypeConsructor (SmartPtr "Stream") $ new "Stream" ["b","index","t"]
+      method "add" ["name" :@ String, "t" :@ "Type", "b" :@ SmartPtr "GLBuffer", "index" :@ Int] Void $ map_insert "map" "name" $ callTypeConsructor (SmartPtr "Stream") $ new "Stream" ["b","index","t"]
       method "validate" [] Bool $ return_ true -- TODO
 
   struct_ "UniformValue" $ do
     structVar (ADTEnum "InputType") ["tag"] -- TODO
-    structUnion
-      [ "_int"   :@ Int
-      , "_word"  :@ UInt
-      , "_float" :@ Float
-      , "_bool"  :@ Bool
-      , "_v2i"   :@ "V2I"
-      , "_v2u"   :@ "V2U"
-      , "_v2b"   :@ "V2B"
-      , "_v2f"   :@ "V2F"
-      , "_v3i"   :@ "V3I"
-      , "_v3u"   :@ "V3U"
-      , "_v3b"   :@ "V3B"
-      , "_v3f"   :@ "V3F"
-      , "_v4i"   :@ "V4I"
-      , "_v4u"   :@ "V4U"
-      , "_v4b"   :@ "V4B"
-      , "_v4f"   :@ "V4F"
-      , "_m22f"  :@ "M22F"
-      , "_m33f"  :@ "M33F"
-      , "_m44f"  :@ "M44F"
-      ]
+    structVar (NativeArray Int) ["_int"]
+    structVar (NativeArray Float) ["_float"]
 
   class_ "Object" $ do
     public $ do
@@ -576,25 +564,30 @@ classes = do
       method "enable" ["visible" :@ Bool] Void $ "enabled" .= "visible"
       method "setOrder" ["o" :@ Int] Void $ "order" .= "o"
 
-      method "setUniform" ["name" :@ String, "v" :@ Ref Int] Void $   map_insert "uniforms" "name" $ recordValue [("tag",enumADT "InputType" "Int"),   ("_int","v")]
-      method "setUniform" ["name" :@ String, "v" :@ Ref UInt] Void $  map_insert "uniforms" "name" $ recordValue [("tag",enumADT "InputType" "Word"),  ("_word","v")]
-      method "setUniform" ["name" :@ String, "v" :@ Ref Float] Void $ map_insert "uniforms" "name" $ recordValue [("tag",enumADT "InputType" "Float"), ("_float","v")]
-      method "setUniform" ["name" :@ String, "v" :@ Ref Bool] Void $  map_insert "uniforms" "name" $ recordValue [("tag",enumADT "InputType" "Bool"),  ("_bool","v")]
-      method "setUniform" ["name" :@ String, "v" :@ Ref "V2I"] Void $ map_insert "uniforms" "name" $ recordValue [("tag",enumADT "InputType" "V2I"),   ("_v2i","v")]
-      method "setUniform" ["name" :@ String, "v" :@ Ref "V2U"] Void $ map_insert "uniforms" "name" $ recordValue [("tag",enumADT "InputType" "V2U"),   ("_v2u","v")]
-      method "setUniform" ["name" :@ String, "v" :@ Ref "V2F"] Void $ map_insert "uniforms" "name" $ recordValue [("tag",enumADT "InputType" "V2F"),   ("_v2f","v")]
-      method "setUniform" ["name" :@ String, "v" :@ Ref "V2B"] Void $ map_insert "uniforms" "name" $ recordValue [("tag",enumADT "InputType" "V2B"),   ("_v2b","v")]
-      method "setUniform" ["name" :@ String, "v" :@ Ref "V3I"] Void $ map_insert "uniforms" "name" $ recordValue [("tag",enumADT "InputType" "V3I"),   ("_v3i","v")]
-      method "setUniform" ["name" :@ String, "v" :@ Ref "V3U"] Void $ map_insert "uniforms" "name" $ recordValue [("tag",enumADT "InputType" "V3U"),   ("_v3u","v")]
-      method "setUniform" ["name" :@ String, "v" :@ Ref "V3F"] Void $ map_insert "uniforms" "name" $ recordValue [("tag",enumADT "InputType" "V3F"),   ("_v3f","v")]
-      method "setUniform" ["name" :@ String, "v" :@ Ref "V3B"] Void $ map_insert "uniforms" "name" $ recordValue [("tag",enumADT "InputType" "V3B"),   ("_v3b","v")]
-      method "setUniform" ["name" :@ String, "v" :@ Ref "V4I"] Void $ map_insert "uniforms" "name" $ recordValue [("tag",enumADT "InputType" "V4I"),   ("_v4i","v")]
-      method "setUniform" ["name" :@ String, "v" :@ Ref "V4U"] Void $ map_insert "uniforms" "name" $ recordValue [("tag",enumADT "InputType" "V4U"),   ("_v4u","v")]
-      method "setUniform" ["name" :@ String, "v" :@ Ref "V4F"] Void $ map_insert "uniforms" "name" $ recordValue [("tag",enumADT "InputType" "V4F"),   ("_v4f","v")]
-      method "setUniform" ["name" :@ String, "v" :@ Ref "V4B"] Void $ map_insert "uniforms" "name" $ recordValue [("tag",enumADT "InputType" "V4B"),   ("_v4b","v")]
-      method "setUniform" ["name" :@ String, "v" :@ Ref "M22F"] Void $ map_insert "uniforms" "name" $ recordValue [("tag",enumADT "InputType" "M22F"), ("_m22f","v")]
-      method "setUniform" ["name" :@ String, "v" :@ Ref "M33F"] Void $ map_insert "uniforms" "name" $ recordValue [("tag",enumADT "InputType" "M33F"), ("_m33f","v")]
-      method "setUniform" ["name" :@ String, "v" :@ Ref "M44F"] Void $ map_insert "uniforms" "name" $ recordValue [("tag",enumADT "InputType" "M44F"), ("_m44f","v")]
+      let setUniform t tag n = method "setUniform" ["name" :@ String, "v" :@ Ref t] Void $ do
+            {-
+             TODO:
+              check key existence
+                missing: create an empty uniform value
+              update uniform value's nativearray
+            -}
+            varRecordValue "UniformValue" "u" [("tag",enumADT "InputType" tag){- TODO: , (n,"v") -}]
+            map_insert "uniforms" "name" "u"
+      setUniform Int "Int" "_int"
+      setUniform Bool "Bool" "_int"
+      setUniform Float "Float" "_float"
+      setUniform "V2I" "V2I" "_int"
+      setUniform "V2B" "V2B" "_int"
+      setUniform "V2F" "V2F" "_float"
+      setUniform "V3I" "V3I" "_int"
+      setUniform "V3B" "V3B" "_int"
+      setUniform "V3F" "V3F" "_float"
+      setUniform "V4I" "V4I" "_int"
+      setUniform "V4B" "V4B" "_int"
+      setUniform "V4F" "V4F" "_float"
+      setUniform "M22F" "M22F" "_float"
+      setUniform "M33F" "M33F" "_float"
+      setUniform "M44F" "M44F" "_float"
 
   class_ "PipelineInput" $ do
     public $ do
@@ -606,7 +599,7 @@ classes = do
         varConstructor (SmartPtr "Object") "o" $ new "Object" []
         "o"~>"enabled" .= true
         "o"~>"order" .= 0
-        "o"~>"glMode" .= callExp "primitiveMode" ["prim"]
+        "o"~>"glMode" .= callProcExp "primitiveMode" ["prim"]
         varAssign Int "count" 0
         map_foreach String "Stream" "i" ("attributes"~>"map") $ do
           if_ (it_value "i" ~> "isArray") $ then_ $ do
@@ -624,7 +617,7 @@ classes = do
         return_ "o"
 
       method "createObject" ["slotName" :@ String, "prim" :@ "Primitive", "attributes" :@ Ref "StreamMap"
-                            , "indexBuffer" :@ Ref "Buffer", "bufferIndex" :@ Int, "objectUniforms" :@ Vector String] (SmartPtr "Object") $ do
+                            , "indexBuffer" :@ Ref "GLBuffer", "bufferIndex" :@ Int, "objectUniforms" :@ Vector String] (SmartPtr "Object") $ do
         varConstructor (SmartPtr "Object") "o" $ new "Object" []
         -- TODO
         return_ "o" 
@@ -634,25 +627,26 @@ classes = do
         "screenWidth" .= "w"
         "screenHeight" .= "h"
 
-      method "setUniform" ["name" :@ String, "v" :@ Ref Int] Void $   map_insert "uniforms" "name" $ recordValue [("tag",enumADT "InputType" "Int"),   ("_int","v")]
-      method "setUniform" ["name" :@ String, "v" :@ Ref UInt] Void $  map_insert "uniforms" "name" $ recordValue [("tag",enumADT "InputType" "Word"),  ("_word","v")]
-      method "setUniform" ["name" :@ String, "v" :@ Ref Float] Void $ map_insert "uniforms" "name" $ recordValue [("tag",enumADT "InputType" "Float"), ("_float","v")]
-      method "setUniform" ["name" :@ String, "v" :@ Ref Bool] Void $  map_insert "uniforms" "name" $ recordValue [("tag",enumADT "InputType" "Bool"),  ("_bool","v")]
-      method "setUniform" ["name" :@ String, "v" :@ Ref "V2I"] Void $ map_insert "uniforms" "name" $ recordValue [("tag",enumADT "InputType" "V2I"),   ("_v2i","v")]
-      method "setUniform" ["name" :@ String, "v" :@ Ref "V2U"] Void $ map_insert "uniforms" "name" $ recordValue [("tag",enumADT "InputType" "V2U"),   ("_v2u","v")]
-      method "setUniform" ["name" :@ String, "v" :@ Ref "V2F"] Void $ map_insert "uniforms" "name" $ recordValue [("tag",enumADT "InputType" "V2F"),   ("_v2f","v")]
-      method "setUniform" ["name" :@ String, "v" :@ Ref "V2B"] Void $ map_insert "uniforms" "name" $ recordValue [("tag",enumADT "InputType" "V2B"),   ("_v2b","v")]
-      method "setUniform" ["name" :@ String, "v" :@ Ref "V3I"] Void $ map_insert "uniforms" "name" $ recordValue [("tag",enumADT "InputType" "V3I"),   ("_v3i","v")]
-      method "setUniform" ["name" :@ String, "v" :@ Ref "V3U"] Void $ map_insert "uniforms" "name" $ recordValue [("tag",enumADT "InputType" "V3U"),   ("_v3u","v")]
-      method "setUniform" ["name" :@ String, "v" :@ Ref "V3F"] Void $ map_insert "uniforms" "name" $ recordValue [("tag",enumADT "InputType" "V3F"),   ("_v3f","v")]
-      method "setUniform" ["name" :@ String, "v" :@ Ref "V3B"] Void $ map_insert "uniforms" "name" $ recordValue [("tag",enumADT "InputType" "V3B"),   ("_v3b","v")]
-      method "setUniform" ["name" :@ String, "v" :@ Ref "V4I"] Void $ map_insert "uniforms" "name" $ recordValue [("tag",enumADT "InputType" "V4I"),   ("_v4i","v")]
-      method "setUniform" ["name" :@ String, "v" :@ Ref "V4U"] Void $ map_insert "uniforms" "name" $ recordValue [("tag",enumADT "InputType" "V4U"),   ("_v4u","v")]
-      method "setUniform" ["name" :@ String, "v" :@ Ref "V4F"] Void $ map_insert "uniforms" "name" $ recordValue [("tag",enumADT "InputType" "V4F"),   ("_v4f","v")]
-      method "setUniform" ["name" :@ String, "v" :@ Ref "V4B"] Void $ map_insert "uniforms" "name" $ recordValue [("tag",enumADT "InputType" "V4B"),   ("_v4b","v")]
-      method "setUniform" ["name" :@ String, "v" :@ Ref "M22F"] Void $ map_insert "uniforms" "name" $ recordValue [("tag",enumADT "InputType" "M22F"), ("_m22f","v")]
-      method "setUniform" ["name" :@ String, "v" :@ Ref "M33F"] Void $ map_insert "uniforms" "name" $ recordValue [("tag",enumADT "InputType" "M33F"), ("_m33f","v")]
-      method "setUniform" ["name" :@ String, "v" :@ Ref "M44F"] Void $ map_insert "uniforms" "name" $ recordValue [("tag",enumADT "InputType" "M44F"), ("_m44f","v")]
+      {- TODO
+      let setUniform t tag n = method "setUniform" ["name" :@ String, "v" :@ Ref t] Void $ do
+            varRecordValue "UniformValue" "u" [("tag",enumADT "InputType" tag),   (n,"v")]
+            map_insert "uniforms" "name" "u"
+      setUniform Int "Int" "_int"
+      setUniform Float "Float" "_float"
+      setUniform Bool "Bool" "_bool"
+      setUniform "V2I" "V2I" "_v2i"
+      setUniform "V2F" "V2F" "_v2f"
+      setUniform "V2B" "V2B" "_v2b"
+      setUniform "V3I" "V3I" "_v3i"
+      setUniform "V3F" "V3F" "_v3f"
+      setUniform "V3B" "V3B" "_v3b"
+      setUniform "V4I" "V4I" "_v4i"
+      setUniform "V4F" "V4F" "_v4f"
+      setUniform "V4B" "V4B" "_v4b"
+      setUniform "M22F" "M22F" "_m22f"
+      setUniform "M33F" "M33F" "_m33f"
+      setUniform "M44F" "M44F" "_m44f"
+      -}
 
   struct_ "Texture" $ do
     structVar Int ["target"]
@@ -676,7 +670,7 @@ classes = do
     private $ do
       classVar (SmartPtr "PipelineInput") ["input"]
       classVar (SmartPtr $ ADTCons "Pipeline" "Pipeline") ["pipeline"]
-      classVar (Vector "Texture") ["textures"]
+      classVar (Vector (SmartPtr "Texture")) ["textures"]
       classVar (Vector UInt) ["targets"]
       classVar (Vector (SmartPtr "GLProgram")) ["programs"]
       classVar (Vector (SmartPtr "GLStreamData")) ["streamData"]

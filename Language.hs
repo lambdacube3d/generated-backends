@@ -13,6 +13,22 @@ data GLPrim
   | GLShaderSource Exp Exp
   | GLGetUniformLocation Exp Exp Exp
   | GLGetAttribLocation Exp Exp Exp
+  | GLUniform1fv Exp Exp Exp
+  | GLUniform1iv Exp Exp Exp
+  | GLUniform2fv Exp Exp Exp
+  | GLUniform2iv Exp Exp Exp
+  | GLUniform3fv Exp Exp Exp
+  | GLUniform3iv Exp Exp Exp
+  | GLUniform4fv Exp Exp Exp
+  | GLUniform4iv Exp Exp Exp
+  | GLUniformMatrix2fv Exp Exp Exp Exp
+  | GLUniformMatrix3fv Exp Exp Exp Exp
+  | GLUniformMatrix4fv Exp Exp Exp Exp
+  | GLVertexAttrib1fv Exp Exp Exp
+  | GLVertexAttrib2fv Exp Exp Exp
+  | GLVertexAttrib3fv Exp Exp Exp
+  | GLVertexAttrib4fv Exp Exp Exp
+  | GLVertexAttribPointer Exp Exp Exp Exp Exp Exp
   deriving Show
 
 data GLCommand -- GL ES 2.0
@@ -54,23 +70,8 @@ data GLCommand -- GL ES 2.0
   | GLReleaseShaderCompiler
   | GLTexImage2D
   | GLTexParameteri
-  | GLUniform1f
   | GLUniform1i
-  | GLUniform2fv
-  | GLUniform2iv
-  | GLUniform3fv
-  | GLUniform3iv
-  | GLUniform4fv
-  | GLUniform4iv
-  | GLUniformMatrix2fv
-  | GLUniformMatrix3fv
-  | GLUniformMatrix4fv
   | GLUseProgram
-  | GLVertexAttrib1f
-  | GLVertexAttrib2fv
-  | GLVertexAttrib3fv
-  | GLVertexAttrib4fv
-  | GLVertexAttribPointer
   | GLViewport
   deriving Show
 
@@ -178,6 +179,8 @@ data Type
   | Const Type
   | Vector Type
   | Map Type Type
+  | NativeArray Type -- only for passing buffers
+  | NativeBuffer
   -- for C++
   | Ref Type      -- &
   | Ptr Type      -- *
@@ -208,7 +211,6 @@ data Exp
   | New Type [Exp]
   | IteratorValue Exp -- used with foreach
   | IteratorKey Exp
-  | RecordValue [(String,Exp)]
   | NotNull Exp
   | Not Exp
   | Map_notElem Exp Exp
@@ -216,13 +218,10 @@ data Exp
   | Map_lookup Exp Exp
   | Vector_lookup Exp Exp
   | Vector_size Exp
-  | Vector_dataPtr Exp
-  | CallTypeConsructor Type Exp
   | Exp :. Exp
   -- for C++
+  | CallTypeConsructor Type Exp
   | Exp :-> Exp
-  | Cast Type Exp
-  | Addr Exp
   | Deref Exp
   -- GL stuff
   | GLCommand   GLCommand
@@ -241,6 +240,8 @@ data Stmt
   | VarADTDef String String String Exp
   | VarAssignDef Type String Exp
   | VarConstructor Type String Exp
+  | VarRecordValue Type String [(String,Exp)]
+  | VarNativeBufferFrom Type String Exp
   | Exp := Exp
   | For [Stmt] Exp Exp [Stmt]
   | For_range String Exp Exp [Stmt]
@@ -272,6 +273,7 @@ data If
 data Pat
   = NsPat String String
   | NsPatADT String String
+  | GLPat GLConstant
   deriving Show
 
 data ClassDef
@@ -279,7 +281,6 @@ data ClassDef
   | Constructor [Arg] [Stmt]
   | Destructor [Stmt]
   | ClassVar Type [String]
-  | ClassUnion [Arg]
   deriving Show
 
 data ClassScope
@@ -289,7 +290,6 @@ data ClassScope
 
 data StructDef
   = StructVar Type [String]
-  | StructUnion [Arg]
   deriving Show
 
 data Def
@@ -321,9 +321,6 @@ public classDefM = tell [Public (execWriter classDefM)]
 classVar :: Type -> [String] -> ClassDefM ()
 classVar t n = tell [ClassVar t n]
 
-classUnion :: [Arg] -> ClassDefM ()
-classUnion args = tell [ClassUnion args]
-
 constructor :: [Arg] -> StmtM () -> ClassDefM ()
 constructor args stmtM = tell [Constructor args (execWriter stmtM)]
 
@@ -339,9 +336,6 @@ struct_ name structDefM = tell [StructDef name (execWriter structDefM)]
 
 structVar :: Type -> [String] -> StructDefM ()
 structVar t n = tell [StructVar t n]
-
-structUnion :: [Arg] -> StructDefM ()
-structUnion args = tell [StructUnion args]
 
 -- enum
 enum_ :: String -> [String] -> DefM ()
@@ -365,6 +359,9 @@ throw msg = tell [Throw msg]
 
 nsPat :: String -> String -> Pat
 nsPat = NsPat
+
+glPat :: GLConstant -> Pat
+glPat = GLPat
 
 return_ :: Exp -> StmtM ()
 return_ exp = tell [Return exp]
@@ -420,12 +417,6 @@ callExp a b = CallExp a b
 new :: Type -> [Exp] -> Exp
 new = New
 
-cast :: Type -> Exp -> Exp
-cast = Cast
-
-addr :: Exp -> Exp
-addr = Addr
-
 false :: Exp
 false = BoolLit False
 
@@ -442,14 +433,14 @@ then_ stmtM = tell [Then (execWriter stmtM)]
 else_ :: StmtM () -> IfM ()
 else_ stmtM = tell [Else (execWriter stmtM)]
 
+varNativeBufferFrom :: Type -> String -> Exp -> StmtM ()
+varNativeBufferFrom t n v = tell [VarNativeBufferFrom t n v]
+
 callTypeConsructor :: Type -> Exp -> Exp
 callTypeConsructor = CallTypeConsructor
 
 vector_size :: Exp -> Exp
 vector_size = Vector_size
-
-vector_dataPtr :: Exp -> Exp
-vector_dataPtr = Vector_dataPtr
 
 map_insert :: Exp -> Exp -> Exp -> StmtM ()
 map_insert m k v = tell [Map_insert m k v]
@@ -485,8 +476,8 @@ key = IteratorKey
 expIf :: Exp -> Exp -> Exp -> Exp
 expIf a b c = ExpIf a b c
 
-recordValue :: [(String,Exp)] -> Exp
-recordValue = RecordValue
+varRecordValue :: Type -> String -> [(String,Exp)] -> StmtM ()
+varRecordValue t n l = tell [VarRecordValue t n l]
 
 var :: Type -> [String] -> StmtM ()
 var t n = tell [VarDef t n]

@@ -67,8 +67,7 @@ prettyClassDef className isCpp ind = \case
     , addIndentation ind "}\n\n"
     ]
   ClassVar t vars -> if isCpp then "" else addIndentation ind $ prettyType t ++ " " ++ intercalate ", " vars ++ ";\n"
-  ClassUnion args -> if isCpp then "" else addIndentation ind "union {\n" ++ concatMap (addIndentation (ind + 1) . (++ ";\n") . prettyArg) args ++ addIndentation ind "};\n"
-  x -> error $ show x
+  x -> error $ "cpp - prettyClassDef" ++ show x
  where
   classNS = if isCpp then className ++ "::" else ""
   terminator = if isCpp then " {\n" else ";\n"
@@ -76,7 +75,6 @@ prettyClassDef className isCpp ind = \case
 
 prettyStructDef ind = \case
   StructVar t vars -> addIndentation ind $ prettyType t ++ " " ++ intercalate ", " vars ++ ";\n"
-  StructUnion args -> addIndentation ind "union {\n" ++ concatMap (addIndentation (ind + 1) . (++ ";\n") . prettyArg) args ++ addIndentation ind "};\n"
 
 prettyArg (n :@ t) = unwords [prettyType t,n]
 
@@ -102,7 +100,9 @@ prettyType = \case
   String  -> "std::string"
   ADTEnum a -> "::" ++ a ++ "::tag"
   ADTCons a b -> "::data::" ++ b
-  x -> error $ show x
+  NativeArray t -> prettyType t ++ "[]"
+  NativeBuffer -> "void*"
+  x -> error $ "cpp - prettyType: " ++ show x
 
 addIndentation ind s = concat (replicate ind "  ") ++ s
 
@@ -126,6 +126,7 @@ prettyCase ind = addIndentation ind . \case
 prettyPat = \case
   NsPat a b -> "::" ++ a ++ "::" ++ b
   NsPatADT a b -> "::" ++ a ++ "::tag::" ++ b
+  GLPat a -> show a
 
 prettyStmt ind = addIndentation ind . \case
   Switch e c -> "switch (" ++ prettyExp e ++ ") {\n" ++ concatMap ((++"\n") . prettyCase (ind + 1)) c ++ addIndentation ind "}"
@@ -140,6 +141,8 @@ prettyStmt ind = addIndentation ind . \case
   VarADTDef t c n e -> "auto " ++ n ++ " = std::static_pointer_cast<data::" ++ c ++ ">(" ++ prettyExp e ++ ");"
   VarAssignDef t n e -> prettyType t ++ " " ++ n ++ " = " ++ prettyExp e ++ ";"
   VarConstructor t n e -> prettyType t ++ " " ++ n ++ "(" ++ prettyExp e ++ ");"
+  VarRecordValue t n a -> prettyType t ++ " " ++ n ++ " = " ++ "{" ++ intercalate ", " ["." ++ n ++ " = " ++ prettyExp v | (n,v) <- a] ++ "}"
+  VarNativeBufferFrom t n a -> "void* " ++ n ++ " = " ++ prettyExp a ++ ".data();"
   a := b -> prettyExp a ++ " = " ++ prettyExp b ++ ";"
   For [a] b c stmts -> "for (" ++ prettyStmt 0 a ++ " " ++ prettyExp b ++ "; " ++ prettyExp c ++ ") {\n" ++ unlines (map (prettyStmt $ ind + 1) stmts) ++ addIndentation ind "}"
   a :/= b -> prettyExp a ++ " /= " ++ prettyExp b ++ ";"
@@ -154,7 +157,7 @@ prettyStmt ind = addIndentation ind . \case
   Break -> "break;"
   Continue -> "continue;"
   Inc e -> prettyExp e ++ "++;"
-  x -> error $ show x
+  x -> error $ "cpp - prettyStmt: " ++ show x
 
 prettyExp = \case
   a :-> b -> prettyExp a ++ "->" ++ prettyExp b
@@ -164,8 +167,6 @@ prettyExp = \case
   EnumADT a b -> "::" ++ a ++ "::tag::" ++ b
   Integer a   -> show a
   FloatLit a  -> show a
-  Cast t e    -> "(" ++ prettyType t ++ ")" ++ prettyExp e
-  Addr e      -> "&" ++ prettyExp e
   Deref e     -> "*" ++ prettyExp e
   BoolLit True  -> "true"
   BoolLit False -> "false"
@@ -188,17 +189,15 @@ prettyExp = \case
   New t a -> "new " ++ prettyType t ++ "(" ++ intercalate "," (map prettyExp a) ++ ")"
   IteratorValue e -> prettyExp e ++ ".second" -- used with foreach
   IteratorKey e -> prettyExp e ++ ".first" -- used with foreach
-  RecordValue a -> "{" ++ intercalate ", " ["." ++ n ++ " = " ++ prettyExp v | (n,v) <- a] ++ "}"
   NotNull e -> prettyExp e -- HACK
   Not e -> "!" ++ prettyExp e
   Map_notElem a b -> prettyExp a ++ ".count(" ++ prettyExp b ++ ")<=0"
   Map_elem a b -> prettyExp a ++ ".count(" ++ prettyExp b ++ ")>0"
   Vector_size a -> prettyExp a ++ ".size()"
-  Vector_dataPtr a -> prettyExp a ++ ".data()"
   CallTypeConsructor t a -> prettyType t ++ "(" ++ prettyExp a ++ ")"
   GLConstant a -> show a
   GLCommand a -> "gl" ++ drop 2 (show a)
-  x -> error $ show x
+  x -> error $ "cpp - prettyExp: " ++ show x
 
 prettyGLPrim = \case
   GLGenTexture e -> "{ int glObj; glGenTextures(1, &glObj); " ++ prettyExp e ++ " = glObj; }"
@@ -209,4 +208,20 @@ prettyGLPrim = \case
   GLShaderSource vs src -> "{ char* glslSrc = " ++ prettyExp src ++ ".c_str(); glShaderSource(" ++ prettyExp vs ++ ", 1, &glslSrc, 0); }"
   GLGetUniformLocation p n v -> prettyExp v ++ " = glGetUniformLocation(" ++ prettyExp p ++ ", " ++ prettyExp n ++ ".c_str());"
   GLGetAttribLocation p n v -> prettyExp v ++ " = glGetAttribLocation(" ++ prettyExp p ++ ", " ++ prettyExp n ++ ".c_str());"
-  x -> error $ show x
+  GLUniform1iv a b c -> "glUniform1iv(" ++ prettyExp a ++ ", " ++ prettyExp b ++ ", " ++ prettyExp c ++ ");"
+  GLUniform1fv a b c -> "glUniform1fv(" ++ prettyExp a ++ ", " ++ prettyExp b ++ ", " ++ prettyExp c ++ ");"
+  GLUniform2iv a b c -> "glUniform2iv(" ++ prettyExp a ++ ", " ++ prettyExp b ++ ", " ++ prettyExp c ++ ");"
+  GLUniform2fv a b c -> "glUniform2fv(" ++ prettyExp a ++ ", " ++ prettyExp b ++ ", " ++ prettyExp c ++ ");"
+  GLUniform3iv a b c -> "glUniform3iv(" ++ prettyExp a ++ ", " ++ prettyExp b ++ ", " ++ prettyExp c ++ ");"
+  GLUniform3fv a b c -> "glUniform3fv(" ++ prettyExp a ++ ", " ++ prettyExp b ++ ", " ++ prettyExp c ++ ");"
+  GLUniform4iv a b c -> "glUniform4iv(" ++ prettyExp a ++ ", " ++ prettyExp b ++ ", " ++ prettyExp c ++ ");"
+  GLUniform4fv a b c -> "glUniform4fv(" ++ prettyExp a ++ ", " ++ prettyExp b ++ ", " ++ prettyExp c ++ ");"
+  GLUniformMatrix2fv a b c d -> "glUniformMatrix2fv(" ++ prettyExp a ++ ", " ++ prettyExp b ++ ", " ++ prettyExp c ++ ", " ++ prettyExp d ++ ");"
+  GLUniformMatrix3fv a b c d -> "glUniformMatrix3fv(" ++ prettyExp a ++ ", " ++ prettyExp b ++ ", " ++ prettyExp c ++ ", " ++ prettyExp d ++ ");"
+  GLUniformMatrix4fv a b c d -> "glUniformMatrix4fv(" ++ prettyExp a ++ ", " ++ prettyExp b ++ ", " ++ prettyExp c ++ ", " ++ prettyExp d ++ ");"
+  GLVertexAttribPointer a b c d e f -> "glVertexAttribPointer(" ++ intercalate ", " (map prettyExp [a,b,c,d,e,f]) ++ ");"
+  GLVertexAttrib1fv a b c -> "glVertexAttrib1fv(" ++ intercalate ", " (map prettyExp [a,b,c]) ++ ");"
+  GLVertexAttrib2fv a b c -> "glVertexAttrib2fv(" ++ intercalate ", " (map prettyExp [a,b,c]) ++ ");"
+  GLVertexAttrib3fv a b c -> "glVertexAttrib3fv(" ++ intercalate ", " (map prettyExp [a,b,c]) ++ ");"
+  GLVertexAttrib4fv a b c -> "glVertexAttrib4fv(" ++ intercalate ", " (map prettyExp [a,b,c]) ++ ");"
+  x -> error $ "cpp - prettyGLPrim: " ++ show x
