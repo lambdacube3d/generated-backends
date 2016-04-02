@@ -41,6 +41,8 @@ java backend:
       setUniformValue
       setUniform (PipelineInput)
       setUniform (Object)
+  allocate containers in constructors
+  stUniformValue call on stream data rendering
   better representation of vertex/index buffers
     Buffer: use NativeArray to store data
             maybe we should use native buffer: IntBuffer/FloatBuffer
@@ -51,7 +53,7 @@ java backend:
     NativeBuffer: that can be created from native array (wrap)
   use heap model only (do not create values on stack)
   remove: Ptr type, deref
-  variable initialization
+  diappeared - variable initialization
 
 now focus:
   GLES20: C++, Java
