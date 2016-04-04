@@ -12,5 +12,13 @@ public class GLProgram {
   public Integer program, vertexShader, fragmentShader;
   public HashMap<String,Integer> programUniforms, programInTextures;
   public HashMap<String,StreamInfo> programStreams;
+  public GLProgram() throws Exception {
+    
+    programUniforms = new HashMap<String,Integer>();
+    programInTextures = new HashMap<String,Integer>();
+    programStreams = new HashMap<String,StreamInfo>();
+
+  }
+
 }
 

@@ -71,6 +71,12 @@ public class GLES20Pipeline {
 
   public Integer screenTarget;
   public GLES20Pipeline(Pipeline ppl_) throws Exception {
+    
+    textures = new ArrayList<Texture>();
+    targets = new ArrayList<Integer>();
+    programs = new ArrayList<GLProgram>();
+    streamData = new ArrayList<GLStreamData>();
+
     screenTarget = 0;
     hasCurrentProgram = false;
     Pipeline.Pipeline_ ppl = (Pipeline.Pipeline_)ppl_;
@@ -238,6 +244,9 @@ public class GLES20Pipeline {
           if (input!= null && pipeline!= null && hasCurrentProgram) {
             Command.RenderStream_ cmd = (Command.RenderStream_)i;
             GLStreamData data = streamData.get(cmd._0);
+            for (Map.Entry<String,Integer> u : programs.get(currentProgram).programUniforms.entrySet()) {
+              Util.setUniformValue(u.getValue(), input.uniforms.get(u.getKey()));
+            }
             for (Map.Entry<String,StreamInfo> s : programs.get(currentProgram).programStreams.entrySet()) {
               Util.setStream(s.getValue().index, data.streams.map.get(s.getValue().name));
             }

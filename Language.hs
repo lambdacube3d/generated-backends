@@ -256,6 +256,7 @@ data Stmt
   | Inc Exp
   | Vector_pushBack Exp Exp
   | Vector_pushBackPtr Exp Exp
+  | AllocClassVars
   deriving Show
 
 data Arg = String :@ Type deriving Show
@@ -288,20 +289,14 @@ data ClassScope
   | Private [ClassDef]
   deriving Show
 
-data StructDef
-  = StructVar Type [String]
-  deriving Show
-
 data Def
   = Procedure String [Arg] Type [Stmt]
   | ClassDef  String [ClassScope]
   | EnumDef   String [String]
-  | StructDef String [StructDef]
   deriving Show
 
 type ClassScopeM = Writer [ClassScope]
 type ClassDefM = Writer [ClassDef]
-type StructDefM = Writer [StructDef]
 type DefM = Writer [Def]
 
 type IfM = Writer [If]
@@ -329,13 +324,6 @@ destructor stmtM = tell [Destructor (execWriter stmtM)]
 
 method :: String -> [Arg] -> Type -> StmtM () -> ClassDefM ()
 method name args retType stmtM = tell [Method False name args retType (execWriter stmtM)]
-
--- struct
-struct_ :: String -> StructDefM () -> DefM ()
-struct_ name structDefM = tell [StructDef name (execWriter structDefM)]
-
-structVar :: Type -> [String] -> StructDefM ()
-structVar t n = tell [StructVar t n]
 
 -- enum
 enum_ :: String -> [String] -> DefM ()
@@ -505,6 +493,9 @@ vector_pushBack a b = tell [Vector_pushBack a b]
 
 vector_pushBackPtr :: Exp -> Exp -> StmtM ()
 vector_pushBackPtr a b = tell [Vector_pushBackPtr a b]
+
+allocClassVars :: StmtM ()
+allocClassVars = tell [AllocClassVars]
 
 for :: StmtM () -> Exp -> Exp -> StmtM () -> StmtM ()
 for loopInitM cond exp stmtM = tell [For (execWriter loopInitM) cond exp (execWriter stmtM)]

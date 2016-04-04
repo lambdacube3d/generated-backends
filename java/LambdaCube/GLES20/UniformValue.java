@@ -12,5 +12,5 @@ public class UniformValue {
   public InputType.Tag tag;
   public int[] _int;
   public float[] _float;
-};
+}
 

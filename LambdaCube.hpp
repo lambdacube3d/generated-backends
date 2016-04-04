@@ -29,6 +29,7 @@ class GLBuffer {
     std::vector<int64_t> offset;
     std::vector<void*> data;
     uint32_t bufferObject;
+    GLBuffer();
     int32_t add(void* buf, int32_t elemGLType, int32_t elemCount);
     void freeze();
     void update(int32_t i, std::vector<float>& v);
@@ -55,6 +56,7 @@ class Stream {
 class StreamMap {
   public:
     std::map<std::string,std::shared_ptr<Stream>> map;
+    StreamMap();
     void add(std::string name, float& v);
     void add(std::string name, V2F& v);
     void add(std::string name, V3F& v);
@@ -66,10 +68,11 @@ class StreamMap {
     bool validate();
 };
 
-struct UniformValue {
-  ::InputType::tag tag;
-  int32_t[] _int;
-  float[] _float;
+class UniformValue {
+  public:
+    ::InputType::tag tag;
+    int32_t[] _int;
+    float[] _float;
 };
 
 class Object {
@@ -103,20 +106,23 @@ class PipelineInput {
     std::map<std::string,std::shared_ptr<std::vector<std::shared_ptr<Object>>>> objectMap;
     std::map<std::string,UniformValue> uniforms;
     int32_t screenWidth, screenHeight;
+    PipelineInput();
     std::shared_ptr<Object> createObject(std::string slotName, Primitive prim, std::shared_ptr<StreamMap> attributes, std::vector<std::string> objectUniforms);
     std::shared_ptr<Object> createObject(std::string slotName, Primitive prim, StreamMap& attributes, GLBuffer& indexBuffer, int32_t bufferIndex, std::vector<std::string> objectUniforms);
     void sortSlotObjects();
     void setScreenSize(int32_t w, int32_t h);
 };
 
-struct Texture {
-  int32_t target;
-  uint32_t texture;
+class Texture {
+  public:
+    int32_t target;
+    uint32_t texture;
 };
 
-struct StreamInfo {
-  std::string name;
-  int32_t index;
+class StreamInfo {
+  public:
+    std::string name;
+    int32_t index;
 };
 
 class GLProgram {
@@ -124,11 +130,14 @@ class GLProgram {
     uint32_t program, vertexShader, fragmentShader;
     std::map<std::string,int32_t> programUniforms, programInTextures;
     std::map<std::string,StreamInfo> programStreams;
+    GLProgram();
 };
 
-struct GLStreamData {
-  int32_t glMode, glCount;
-  StreamMap streams;
+class GLStreamData {
+  public:
+    int32_t glMode, glCount;
+    StreamMap streams;
+    GLStreamData();
 };
 
 class GLES20Pipeline {

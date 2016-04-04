@@ -10,6 +10,12 @@ import java.util.Map;
 
 public class StreamMap {
   public HashMap<String,Stream> map;
+  public StreamMap() throws Exception {
+    
+    map = new HashMap<String,Stream>();
+
+  }
+
   public void add(String name, Float v) throws Exception {
     map.put(name, new Stream(v));
   }

@@ -13,6 +13,16 @@ public class GLBuffer {
   public ArrayList<Integer> offset;
   public ArrayList<Buffer> data;
   public Integer bufferObject;
+  public GLBuffer() throws Exception {
+    
+    size = new ArrayList<Integer>();
+    byteSize = new ArrayList<Integer>();
+    glType = new ArrayList<Integer>();
+    offset = new ArrayList<Integer>();
+    data = new ArrayList<Buffer>();
+
+  }
+
   public Integer add(Buffer buf, Integer elemGLType, Integer elemCount) throws Exception {
     Integer i = data.size();
     Integer elemSize = 1;

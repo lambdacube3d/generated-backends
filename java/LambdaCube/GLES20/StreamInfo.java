@@ -11,5 +11,5 @@ import java.util.Map;
 public class StreamInfo {
   public String name;
   public Integer index;
-};
+}
 

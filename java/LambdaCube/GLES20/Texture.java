@@ -11,5 +11,5 @@ import java.util.Map;
 public class Texture {
   public Integer target;
   public Integer texture;
-};
+}
 

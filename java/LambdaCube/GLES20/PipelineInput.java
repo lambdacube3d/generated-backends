@@ -12,6 +12,13 @@ public class PipelineInput {
   public HashMap<String,ArrayList<Object>> objectMap;
   public HashMap<String,UniformValue> uniforms;
   public Integer screenWidth, screenHeight;
+  public PipelineInput() throws Exception {
+    
+    objectMap = new HashMap<String,ArrayList<Object>>();
+    uniforms = new HashMap<String,UniformValue>();
+
+  }
+
   public Object createObject(String slotName, Primitive prim, StreamMap attributes, ArrayList<String> objectUniforms) throws Exception {
     Object o = new Object();
     o.enabled = true;

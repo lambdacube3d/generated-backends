@@ -507,6 +507,10 @@ void setupAccumulationContext(std::shared_ptr<AccumulationContext> ctx_) {
   }
 }
 
+GLBuffer::GLBuffer() {
+  
+}
+
 int32_t GLBuffer::add(void* buf, int32_t elemGLType, int32_t elemCount) {
   int32_t i = data.size();
   int32_t elemSize = 1;
@@ -604,6 +608,10 @@ Stream::Stream(std::shared_ptr<GLBuffer> b, int32_t i, Type t) {
     case ::Type::FLOAT_MAT3: glSize = 9; break;
     case ::Type::FLOAT_MAT4: glSize = 16; break;
   }
+}
+
+StreamMap::StreamMap() {
+  
 }
 
 void StreamMap::add(std::string name, float& v) {
@@ -728,6 +736,10 @@ void Object::setUniform(std::string name, M44F& v) {
   uniforms[name] = u;
 }
 
+PipelineInput::PipelineInput() {
+  
+}
+
 std::shared_ptr<Object> PipelineInput::createObject(std::string slotName, Primitive prim, std::shared_ptr<StreamMap> attributes, std::vector<std::string> objectUniforms) {
   std::shared_ptr<Object> o(new Object());
   o->enabled = true;
@@ -763,6 +775,14 @@ void PipelineInput::sortSlotObjects() {
 void PipelineInput::setScreenSize(int32_t w, int32_t h) {
   screenWidth = w;
   screenHeight = h;
+}
+
+GLProgram::GLProgram() {
+  
+}
+
+GLStreamData::GLStreamData() {
+  
 }
 
 uint32_t GLES20Pipeline::createRenderTarget(std::shared_ptr<RenderTarget> t_) {
@@ -818,6 +838,7 @@ uint32_t GLES20Pipeline::createRenderTarget(std::shared_ptr<RenderTarget> t_) {
 }
 
 GLES20Pipeline::GLES20Pipeline(std::shared_ptr<Pipeline> ppl_) {
+  
   screenTarget = 0;
   hasCurrentProgram = false;
   auto ppl = std::static_pointer_cast<data::Pipeline>(ppl_);
@@ -985,6 +1006,9 @@ void GLES20Pipeline::render() {
         if (input && pipeline && hasCurrentProgram) {
           auto cmd = std::static_pointer_cast<data::RenderStream>(i);
           std::shared_ptr<GLStreamData> data = streamData[cmd->_0];
+          for (auto u : programs[currentProgram]->programUniforms) {
+            setUniformValue(u.second, input->uniforms[u.first]);
+          }
           for (auto s : programs[currentProgram]->programStreams) {
             setStream(s.second.index, *data->streams.map[s.second.name]);
           }

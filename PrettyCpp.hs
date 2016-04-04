@@ -28,7 +28,7 @@ prettyDef :: Bool -> Def -> String
 prettyDef isCpp = \case
   Procedure name args retType stmts | isCpp -> concat
     [ prettyType retType ++ " " ++ name ++ "(" ++ intercalate ", " (map prettyArg args) ++ ") {\n"
-    , unlines $ map (prettyStmt 1) stmts
+    , unlines $ map (prettyStmt [] 1) stmts
     , "}\n\n"
     ]
   EnumDef name args | Prelude.not isCpp -> unlines
@@ -37,33 +37,32 @@ prettyDef isCpp = \case
     , "};"
     , ""
     ]
-  ClassDef className args | Prelude.not isCpp -> "class " ++ className ++ " {\n" ++ concatMap (prettyClassScope className isCpp 1) args ++ "};\n\n"
-  ClassDef className args | isCpp -> concat $ map (prettyClassScope className isCpp 0) args
-  StructDef structName args | Prelude.not isCpp -> "struct " ++ structName ++ " {\n" ++ concatMap (prettyStructDef 1) args ++ "};\n\n"
+  ClassDef className args | Prelude.not isCpp -> "class " ++ className ++ " {\n" ++ concatMap (prettyClassScope args className isCpp 1) args ++ "};\n\n"
+  ClassDef className args | isCpp -> concat $ map (prettyClassScope args className isCpp 0) args
   x -> ""
 
-prettyClassScope className False ind = \case
-  Public args -> addIndentation ind "public:\n" ++ concatMap (prettyClassDef className False $ ind + 1) args
-  Private args -> addIndentation ind "private:\n" ++ concatMap (prettyClassDef className False $ ind + 1) args
+prettyClassScope classDefs className False ind = \case
+  Public args -> addIndentation ind "public:\n" ++ concatMap (prettyClassDef classDefs className False $ ind + 1) args
+  Private args -> addIndentation ind "private:\n" ++ concatMap (prettyClassDef classDefs className False $ ind + 1) args
 
-prettyClassScope className True ind = \case
-  Public args -> concat $ map (prettyClassDef className True $ ind) args
-  Private args -> concat $ map (prettyClassDef className True $ ind) args
+prettyClassScope classDefs className True ind = \case
+  Public args -> concat $ map (prettyClassDef classDefs className True $ ind) args
+  Private args -> concat $ map (prettyClassDef classDefs className True $ ind) args
 
-prettyClassDef className isCpp ind = \case
+prettyClassDef classDefs className isCpp ind = \case
   Method isStatic name args retType stmts -> concat $ cut
     [ addIndentation ind $ prettyType retType ++ " " ++ classNS ++ name ++ "(" ++ intercalate ", " (map prettyArg args) ++ ")" ++ terminator
-    , unlines $ map (prettyStmt $ ind + 1) stmts
+    , unlines $ map (prettyStmt classDefs $ ind + 1) stmts
     , addIndentation ind "}\n\n"
     ]
   Constructor args stmts -> concat $ cut
     [ addIndentation ind $ classNS ++ className ++ "(" ++ intercalate ", " (map prettyArg args) ++ ")" ++ terminator
-    , unlines $ map (prettyStmt $ ind + 1) stmts
+    , unlines $ map (prettyStmt classDefs $ ind + 1) stmts
     , addIndentation ind "}\n\n"
     ]
   Destructor stmts -> concat $ cut
     [ addIndentation ind $ classNS ++ "~" ++ className ++ "()" ++ terminator
-    , unlines $ map (prettyStmt $ ind + 1) stmts
+    , unlines $ map (prettyStmt classDefs $ ind + 1) stmts
     , addIndentation ind "}\n\n"
     ]
   ClassVar t vars -> if isCpp then "" else addIndentation ind $ prettyType t ++ " " ++ intercalate ", " vars ++ ";\n"
@@ -72,9 +71,6 @@ prettyClassDef className isCpp ind = \case
   classNS = if isCpp then className ++ "::" else ""
   terminator = if isCpp then " {\n" else ";\n"
   cut = if isCpp then id else take 1
-
-prettyStructDef ind = \case
-  StructVar t vars -> addIndentation ind $ prettyType t ++ " " ++ intercalate ", " vars ++ ";\n"
 
 prettyArg (n :@ t) = unwords [prettyType t,n]
 
@@ -118,25 +114,25 @@ isSimple = \case
   _ -> False
 
 prettyCase ind = addIndentation ind . \case
-  Case p [s@(Return{})]  -> "case " ++ prettyPat p ++ ": " ++ prettyStmt 0 s
-  Case p [s] | isSimple s -> "case " ++ prettyPat p ++ ": " ++ prettyStmt 0 s ++ " break;"
-  Case p s  -> "case " ++ prettyPat p ++ ": {\n" ++ unlines (map (prettyStmt $ ind + 1) s) ++ addIndentation (ind + 1) "break;\n" ++ addIndentation ind "}"
-  Default s -> "default:\n" ++ unlines (map (prettyStmt $ ind + 1) s)
+  Case p [s@(Return{})]  -> "case " ++ prettyPat p ++ ": " ++ prettyStmt [] 0 s
+  Case p [s] | isSimple s -> "case " ++ prettyPat p ++ ": " ++ prettyStmt [] 0 s ++ " break;"
+  Case p s  -> "case " ++ prettyPat p ++ ": {\n" ++ unlines (map (prettyStmt [] $ ind + 1) s) ++ addIndentation (ind + 1) "break;\n" ++ addIndentation ind "}"
+  Default s -> "default:\n" ++ unlines (map (prettyStmt [] $ ind + 1) s)
 
 prettyPat = \case
   NsPat a b -> "::" ++ a ++ "::" ++ b
   NsPatADT a b -> "::" ++ a ++ "::tag::" ++ b
   GLPat a -> show a
 
-prettyStmt ind = addIndentation ind . \case
+prettyStmt classDefs ind = addIndentation ind . \case
   Switch e c -> "switch (" ++ prettyExp e ++ ") {\n" ++ concatMap ((++"\n") . prettyCase (ind + 1)) c ++ addIndentation ind "}"
   Return e -> "return " ++ prettyExp e ++ ";"
   Throw s -> "throw " ++ show s ++ ";"
   CallGLPrim prim -> prettyGLPrim prim
   Call a b -> prettyExp a ++ "(" ++ intercalate ", " (map prettyExp b) ++ ");"
   CallProc a b -> prettyExp a ++ "(" ++ intercalate ", " (map prettyExp b) ++ ");"
-  If a b c -> "if (" ++ prettyExp a ++ ") {\n" ++ concatMap ((++"\n") . prettyStmt (ind + 1)) b ++ addIndentation ind "}" ++
-              if null c then "" else " else {\n" ++ concatMap ((++"\n") . prettyStmt (ind + 1)) c ++ addIndentation ind "}"
+  If a b c -> "if (" ++ prettyExp a ++ ") {\n" ++ concatMap ((++"\n") . prettyStmt [] (ind + 1)) b ++ addIndentation ind "}" ++
+              if null c then "" else " else {\n" ++ concatMap ((++"\n") . prettyStmt [] (ind + 1)) c ++ addIndentation ind "}"
   VarDef t n -> prettyType t ++ " " ++ intercalate ", " n ++ ";"
   VarADTDef t c n e -> "auto " ++ n ++ " = std::static_pointer_cast<data::" ++ c ++ ">(" ++ prettyExp e ++ ");"
   VarAssignDef t n e -> prettyType t ++ " " ++ n ++ " = " ++ prettyExp e ++ ";"
@@ -144,19 +140,20 @@ prettyStmt ind = addIndentation ind . \case
   VarRecordValue t n a -> prettyType t ++ " " ++ n ++ " = " ++ "{" ++ intercalate ", " ["." ++ n ++ " = " ++ prettyExp v | (n,v) <- a] ++ "}"
   VarNativeBufferFrom t n a -> "void* " ++ n ++ " = " ++ prettyExp a ++ ".data();"
   a := b -> prettyExp a ++ " = " ++ prettyExp b ++ ";"
-  For [a] b c stmts -> "for (" ++ prettyStmt 0 a ++ " " ++ prettyExp b ++ "; " ++ prettyExp c ++ ") {\n" ++ unlines (map (prettyStmt $ ind + 1) stmts) ++ addIndentation ind "}"
+  For [a] b c stmts -> "for (" ++ prettyStmt [] 0 a ++ " " ++ prettyExp b ++ "; " ++ prettyExp c ++ ") {\n" ++ unlines (map (prettyStmt [] $ ind + 1) stmts) ++ addIndentation ind "}"
   a :/= b -> prettyExp a ++ " /= " ++ prettyExp b ++ ";"
   a :|= b -> prettyExp a ++ " |= " ++ prettyExp b ++ ";"
   a :+= b -> prettyExp a ++ " += " ++ prettyExp b ++ ";"
   Map_insert m k v -> prettyExp m ++ "[" ++ prettyExp k ++ "] = " ++ prettyExp v ++ ";"
-  Map_foreach tk tv n e s -> "for (auto " ++ n ++ " : " ++ prettyExp e ++ ") {\n" ++ unlines (map (prettyStmt $ ind + 1) s) ++ addIndentation ind "}"
-  For_range n a b s -> "for (int " ++ n ++ " = " ++ prettyExp a ++ "; " ++ n ++ " < " ++ prettyExp b ++ "; " ++ n ++ "++) {\n" ++ unlines (map (prettyStmt $ ind + 1) s) ++ addIndentation ind "}"
-  Vector_foreach t n e s -> "for (auto " ++ n ++ " : " ++ prettyExp e ++ ") {\n" ++ unlines (map (prettyStmt $ ind + 1) s) ++ addIndentation ind "}"
+  Map_foreach tk tv n e s -> "for (auto " ++ n ++ " : " ++ prettyExp e ++ ") {\n" ++ unlines (map (prettyStmt [] $ ind + 1) s) ++ addIndentation ind "}"
+  For_range n a b s -> "for (int " ++ n ++ " = " ++ prettyExp a ++ "; " ++ n ++ " < " ++ prettyExp b ++ "; " ++ n ++ "++) {\n" ++ unlines (map (prettyStmt [] $ ind + 1) s) ++ addIndentation ind "}"
+  Vector_foreach t n e s -> "for (auto " ++ n ++ " : " ++ prettyExp e ++ ") {\n" ++ unlines (map (prettyStmt [] $ ind + 1) s) ++ addIndentation ind "}"
   Vector_pushBack a b -> prettyExp a ++ ".push_back(" ++ prettyExp b ++ ");"
   Vector_pushBackPtr a b -> prettyExp a ++ "->push_back(" ++ prettyExp b ++ ");"
   Break -> "break;"
   Continue -> "continue;"
   Inc e -> prettyExp e ++ "++;"
+  AllocClassVars -> ""
   x -> error $ "cpp - prettyStmt: " ++ show x
 
 prettyExp = \case

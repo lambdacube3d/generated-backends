@@ -11,5 +11,11 @@ import java.util.Map;
 public class GLStreamData {
   public Integer glMode, glCount;
   public StreamMap streams;
-};
+  public GLStreamData() throws Exception {
+    
+    streams = new StreamMap();
+
+  }
+
+}
 

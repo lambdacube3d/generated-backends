@@ -400,6 +400,8 @@ classes = do
       classVar (Vector NativeBuffer) ["data"]
       classVar UInt ["bufferObject"]
 
+      constructor [] allocClassVars
+
       method "add" ["buf" :@ NativeBuffer, "elemGLType" :@ Int, "elemCount" :@ Int] Int $ do
         varAssign Int "i" $ vector_size "data"
         varAssign Int "elemSize" 1
@@ -536,6 +538,7 @@ classes = do
   class_ "StreamMap" $ do
     public $ do
       classVar (Map String (SmartPtr "Stream")) ["map"]
+      constructor [] allocClassVars
 
       method "add" ["name" :@ String, "v" :@ Ref Float] Void $ map_insert "map" "name" $ callTypeConsructor (SmartPtr "Stream") $ new "Stream" ["v"]
       method "add" ["name" :@ String, "v" :@ Ref "V2F"] Void $ map_insert "map" "name" $ callTypeConsructor (SmartPtr "Stream") $ new "Stream" ["v"]
@@ -547,10 +550,10 @@ classes = do
       method "add" ["name" :@ String, "t" :@ "Type", "b" :@ SmartPtr "GLBuffer", "index" :@ Int] Void $ map_insert "map" "name" $ callTypeConsructor (SmartPtr "Stream") $ new "Stream" ["b","index","t"]
       method "validate" [] Bool $ return_ true -- TODO
 
-  struct_ "UniformValue" $ do
-    structVar (ADTEnum "InputType") ["tag"] -- TODO
-    structVar (NativeArray Int) ["_int"]
-    structVar (NativeArray Float) ["_float"]
+  class_ "UniformValue" $ public $ do
+    classVar (ADTEnum "InputType") ["tag"] -- TODO
+    classVar (NativeArray Int) ["_int"]
+    classVar (NativeArray Float) ["_float"]
 
   class_ "Object" $ do
     public $ do
@@ -594,6 +597,8 @@ classes = do
       classVar (Map String (SmartPtr (Vector (SmartPtr "Object")))) ["objectMap"]
       classVar (Map String "UniformValue") ["uniforms"]
       classVar Int ["screenWidth","screenHeight"]
+
+      constructor [] allocClassVars
 
       method "createObject" ["slotName" :@ String, "prim" :@ "Primitive", "attributes" :@ SmartPtr "StreamMap", "objectUniforms" :@ Vector String] (SmartPtr "Object") $ do
         varConstructor (SmartPtr "Object") "o" $ new "Object" []
@@ -648,13 +653,13 @@ classes = do
       setUniform "M44F" "M44F" "_m44f"
       -}
 
-  struct_ "Texture" $ do
-    structVar Int ["target"]
-    structVar UInt ["texture"]
+  class_ "Texture" $ public $ do
+    classVar Int ["target"]
+    classVar UInt ["texture"]
 
-  struct_ "StreamInfo" $ do
-    structVar String ["name"]
-    structVar Int ["index"]
+  class_ "StreamInfo" $ public $ do
+    classVar String ["name"]
+    classVar Int ["index"]
 
   class_ "GLProgram" $ do
     public $ do
@@ -662,9 +667,12 @@ classes = do
       classVar (Map String Int) ["programUniforms","programInTextures"]
       classVar (Map String "StreamInfo") ["programStreams"]
 
-  struct_ "GLStreamData" $ do
-    structVar Int ["glMode","glCount"]
-    structVar "StreamMap" ["streams"]
+      constructor [] allocClassVars
+
+  class_ "GLStreamData" $ public $ do
+    classVar Int ["glMode","glCount"]
+    classVar "StreamMap" ["streams"]
+    constructor [] allocClassVars
 
   class_ "GLES20Pipeline" $ do
     private $ do
@@ -726,6 +734,7 @@ classes = do
       classVar UInt ["screenTarget"]
 
       constructor ["ppl_" :@ SmartPtr "Pipeline"] $ do
+        allocClassVars
         "screenTarget" .= 0
         "hasCurrentProgram" .= false
         varADT "Pipeline" "Pipeline" "ppl" $ "ppl_"
@@ -847,6 +856,9 @@ classes = do
             case_ (nsPatADT "Command" "RenderStream") $ if_ (notNull "input" && notNull "pipeline" && "hasCurrentProgram") $ then_ $ do
               varADT "Command" "RenderStream" "cmd" $ "i"
               varAssign (SmartPtr "GLStreamData") "data" $ "streamData" `vector_lookup` ("cmd"~>"_0")
+              -- setup uniforms
+              map_foreach String Int "u" (("programs" `vector_lookup` "currentProgram")~>"programUniforms") $ do
+                callProc "setUniformValue" [it_value "u","input"~>"uniforms" `map_lookup` (key "u")]
               -- setup streams
               map_foreach String "StreamInfo" "s" (("programs" `vector_lookup` "currentProgram")~>"programStreams") $ do
                 callProc "setStream" [it_value "s"."index",deref $ "data"~>"streams"."map" `map_lookup` (it_value "s"."name")]

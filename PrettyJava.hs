@@ -1,6 +1,7 @@
 {-# LANGUAGE LambdaCase #-}
 module PrettyJava (prettyJava) where
 
+import Data.Maybe
 import System.Directory
 import System.FilePath
 import Control.Monad.Writer
@@ -38,7 +39,6 @@ prettyJava path defM = do
     let name = case def of
           ClassDef a _ -> a
           EnumDef a _ -> a
-          StructDef a _ -> a
           _ -> error "prettyJava: internal error"
     writeFile (path </> name ++ ".java") $ inc ++ prettyDef def
 
@@ -46,7 +46,7 @@ prettyDef :: Def -> String
 prettyDef = \case
   Procedure name args retType stmts -> concat
     [ prettyType retType ++ " " ++ name ++ "(" ++ intercalate ", " (map prettyArg args) ++ ") {\n"
-    , unlines $ map (prettyStmt 1) stmts
+    , unlines $ map (prettyStmt [] 1) stmts
     , "}\n\n"
     ]
   EnumDef name args -> unlines
@@ -55,37 +55,33 @@ prettyDef = \case
     , "};"
     , ""
     ]
-  ClassDef className args -> "public class " ++ className ++ " {\n" ++ concatMap (prettyClassScope className 1) args ++ "}\n\n"
-  StructDef structName args -> "public class " ++ structName ++ " {\n" ++ concatMap (prettyStructDef 1) args ++ "};\n\n"
+  ClassDef className args -> "public class " ++ className ++ " {\n" ++ concatMap (prettyClassScope args className 1) args ++ "}\n\n"
   x -> ""
 
-prettyClassScope className ind = \case
-  Public args -> concatMap (prettyClassDef True className ind) args
-  Private args -> concatMap (prettyClassDef False className ind) args
+prettyClassScope classDefs className ind = \case
+  Public args -> concatMap (prettyClassDef classDefs True className ind) args
+  Private args -> concatMap (prettyClassDef classDefs False className ind) args
 
-prettyClassDef isPublic className ind = \case
+prettyClassDef classDefs isPublic className ind = \case
   Method isStatic name args retType stmts -> concat
     [ addIndentation ind $ (if isStatic then "static " else "") ++ visibility ++ prettyType retType ++ " " ++ name ++ "(" ++ intercalate ", " (map prettyArg args) ++ ") throws Exception {\n"
-    , unlines $ map (prettyStmt $ ind + 1) stmts
+    , unlines $ map (prettyStmt classDefs $ ind + 1) stmts
     , addIndentation ind "}\n\n"
     ]
   Constructor args stmts -> concat
     [ addIndentation ind $ visibility ++ className ++ "(" ++ intercalate ", " (map prettyArg args) ++ ") throws Exception {\n"
-    , unlines $ map (prettyStmt $ ind + 1) stmts
+    , unlines $ map (prettyStmt classDefs $ ind + 1) stmts
     , addIndentation ind "}\n\n"
     ]
   Destructor stmts -> concat
     [ addIndentation ind $ "protected void finalize() {\n"
-    , unlines $ map (prettyStmt $ ind + 1) stmts
+    , unlines $ map (prettyStmt classDefs $ ind + 1) stmts
     , addIndentation ind "}\n\n"
     ]
   ClassVar t vars -> addIndentation ind $ visibility ++ prettyType t ++ " " ++ intercalate ", " vars ++ ";\n"
   x -> error $ "java - prettyClassDef: " ++ show x
  where
   visibility = if isPublic then "public " else "protected "
-
-prettyStructDef ind = \case
-  StructVar t vars -> addIndentation ind $ "public " ++ prettyType t ++ " " ++ intercalate ", " vars ++ ";\n"
 
 prettyArg (n :@ t) = unwords [prettyType t,n]
 
@@ -130,25 +126,25 @@ isSimple = \case
   _ -> False
 
 prettyCase ind = addIndentation ind . \case
-  Case p [s@(Return{})]  -> "case " ++ prettyPat p ++ ": " ++ prettyStmt 0 s
-  Case p [s] | isSimple s -> "case " ++ prettyPat p ++ ": " ++ prettyStmt 0 s ++ " break;"
-  Case p s  -> "case " ++ prettyPat p ++ ": {\n" ++ unlines (map (prettyStmt $ ind + 1) s) ++ addIndentation (ind + 1) "break;\n" ++ addIndentation ind "}"
-  Default s -> "default:\n" ++ unlines (map (prettyStmt $ ind + 1) s)
+  Case p [s@(Return{})]  -> "case " ++ prettyPat p ++ ": " ++ prettyStmt [] 0 s
+  Case p [s] | isSimple s -> "case " ++ prettyPat p ++ ": " ++ prettyStmt [] 0 s ++ " break;"
+  Case p s  -> "case " ++ prettyPat p ++ ": {\n" ++ unlines (map (prettyStmt [] $ ind + 1) s) ++ addIndentation (ind + 1) "break;\n" ++ addIndentation ind "}"
+  Default s -> "default:\n" ++ unlines (map (prettyStmt [] $ ind + 1) s)
 
 prettyPat = \case
   NsPat a b -> b
   NsPatADT a b -> b
   GLPat a -> "GLES20." ++ show a
 
-prettyStmt ind = addIndentation ind . \case
+prettyStmt classDefs ind = addIndentation ind . \case
   Switch e c -> "switch (" ++ prettyExp e ++ ") {\n" ++ concatMap ((++"\n") . prettyCase (ind + 1)) c ++ addIndentation ind "}"
   Return e -> "return " ++ prettyExp e ++ ";"
   Throw s -> "throw new Exception(" ++ show s ++ ");"
   CallGLPrim prim -> prettyGLPrim prim
   Call a b -> prettyExp a ++ "(" ++ intercalate ", " (map prettyExp b) ++ ");"
   CallProc a b -> "Util." ++ prettyExp a ++ "(" ++ intercalate ", " (map prettyExp b) ++ ");"
-  If a b c -> "if (" ++ prettyExp a ++ ") {\n" ++ concatMap ((++"\n") . prettyStmt (ind + 1)) b ++ addIndentation ind "}" ++
-              if null c then "" else " else {\n" ++ concatMap ((++"\n") . prettyStmt (ind + 1)) c ++ addIndentation ind "}"
+  If a b c -> "if (" ++ prettyExp a ++ ") {\n" ++ concatMap ((++"\n") . prettyStmt classDefs (ind + 1)) b ++ addIndentation ind "}" ++
+              if null c then "" else " else {\n" ++ concatMap ((++"\n") . prettyStmt classDefs (ind + 1)) c ++ addIndentation ind "}"
   VarDef t n -> prettyType t ++ " " ++ intercalate ", " n ++ ";"
   VarADTDef t c n e -> t ++ "." ++ c ++ "_ " ++ n ++ " = (" ++ t ++ "." ++ c ++ "_)" ++ prettyExp e ++ ";"
   VarAssignDef t n e -> prettyType t ++ " " ++ n ++ " = " ++ prettyExp e ++ ";"
@@ -159,19 +155,27 @@ prettyStmt ind = addIndentation ind . \case
                                    populate = "for (Float vec_elem : " ++ prettyExp a ++ ") " ++ n ++ ".put(vec_elem);\n" ++ addIndentation ind (n ++ ".rewind();")
                                in tStr ++ " " ++ n ++ " = " ++ tStr ++ ".allocate(" ++ prettyExp a ++ ".size());\n" ++ addIndentation ind populate
   a := b -> prettyExp a ++ " = " ++ prettyExp b ++ ";"
-  For [a] b c stmts -> "for (" ++ prettyStmt 0 a ++ " " ++ prettyExp b ++ "; " ++ prettyExp c ++ ") {\n" ++ unlines (map (prettyStmt $ ind + 1) stmts) ++ addIndentation ind "}"
+  For [a] b c stmts -> "for (" ++ prettyStmt classDefs 0 a ++ " " ++ prettyExp b ++ "; " ++ prettyExp c ++ ") {\n" ++ unlines (map (prettyStmt classDefs $ ind + 1) stmts) ++ addIndentation ind "}"
   a :/= b -> prettyExp a ++ " /= " ++ prettyExp b ++ ";"
   a :|= b -> prettyExp a ++ " |= " ++ prettyExp b ++ ";"
   a :+= b -> prettyExp a ++ " += " ++ prettyExp b ++ ";"
   Map_insert m k v -> prettyExp m ++ ".put(" ++ prettyExp k ++ ", " ++ prettyExp v ++ ");"
-  Map_foreach tk tv n e s -> "for (Map.Entry<" ++ prettyType tk ++ "," ++ prettyType tv ++ "> " ++ n ++ " : " ++ prettyExp e ++ ".entrySet()) {\n" ++ unlines (map (prettyStmt $ ind + 1) s) ++ addIndentation ind "}"
-  For_range n a b s -> "for (int " ++ n ++ " = " ++ prettyExp a ++ "; " ++ n ++ " < " ++ prettyExp b ++ "; " ++ n ++ "++) {\n" ++ unlines (map (prettyStmt $ ind + 1) s) ++ addIndentation ind "}"
-  Vector_foreach t n e s -> "for (" ++ prettyType t ++ " " ++ n ++ " : " ++ prettyExp e ++ ") {\n" ++ unlines (map (prettyStmt $ ind + 1) s) ++ addIndentation ind "}"
+  Map_foreach tk tv n e s -> "for (Map.Entry<" ++ prettyType tk ++ "," ++ prettyType tv ++ "> " ++ n ++ " : " ++ prettyExp e ++ ".entrySet()) {\n" ++ unlines (map (prettyStmt classDefs $ ind + 1) s) ++ addIndentation ind "}"
+  For_range n a b s -> "for (int " ++ n ++ " = " ++ prettyExp a ++ "; " ++ n ++ " < " ++ prettyExp b ++ "; " ++ n ++ "++) {\n" ++ unlines (map (prettyStmt classDefs $ ind + 1) s) ++ addIndentation ind "}"
+  Vector_foreach t n e s -> "for (" ++ prettyType t ++ " " ++ n ++ " : " ++ prettyExp e ++ ") {\n" ++ unlines (map (prettyStmt classDefs $ ind + 1) s) ++ addIndentation ind "}"
   Vector_pushBack a b -> prettyExp a ++ ".add(" ++ prettyExp b ++ ");"
   Vector_pushBackPtr a b -> prettyExp a ++ ".add(" ++ prettyExp b ++ ");"
   Break -> "break;"
   Continue -> "continue;"
   Inc e -> prettyExp e ++ "++;"
+  AllocClassVars -> let vars = catMaybes . map filterVar $ [a | Public l <- classDefs, a@ClassVar{} <- l] ++ [a | Private l <- classDefs, a@ClassVar{} <- l]
+                        filterVar (ClassVar t l) = case t of
+                          Class{} -> Just $ map (allocVar t) l
+                          Vector{} -> Just $ map (allocVar t) l
+                          Map{} -> Just $ map (allocVar t) l
+                          _ -> Nothing
+                        allocVar t n = n ++ " = new " ++ prettyType t ++ "();"
+                    in "\n" ++ (unlines $ map (addIndentation ind) $ concat vars)
   x -> error $ "java - prettyStmt: " ++ show x
 
 prettyExp = \case
