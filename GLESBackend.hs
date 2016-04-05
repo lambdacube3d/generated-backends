@@ -555,7 +555,7 @@ classes = do
     classVar (NativeArray Int) ["_int"]
     classVar (NativeArray Float) ["_float"]
 
-  class_ "Object" $ do
+  class_ "GLObject" $ do
     public $ do
       classVar Bool ["enabled"]
       classVar Int ["order","glMode","glCount"]
@@ -568,14 +568,16 @@ classes = do
       method "setOrder" ["o" :@ Int] Void $ "order" .= "o"
 
       let setUniform t tag n = method "setUniform" ["name" :@ String, "v" :@ Ref t] Void $ do
-            {-
-             TODO:
-              check key existence
-                missing: create an empty uniform value
-              update uniform value's nativearray
-            -}
-            varRecordValue "UniformValue" "u" [("tag",enumADT "InputType" tag){- TODO: , (n,"v") -}]
-            map_insert "uniforms" "name" "u"
+            if_ (map_elem "uniforms" "name") $ do
+              then_ $ do
+                varAssign "UniformValue" "u" $ map_lookup "uniforms" "name"
+                copyToNativeArray t ("u".n) "v"
+              else_ $ do
+                varConstructor (SmartPtr "UniformValue") "u" $ new "UniformValue" []
+                "u"."tag" .= enumADT "InputType" tag
+                allocNativeArray t $ "u".n
+                copyToNativeArray t ("u".n) "v"
+                map_insert "uniforms" "name" "u"
       setUniform Int "Int" "_int"
       setUniform Bool "Bool" "_int"
       setUniform Float "Float" "_float"
@@ -594,14 +596,14 @@ classes = do
 
   class_ "PipelineInput" $ do
     public $ do
-      classVar (Map String (SmartPtr (Vector (SmartPtr "Object")))) ["objectMap"]
+      classVar (Map String (SmartPtr (Vector (SmartPtr "GLObject")))) ["objectMap"]
       classVar (Map String "UniformValue") ["uniforms"]
       classVar Int ["screenWidth","screenHeight"]
 
       constructor [] allocClassVars
 
-      method "createObject" ["slotName" :@ String, "prim" :@ "Primitive", "attributes" :@ SmartPtr "StreamMap", "objectUniforms" :@ Vector String] (SmartPtr "Object") $ do
-        varConstructor (SmartPtr "Object") "o" $ new "Object" []
+      method "createObject" ["slotName" :@ String, "prim" :@ "Primitive", "attributes" :@ SmartPtr "StreamMap", "objectUniforms" :@ Vector String] (SmartPtr "GLObject") $ do
+        varConstructor (SmartPtr "GLObject") "o" $ new "GLObject" []
         "o"~>"enabled" .= true
         "o"~>"order" .= 0
         "o"~>"glMode" .= callProcExp "primitiveMode" ["prim"]
@@ -616,14 +618,14 @@ classes = do
           then_ $ do
             vector_pushBackPtr ("objectMap" `map_lookup` "slotName") "o"
           else_ $ do
-            varAssign (Ptr $ Vector $ SmartPtr "Object") "ov" $ new (Vector $ SmartPtr "Object") []
+            varAssign (Ptr $ Vector $ SmartPtr "GLObject") "ov" $ new (Vector $ SmartPtr "GLObject") []
             vector_pushBackPtr "ov" "o"
-            map_insert "objectMap" "slotName" $ CallTypeConsructor (SmartPtr $ Vector $ SmartPtr "Object") "ov"
+            map_insert "objectMap" "slotName" $ CallTypeConsructor (SmartPtr $ Vector $ SmartPtr "GLObject") "ov"
         return_ "o"
 
       method "createObject" ["slotName" :@ String, "prim" :@ "Primitive", "attributes" :@ Ref "StreamMap"
-                            , "indexBuffer" :@ Ref "GLBuffer", "bufferIndex" :@ Int, "objectUniforms" :@ Vector String] (SmartPtr "Object") $ do
-        varConstructor (SmartPtr "Object") "o" $ new "Object" []
+                            , "indexBuffer" :@ Ref "GLBuffer", "bufferIndex" :@ Int, "objectUniforms" :@ Vector String] (SmartPtr "GLObject") $ do
+        varConstructor (SmartPtr "GLObject") "o" $ new "GLObject" []
         -- TODO
         return_ "o" 
 
@@ -632,26 +634,33 @@ classes = do
         "screenWidth" .= "w"
         "screenHeight" .= "h"
 
-      {- TODO
+      -- same as GLObjects
       let setUniform t tag n = method "setUniform" ["name" :@ String, "v" :@ Ref t] Void $ do
-            varRecordValue "UniformValue" "u" [("tag",enumADT "InputType" tag),   (n,"v")]
-            map_insert "uniforms" "name" "u"
+            if_ (map_elem "uniforms" "name") $ do
+              then_ $ do
+                varAssign "UniformValue" "u" $ map_lookup "uniforms" "name"
+                copyToNativeArray t ("u".n) "v"
+              else_ $ do
+                varConstructor (SmartPtr "UniformValue") "u" $ new "UniformValue" []
+                "u"."tag" .= enumADT "InputType" tag
+                allocNativeArray t $ "u".n
+                copyToNativeArray t ("u".n) "v"
+                map_insert "uniforms" "name" "u"
       setUniform Int "Int" "_int"
+      setUniform Bool "Bool" "_int"
       setUniform Float "Float" "_float"
-      setUniform Bool "Bool" "_bool"
-      setUniform "V2I" "V2I" "_v2i"
-      setUniform "V2F" "V2F" "_v2f"
-      setUniform "V2B" "V2B" "_v2b"
-      setUniform "V3I" "V3I" "_v3i"
-      setUniform "V3F" "V3F" "_v3f"
-      setUniform "V3B" "V3B" "_v3b"
-      setUniform "V4I" "V4I" "_v4i"
-      setUniform "V4F" "V4F" "_v4f"
-      setUniform "V4B" "V4B" "_v4b"
-      setUniform "M22F" "M22F" "_m22f"
-      setUniform "M33F" "M33F" "_m33f"
-      setUniform "M44F" "M44F" "_m44f"
-      -}
+      setUniform "V2I" "V2I" "_int"
+      setUniform "V2B" "V2B" "_int"
+      setUniform "V2F" "V2F" "_float"
+      setUniform "V3I" "V3I" "_int"
+      setUniform "V3B" "V3B" "_int"
+      setUniform "V3F" "V3F" "_float"
+      setUniform "V4I" "V4I" "_int"
+      setUniform "V4B" "V4B" "_int"
+      setUniform "V4F" "V4F" "_float"
+      setUniform "M22F" "M22F" "_float"
+      setUniform "M33F" "M33F" "_float"
+      setUniform "M44F" "M44F" "_float"
 
   class_ "Texture" $ public $ do
     classVar Int ["target"]
@@ -840,7 +849,7 @@ classes = do
               varADT "Command" "RenderSlot" "cmd" $ "i"
               varADT "Slot" "Slot" "slot" $ "pipeline"~>"slots" `vector_lookup` ("cmd"~>"_0")
               if_ (map_notElem ("input"~>"objectMap") ("slot"~>"slotName")) $ then_ break_
-              vector_foreach "Object" "o" (deref $ "input"~>"objectMap" `map_lookup` ("slot"~>"slotName")) $ do
+              vector_foreach "GLObject" "o" (deref $ "input"~>"objectMap" `map_lookup` ("slot"~>"slotName")) $ do
                 if_ (not $ "o"~>"enabled") $ then_ continue_
                 -- setup uniforms
                 map_foreach String Int "u" (("programs" `vector_lookup` "currentProgram")~>"programUniforms") $ do

@@ -185,7 +185,7 @@ data Type
   | Ref Type      -- &
   | Ptr Type      -- *
   | SmartPtr Type -- shared_ptr
-  deriving Show
+  deriving (Show,Eq)
 
 data Exp
   = Var String
@@ -257,6 +257,8 @@ data Stmt
   | Vector_pushBack Exp Exp
   | Vector_pushBackPtr Exp Exp
   | AllocClassVars
+  | AllocNativeArray Type Exp
+  | CopyToNativeArray Type Exp Exp
   deriving Show
 
 data Arg = String :@ Type deriving Show
@@ -496,6 +498,12 @@ vector_pushBackPtr a b = tell [Vector_pushBackPtr a b]
 
 allocClassVars :: StmtM ()
 allocClassVars = tell [AllocClassVars]
+
+allocNativeArray :: Type -> Exp -> StmtM ()
+allocNativeArray t n = tell [AllocNativeArray t n]
+
+copyToNativeArray :: Type -> Exp -> Exp -> StmtM ()
+copyToNativeArray t dst src = tell [CopyToNativeArray t dst src]
 
 for :: StmtM () -> Exp -> Exp -> StmtM () -> StmtM ()
 for loopInitM cond exp stmtM = tell [For (execWriter loopInitM) cond exp (execWriter stmtM)]

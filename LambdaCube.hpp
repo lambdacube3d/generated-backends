@@ -75,13 +75,13 @@ class UniformValue {
     float[] _float;
 };
 
-class Object {
+class GLObject {
   public:
     bool enabled;
     int32_t order, glMode, glCount;
     std::map<std::string,UniformValue> uniforms;
     std::shared_ptr<StreamMap> streams;
-    ~Object();
+    ~GLObject();
     void enable(bool visible);
     void setOrder(int32_t o);
     void setUniform(std::string name, int32_t& v);
@@ -103,14 +103,29 @@ class Object {
 
 class PipelineInput {
   public:
-    std::map<std::string,std::shared_ptr<std::vector<std::shared_ptr<Object>>>> objectMap;
+    std::map<std::string,std::shared_ptr<std::vector<std::shared_ptr<GLObject>>>> objectMap;
     std::map<std::string,UniformValue> uniforms;
     int32_t screenWidth, screenHeight;
     PipelineInput();
-    std::shared_ptr<Object> createObject(std::string slotName, Primitive prim, std::shared_ptr<StreamMap> attributes, std::vector<std::string> objectUniforms);
-    std::shared_ptr<Object> createObject(std::string slotName, Primitive prim, StreamMap& attributes, GLBuffer& indexBuffer, int32_t bufferIndex, std::vector<std::string> objectUniforms);
+    std::shared_ptr<GLObject> createObject(std::string slotName, Primitive prim, std::shared_ptr<StreamMap> attributes, std::vector<std::string> objectUniforms);
+    std::shared_ptr<GLObject> createObject(std::string slotName, Primitive prim, StreamMap& attributes, GLBuffer& indexBuffer, int32_t bufferIndex, std::vector<std::string> objectUniforms);
     void sortSlotObjects();
     void setScreenSize(int32_t w, int32_t h);
+    void setUniform(std::string name, int32_t& v);
+    void setUniform(std::string name, bool& v);
+    void setUniform(std::string name, float& v);
+    void setUniform(std::string name, V2I& v);
+    void setUniform(std::string name, V2B& v);
+    void setUniform(std::string name, V2F& v);
+    void setUniform(std::string name, V3I& v);
+    void setUniform(std::string name, V3B& v);
+    void setUniform(std::string name, V3F& v);
+    void setUniform(std::string name, V4I& v);
+    void setUniform(std::string name, V4B& v);
+    void setUniform(std::string name, V4F& v);
+    void setUniform(std::string name, M22F& v);
+    void setUniform(std::string name, M33F& v);
+    void setUniform(std::string name, M44F& v);
 };
 
 class Texture {

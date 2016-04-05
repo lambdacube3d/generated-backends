@@ -221,7 +221,7 @@ public class GLES20Pipeline {
             if (!input.objectMap.containsKey(slot.slotName)) {
               break;
             }
-            for (Object o : input.objectMap.get(slot.slotName)) {
+            for (GLObject o : input.objectMap.get(slot.slotName)) {
               if (!o.enabled) {
                 continue;
               }

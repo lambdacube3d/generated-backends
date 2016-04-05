@@ -8,52 +8,20 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
-public class PipelineInput {
-  public HashMap<String,ArrayList<GLObject>> objectMap;
+public class GLObject {
+  public Boolean enabled;
+  public Integer order, glMode, glCount;
   public HashMap<String,UniformValue> uniforms;
-  public Integer screenWidth, screenHeight;
-  public PipelineInput() throws Exception {
-    
-    objectMap = new HashMap<String,ArrayList<GLObject>>();
-    uniforms = new HashMap<String,UniformValue>();
-
+  public StreamMap streams;
+  protected void finalize() {
   }
 
-  public GLObject createObject(String slotName, Primitive prim, StreamMap attributes, ArrayList<String> objectUniforms) throws Exception {
-    GLObject o = new GLObject();
-    o.enabled = true;
-    o.order = 0;
-    o.glMode = Util.primitiveMode(prim);
-    Integer count = 0;
-    for (Map.Entry<String,Stream> i : attributes.map.entrySet()) {
-      if (i.getValue().isArray) {
-        count = i.getValue().buffer.size.get(i.getValue().index) / i.getValue().glSize;
-        break;
-      }
-    }
-    o.glCount = count;
-    o.streams = attributes;
-    if (objectMap.containsKey(slotName)) {
-      objectMap.get(slotName).add(o);
-    } else {
-      ArrayList<GLObject> ov = new ArrayList<GLObject>();
-      ov.add(o);
-      objectMap.put(slotName, ov);
-    }
-    return o;
+  public void enable(Boolean visible) throws Exception {
+    enabled = visible;
   }
 
-  public GLObject createObject(String slotName, Primitive prim, StreamMap attributes, GLBuffer indexBuffer, Integer bufferIndex, ArrayList<String> objectUniforms) throws Exception {
-    GLObject o = new GLObject();
-    return o;
-  }
-
-  public void sortSlotObjects() throws Exception {
-  }
-
-  public void setScreenSize(Integer w, Integer h) throws Exception {
-    screenWidth = w;
-    screenHeight = h;
+  public void setOrder(Integer o) throws Exception {
+    order = o;
   }
 
   public void setUniform(String name, Integer v) throws Exception {

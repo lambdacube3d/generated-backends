@@ -1,4 +1,4 @@
-{-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE LambdaCase, OverloadedStrings, FlexibleContexts #-}
 module PrettyJava (prettyJava) where
 
 import Data.Maybe
@@ -7,13 +7,6 @@ import System.FilePath
 import Control.Monad.Writer
 import Data.List
 import Language hiding ((.))
-
-{-
-  = Procedure String [Arg] Type [Stmt]  -- static method in a sppecial class
-  | ClassDef  String [ClassScope]       -- class
-  | EnumDef   String [String]           -- enum in spearated file
-  | StructDef String [StructDef]        -- class
--}
 
 prettyJava :: String -> DefM () -> IO ()
 prettyJava path defM = do
@@ -176,12 +169,56 @@ prettyStmt classDefs ind = addIndentation ind . \case
                           _ -> Nothing
                         allocVar t n = n ++ " = new " ++ prettyType t ++ "();"
                     in "\n" ++ (unlines $ map (addIndentation ind) $ concat vars)
+  AllocNativeArray t n -> prettyExp n ++ " = new " ++ case t of
+    Int   -> "int[1];"
+    Bool  -> "int[1];"
+    Float -> "float[1];"
+    "V2I" -> "int[2];"
+    "V2B" -> "int[2];"
+    "V2F" -> "float[2];"
+    "V3I" -> "int[3];"
+    "V3B" -> "int[3];"
+    "V3F" -> "float[3];"
+    "V4I" -> "int[4];"
+    "V4B" -> "int[4];"
+    "V4F" -> "float[4];"
+    "M22F"  -> "float[4];"
+    "M33F"  -> "float[9];"
+    "M44F"  -> "float[16];"
+  CopyToNativeArray t dst src -> case t of
+      Int   -> f 0 ""
+      Bool  -> f 0 "?1:0"
+      Float -> f 0 ""
+      "V2I" -> intercalate indStr [f 0 ".x", f 1 ".y"]
+      "V2B" -> intercalate indStr [f 0 ".x?1:0", f 1 ".y?1:0"]
+      "V2F" -> intercalate indStr [f 0 ".x", f 1 ".y"]
+      "V3I" -> intercalate indStr [f 0 ".x", f 1 ".y", f 2 ".z"]
+      "V3B" -> intercalate indStr [f 0 ".x?1:0", f 1 ".y?1:0", f 2 ".z?1:0"]
+      "V3F" -> intercalate indStr [f 0 ".x", f 1 ".y", f 2 ".z"]
+      "V4I" -> intercalate indStr [f 0 ".x", f 1 ".y", f 2 ".z", f 3 ".w"]
+      "V4B" -> intercalate indStr [f 0 ".x?1:0", f 1 ".y?1:0", f 2 ".z?1:0", f 3 ".w?1:0"]
+      "V4F" -> intercalate indStr [f 0 ".x", f 1 ".y", f 2 ".z", f 3 ".w"]
+      "M22F"  -> intercalate indStr [ f 0 ".x.x", f 1 ".x.y"
+                         , f 2 ".y.x", f 3 ".y.y"
+                         ]
+      "M33F"  -> intercalate indStr [ f 0 ".x.x", f 1 ".x.y", f 2 ".x.z"
+                         , f 3 ".y.x", f 4 ".y.y", f 5 ".y.z"
+                         , f 6 ".z.x", f 7 ".z.y", f 8 ".z.z"
+                         ]
+      "M44F"  -> intercalate indStr [ f 0 ".x.x", f 1 ".x.y", f 2 ".x.z", f 3 ".x.w"
+                         , f 4 ".y.x", f 5 ".y.y", f 6 ".y.z", f 7 ".y.w"
+                         , f 8 ".z.x", f 9 ".z.y", f 10 ".z.z", f 11 ".z.w"
+                         , f 12 ".w.x", f 13 ".w.y", f 14 ".w.z", f 15 ".w.w"
+                         ]
+    where
+      indStr = "\n" ++ addIndentation ind ""
+      f i n = prettyExp dst ++ "["  ++ show i ++ "] = " ++ prettyExp src ++ n ++ ";"
   x -> error $ "java - prettyStmt: " ++ show x
 
 prettyExp = \case
   a :-> b -> prettyExp a ++ "." ++ prettyExp b
   a :. b  -> prettyExp a ++ "." ++ prettyExp b
-  Deref e     -> prettyExp e
+  Deref e -> prettyExp e
   Var n   -> n
   EnumVal a b -> a ++ "." ++ b
   EnumADT a b -> a ++ ".Tag." ++ b

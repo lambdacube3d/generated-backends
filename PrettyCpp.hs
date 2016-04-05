@@ -154,6 +154,8 @@ prettyStmt classDefs ind = addIndentation ind . \case
   Continue -> "continue;"
   Inc e -> prettyExp e ++ "++;"
   AllocClassVars -> ""
+  AllocNativeArray t n -> ""
+  CopyToNativeArray t dst src -> ""
   x -> error $ "cpp - prettyStmt: " ++ show x
 
 prettyExp = \case

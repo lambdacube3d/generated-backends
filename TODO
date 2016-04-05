@@ -21,7 +21,7 @@ java backend:
     done - remove `auto` type, instead use explicit type annotation
     done - union in: Stream, UniformValue (used in c++)
     done - remove record value (used in setUniform methods)
-    void* type (used in c++, can not be used in Java)
+    done - void* type (used in c++, can not be used in Java)
 
   done - nsPat for DDL ADT constructor enum
   done - nsPat for custom
@@ -35,24 +35,25 @@ java backend:
   done - remove: addr, cast - use GLPrim instead
   done - handle type synonyms for: V2F, V2I, etc: do not use generics for V2/V3/V4 on java use specialised types instead
   irrelevant - handle the case when LC types has mapped to same native types e.g. int -> Integer. uint -> Integer
-  better representation of V2,V3,V4 and matrices (e.g. for jave use arrays: []). idea: keep the IR representation in the api, but use arrays in uniform values
+  done - better representation of V2,V3,V4 and matrices (e.g. for jave use arrays: []). idea: keep the IR representation in the api, but use arrays in uniform values
     affected functions/methods/classes:
       UniformValue
       setUniformValue
       setUniform (PipelineInput)
       setUniform (Object)
-  allocate containers in constructors
-  stUniformValue call on stream data rendering
-  better representation of vertex/index buffers
+  done - allocate containers in constructors
+  done - setUniformValue call on stream data rendering
+  done - better representation of vertex/index buffers
     Buffer: use NativeArray to store data
             maybe we should use native buffer: IntBuffer/FloatBuffer
-  Buffer: use lower level data input api
+  done - Buffer: use lower level data input api
     remove high level adds and use this:
         public Integer add(java.nio.Buffer buf,int elemGLType, int elemCount) throws Exception {
     NativeArray = type[]
     NativeBuffer: that can be created from native array (wrap)
   use heap model only (do not create values on stack)
   remove: Ptr type, deref
+  remove: SmartPtr
   diappeared - variable initialization
 
 now focus:
