@@ -3,6 +3,7 @@ module PrettyCpp (prettyCpp,prettyHpp) where
 
 import Control.Monad.Writer
 import Data.List
+import Data.Maybe
 import Language hiding ((.))
 
 prettyCpp :: DefM () -> String
@@ -150,9 +151,15 @@ prettyStmt classDefs ind = addIndentation ind . \case
   Break -> "break;"
   Continue -> "continue;"
   Inc e -> prettyExp e ++ "++;"
-  AllocClassVars -> "" -- TODO
-  --AllocNativeArray t n -> "" -- TODO
-  --CopyToNativeArray t dst src -> "" -- TODO
+  AllocClassVars -> let vars = catMaybes . map filterVar $ [a | Public l <- classDefs, a@ClassVar{} <- l] ++ [a | Private l <- classDefs, a@ClassVar{} <- l]
+                        filterVar (ClassVar t l) = case t of
+                          Class{} -> Just $ map (allocVar t) l
+                          Vector{} -> Just $ map (allocVar t) l
+                          Map{} -> Just $ map (allocVar t) l
+                          _ -> Nothing
+                        allocVar (Class t) n = n ++ " = std::shared_ptr<" ++ t ++" >(new " ++ t ++ "());"
+                        allocVar _ _ = ""
+                    in "\n" ++ (unlines $ map (addIndentation ind) $ concat vars)
   AllocNativeArray t n -> prettyExp n ++ " = new " ++ case t of
     Int   -> "int[1];"
     Bool  -> "int[1];"

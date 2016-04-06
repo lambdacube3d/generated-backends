@@ -511,6 +511,12 @@ void setupAccumulationContext(std::shared_ptr<AccumulationContext> ctx_) {
 
 GLBuffer::GLBuffer() {
   
+  
+  
+  
+  
+  
+
 }
 
 int32_t GLBuffer::add(const void* buf, int32_t elemGLType, int32_t elemCount) {
@@ -614,6 +620,8 @@ Stream::Stream(std::shared_ptr<GLBuffer> b, int32_t i, enum Type t) {
 
 StreamMap::StreamMap() {
   
+  
+
 }
 
 void StreamMap::add(std::string name, float v) {
@@ -956,6 +964,9 @@ void GLObject::setUniform(std::string name, M44F v) {
 
 PipelineInput::PipelineInput() {
   
+  
+  
+
 }
 
 std::shared_ptr<GLObject> PipelineInput::createObject(std::string slotName, enum Primitive prim, std::shared_ptr<StreamMap> attributes, std::vector<std::string> objectUniforms) {
@@ -1280,10 +1291,16 @@ void PipelineInput::setUniform(std::string name, M44F v) {
 
 GLProgram::GLProgram() {
   
+  
+  
+  
+
 }
 
 GLStreamData::GLStreamData() {
   
+  streams = std::shared_ptr<StreamMap >(new StreamMap());
+
 }
 
 uint32_t GLES20Pipeline::createRenderTarget(std::shared_ptr<RenderTarget> t_) {
@@ -1340,6 +1357,12 @@ uint32_t GLES20Pipeline::createRenderTarget(std::shared_ptr<RenderTarget> t_) {
 
 GLES20Pipeline::GLES20Pipeline(std::shared_ptr<Pipeline> ppl_) {
   
+  input = std::shared_ptr<PipelineInput >(new PipelineInput());
+  
+  
+  
+  
+
   hasPipelineInput = false;
   screenTarget = 0;
   hasCurrentProgram = false;
