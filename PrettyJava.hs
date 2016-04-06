@@ -92,10 +92,6 @@ prettyType = \case
   Class n -> n
   Builtin n -> n
   Enum n  -> n
---  Const t -> prettyType t
---  Ref t   -> prettyType t
---  Ptr t   -> prettyType t
---  SmartPtr t -> prettyType t
   Vector t -> "ArrayList<" ++ prettyType t ++ ">"
   Map k v -> "HashMap<" ++ prettyType k ++ "," ++ prettyType v ++ ">"
   String  -> "String"
@@ -158,7 +154,6 @@ prettyStmt classDefs ind = addIndentation ind . \case
   For_range n a b s -> "for (int " ++ n ++ " = " ++ prettyExp a ++ "; " ++ n ++ " < " ++ prettyExp b ++ "; " ++ n ++ "++) {\n" ++ unlines (map (prettyStmt classDefs $ ind + 1) s) ++ addIndentation ind "}"
   Vector_foreach t n e s -> "for (" ++ prettyType t ++ " " ++ n ++ " : " ++ prettyExp e ++ ") {\n" ++ unlines (map (prettyStmt classDefs $ ind + 1) s) ++ addIndentation ind "}"
   Vector_pushBack a b -> prettyExp a ++ ".add(" ++ prettyExp b ++ ");"
---  Vector_pushBackPtr a b -> prettyExp a ++ ".add(" ++ prettyExp b ++ ");"
   Vector_new t n -> prettyType (Vector t) ++ " " ++ n ++ " = new " ++ prettyType (Vector t) ++ "();"
   Break -> "break;"
   Continue -> "continue;"
@@ -220,7 +215,6 @@ prettyStmt classDefs ind = addIndentation ind . \case
 prettyExp = \case
   a :-> b -> prettyExp a ++ "." ++ prettyExp b
   a :. b  -> prettyExp a ++ "." ++ prettyExp b
---  Deref e -> prettyExp e
   Var n   -> n
   EnumVal a b -> a ++ "." ++ b
   EnumADT a b -> a ++ ".Tag." ++ b
@@ -244,7 +238,6 @@ prettyExp = \case
   CallProcExp n a -> "Util." ++ prettyExp n ++ "(" ++ intercalate ", " (map prettyExp a) ++ ")"
   ExpIf a b c -> prettyExp a ++ "?" ++ prettyExp b ++ ":" ++ prettyExp c
   NullPtr -> "null"
---  New t a -> "new " ++ prettyType t ++ "(" ++ intercalate "," (map prettyExp a) ++ ")"
   IteratorValue e -> prettyExp e ++ ".getValue()" -- used with foreach
   IteratorKey e -> prettyExp e ++ ".getKey()" -- used with foreach
   NotNull e -> prettyExp e ++ "!= null"
@@ -252,7 +245,6 @@ prettyExp = \case
   Map_notElem a b -> "!" ++ prettyExp a ++ ".containsKey(" ++ prettyExp b ++ ")"
   Map_elem a b -> prettyExp a ++ ".containsKey(" ++ prettyExp b ++ ")"
   Vector_size a -> prettyExp a ++ ".size()"
---  CallTypeConsructor t a -> prettyExp a
   GLConstant a -> "GLES20." ++ show a
   GLCommand a -> "GLES20.gl" ++ drop 2 (show a)
   x -> error $ "java - prettyExp: " ++ show x

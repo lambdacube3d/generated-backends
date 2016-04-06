@@ -177,15 +177,10 @@ data Type
   | Enum String
   | ADTEnum String
   | ADTCons String String
---  | Const Type
   | Vector Type
   | Map Type Type
   | NativeArray Type -- only for passing buffers
   | NativeBuffer
-  -- for C++
---  | Ref Type      -- &
---  | Ptr Type      -- *
---  | SmartPtr Type -- shared_ptr
   deriving (Show,Eq)
 
 data Exp
@@ -209,7 +204,6 @@ data Exp
   | CallProcExp Exp [Exp]
   | ExpIf Exp Exp Exp
   | NullPtr
---  | New Type [Exp]
   | IteratorValue Exp -- used with foreach
   | IteratorKey Exp
   | NotNull Exp
@@ -221,9 +215,7 @@ data Exp
   | Vector_size Exp
   | Exp :. Exp
   -- for C++
---  | CallTypeConsructor Type Exp
   | Exp :-> Exp
---  | Deref Exp
   -- GL stuff
   | GLCommand   GLCommand
   | GLConstant  GLConstant
@@ -257,7 +249,6 @@ data Stmt
   | Continue
   | Inc Exp
   | Vector_pushBack Exp Exp
---  | Vector_pushBackPtr Exp Exp
   | AllocClassVars
   | AllocNativeArray Type Exp
   | CopyToNativeArray Type Exp Exp
@@ -370,9 +361,6 @@ map_notElem = Map_notElem
 map_elem :: Exp -> Exp -> Exp
 map_elem = Map_elem
 
---deref :: Exp -> Exp
---deref = Deref
-
 not :: Exp -> Exp
 not = Not
 
@@ -406,9 +394,6 @@ call fun args = tell [Call fun args]
 callExp :: Exp -> [Exp] -> Exp
 callExp a b = CallExp a b
 
---new :: Type -> [Exp] -> Exp
---new = New
-
 false :: Exp
 false = BoolLit False
 
@@ -427,9 +412,6 @@ else_ stmtM = tell [Else (execWriter stmtM)]
 
 varNativeBufferFrom :: Type -> String -> Exp -> StmtM ()
 varNativeBufferFrom t n v = tell [VarNativeBufferFrom t n v]
-
---callTypeConsructor :: Type -> Exp -> Exp
---callTypeConsructor = CallTypeConsructor
 
 vector_size :: Exp -> Exp
 vector_size = Vector_size
@@ -497,9 +479,6 @@ vector_pushBack a b = tell [Vector_pushBack a b]
 
 vector_new :: Type -> String -> StmtM ()
 vector_new t n = tell [Vector_new t n]
-
---vector_pushBackPtr :: Exp -> Exp -> StmtM ()
---vector_pushBackPtr a b = tell [Vector_pushBackPtr a b]
 
 allocClassVars :: StmtM ()
 allocClassVars = tell [AllocClassVars]

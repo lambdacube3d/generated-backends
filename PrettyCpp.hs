@@ -88,10 +88,6 @@ prettyType = \case
   Class n -> "std::shared_ptr<" ++ n ++ ">"
   Builtin n -> n
   Enum n  -> "enum " ++ n
---  Const t -> "const " ++ prettyType t
---  Ref t   -> prettyType t ++ "&"
---  Ptr t   -> prettyType t ++ "*"
---  SmartPtr t -> "std::shared_ptr<" ++ prettyType t ++ ">"
   Vector t -> "std::vector<" ++ prettyType t ++ ">"
   Map k v -> "std::map<" ++ prettyType k ++ "," ++ prettyType v ++ ">"
   String  -> "std::string"
@@ -150,7 +146,6 @@ prettyStmt classDefs ind = addIndentation ind . \case
   For_range n a b s -> "for (int " ++ n ++ " = " ++ prettyExp a ++ "; " ++ n ++ " < " ++ prettyExp b ++ "; " ++ n ++ "++) {\n" ++ unlines (map (prettyStmt [] $ ind + 1) s) ++ addIndentation ind "}"
   Vector_foreach t n e s -> "for (auto " ++ n ++ " : " ++ prettyExp e ++ ") {\n" ++ unlines (map (prettyStmt [] $ ind + 1) s) ++ addIndentation ind "}"
   Vector_pushBack a b -> prettyExp a ++ ".push_back(" ++ prettyExp b ++ ");"
---  Vector_pushBackPtr a b -> prettyExp a ++ "->push_back(" ++ prettyExp b ++ ");"
   Vector_new t n -> prettyType (Vector t) ++ " " ++ n ++ ";"
   Break -> "break;"
   Continue -> "continue;"
@@ -168,7 +163,6 @@ prettyExp = \case
   EnumADT a b -> "::" ++ a ++ "::tag::" ++ b
   Integer a   -> show a
   FloatLit a  -> show a
---  Deref e     -> "*" ++ prettyExp e
   BoolLit True  -> "true"
   BoolLit False -> "false"
   Vector_lookup a b -> prettyExp a ++ "[" ++ prettyExp b ++ "]"
@@ -187,7 +181,6 @@ prettyExp = \case
   CallProcExp n a -> prettyExp n ++ "(" ++ intercalate ", " (map prettyExp a) ++ ")"
   ExpIf a b c -> prettyExp a ++ "?" ++ prettyExp b ++ ":" ++ prettyExp c
   NullPtr -> "nullptr"
---  New t a -> "new " ++ prettyType t ++ "(" ++ intercalate "," (map prettyExp a) ++ ")"
   IteratorValue e -> prettyExp e ++ ".second" -- used with foreach
   IteratorKey e -> prettyExp e ++ ".first" -- used with foreach
   NotNull e -> prettyExp e -- HACK
@@ -195,7 +188,6 @@ prettyExp = \case
   Map_notElem a b -> prettyExp a ++ ".count(" ++ prettyExp b ++ ")<=0"
   Map_elem a b -> prettyExp a ++ ".count(" ++ prettyExp b ++ ")>0"
   Vector_size a -> prettyExp a ++ ".size()"
---  CallTypeConsructor t a -> prettyType t ++ "(" ++ prettyExp a ++ ")"
   GLConstant a -> show a
   GLCommand a -> "gl" ++ drop 2 (show a)
   x -> error $ "cpp - prettyExp: " ++ show x
