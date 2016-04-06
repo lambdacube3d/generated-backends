@@ -173,18 +173,19 @@ data Type
   | String
   | Void
   | Class String
+  | Builtin String
   | Enum String
   | ADTEnum String
   | ADTCons String String
-  | Const Type
+--  | Const Type
   | Vector Type
   | Map Type Type
   | NativeArray Type -- only for passing buffers
   | NativeBuffer
   -- for C++
-  | Ref Type      -- &
-  | Ptr Type      -- *
-  | SmartPtr Type -- shared_ptr
+--  | Ref Type      -- &
+--  | Ptr Type      -- *
+--  | SmartPtr Type -- shared_ptr
   deriving (Show,Eq)
 
 data Exp
@@ -220,9 +221,9 @@ data Exp
   | Vector_size Exp
   | Exp :. Exp
   -- for C++
-  | CallTypeConsructor Type Exp
+--  | CallTypeConsructor Type Exp
   | Exp :-> Exp
-  | Deref Exp
+--  | Deref Exp
   -- GL stuff
   | GLCommand   GLCommand
   | GLConstant  GLConstant
@@ -239,7 +240,7 @@ data Stmt
   | VarDef Type [String]
   | VarADTDef String String String Exp
   | VarAssignDef Type String Exp
-  | VarConstructor Type String Exp
+  | VarConstructor String String [Exp]
   | VarRecordValue Type String [(String,Exp)]
   | VarNativeBufferFrom Type String Exp
   | Exp := Exp
@@ -368,8 +369,8 @@ map_notElem = Map_notElem
 map_elem :: Exp -> Exp -> Exp
 map_elem = Map_elem
 
-deref :: Exp -> Exp
-deref = Deref
+--deref :: Exp -> Exp
+--deref = Deref
 
 not :: Exp -> Exp
 not = Not
@@ -426,8 +427,8 @@ else_ stmtM = tell [Else (execWriter stmtM)]
 varNativeBufferFrom :: Type -> String -> Exp -> StmtM ()
 varNativeBufferFrom t n v = tell [VarNativeBufferFrom t n v]
 
-callTypeConsructor :: Type -> Exp -> Exp
-callTypeConsructor = CallTypeConsructor
+--callTypeConsructor :: Type -> Exp -> Exp
+--callTypeConsructor = CallTypeConsructor
 
 vector_size :: Exp -> Exp
 vector_size = Vector_size
@@ -478,7 +479,7 @@ varADT t c n e = tell [VarADTDef t c n e ]
 varAssign :: Type -> String -> Exp -> StmtM ()
 varAssign t n e = tell [VarAssignDef t n e]
 
-varConstructor :: Type -> String -> Exp -> StmtM ()
+varConstructor :: String -> String -> [Exp] -> StmtM ()
 varConstructor t n e = tell [VarConstructor t n e]
 
 for_range :: String -> Exp -> Exp -> StmtM () -> StmtM ()

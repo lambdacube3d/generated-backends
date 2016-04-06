@@ -6,7 +6,7 @@ import PrettyCpp
 import PrettyJava
 
 enumConversions = do
-  procedure "inputType" ["t" :@ SmartPtr "InputType"] (Enum "Type") $ do
+  procedure "inputType" ["t" :@ "InputType"] (Enum "Type") $ do
     switch ("t"~>"tag") $ do -- TODO: ADT switch
       case_ (nsPatADT "InputType" "Float") $ return_ $ enumVal "Type" "FLOAT"
       case_ (nsPatADT "InputType" "V2F")   $ return_ $ enumVal "Type" "FLOAT_VEC2"
@@ -17,7 +17,7 @@ enumConversions = do
       case_ (nsPatADT "InputType" "M44F")  $ return_ $ enumVal "Type" "FLOAT_MAT4"
     throw "illegal input type"
 
-  procedure "primitiveMode" ["p" :@ "Primitive"] Int $ do
+  procedure "primitiveMode" ["p" :@ Enum "Primitive"] Int $ do
     switch "p" $ do
       case_ (nsPat "Primitive" "TriangleStrip") $ return_ $ toExp GL_TRIANGLE_STRIP
       case_ (nsPat "Primitive" "TriangleList")  $ return_ $ toExp GL_TRIANGLES
@@ -28,7 +28,7 @@ enumConversions = do
       case_ (nsPat "Primitive" "PointList")     $ return_ $ toExp GL_POINTS
     throw "illegal primitive mode"
 
-  procedure "blendingFactor" ["bf" :@ SmartPtr "BlendingFactor"] Int $ do
+  procedure "blendingFactor" ["bf" :@ "BlendingFactor"] Int $ do
     switch ("bf"~>"tag") $ do -- TODO: ADT switch
       case_ (nsPatADT "BlendingFactor" "ConstantAlpha") $ return_ $ toExp GL_CONSTANT_ALPHA
       case_ (nsPatADT "BlendingFactor" "ConstantColor") $ return_ $ toExp GL_CONSTANT_COLOR
@@ -47,14 +47,14 @@ enumConversions = do
       case_ (nsPatADT "BlendingFactor" "Zero") $ return_ $ toExp GL_ZERO
     throw "illegal blending factor"
 
-  procedure "blendEquation" ["be" :@ SmartPtr "BlendEquation"] Int $ do
+  procedure "blendEquation" ["be" :@ "BlendEquation"] Int $ do
     switch ("be"~>"tag") $ do -- TODO: ADT switch
       case_ (nsPatADT "BlendEquation" "FuncAdd") $ return_ $ toExp GL_FUNC_ADD
       case_ (nsPatADT "BlendEquation" "FuncReverseSubtract") $ return_ $ toExp GL_FUNC_REVERSE_SUBTRACT
       case_ (nsPatADT "BlendEquation" "FuncSubtract") $ return_ $ toExp GL_FUNC_SUBTRACT
     throw "illegal blend equation"
 
-  procedure "comparisonFunction" ["cf" :@ SmartPtr "ComparisonFunction"] Int $ do
+  procedure "comparisonFunction" ["cf" :@ "ComparisonFunction"] Int $ do
     switch ("cf"~>"tag") $ do -- TODO: ADT switch
       case_ (nsPatADT "ComparisonFunction" "Always") $ return_ $ toExp GL_ALWAYS
       case_ (nsPatADT "ComparisonFunction" "Equal") $ return_ $ toExp GL_EQUAL
@@ -66,32 +66,32 @@ enumConversions = do
       case_ (nsPatADT "ComparisonFunction" "Notequal") $ return_ $ toExp GL_NOTEQUAL
     throw "illegal comparison function"
 
-  procedure "frontFace" ["ff" :@ SmartPtr "FrontFace"] Int $ do
+  procedure "frontFace" ["ff" :@ "FrontFace"] Int $ do
     switch ("ff"~>"tag") $ do -- TODO: ADT switch
       case_ (nsPatADT "FrontFace" "CCW") $ return_ $ toExp GL_CCW
       case_ (nsPatADT "FrontFace" "CW") $ return_ $ toExp GL_CW
     throw "illegal front face value"
 
-  procedure "textureDataTypeToGLType" ["s_" :@ SmartPtr "ImageSemantic", "d_" :@ SmartPtr "TextureDataType"] Int $ do
+  procedure "textureDataTypeToGLType" ["s_" :@ "ImageSemantic", "d_" :@ "TextureDataType"] Int $ do
     switch ("s_"~>"tag") $ do -- TODO: ADT switch
       case_ (nsPatADT "ImageSemantic" "Color") $ return_ $ toExp GL_RGBA
       case_ (nsPatADT "ImageSemantic" "Depth") $ return_ $ toExp GL_DEPTH_COMPONENT
     throw "FIXME: This texture format is not yet supported"
 
-  procedure "textureDataTypeToGLArityType" ["s_" :@ SmartPtr "ImageSemantic", "d_" :@ SmartPtr "TextureDataType"] Int $ do
+  procedure "textureDataTypeToGLArityType" ["s_" :@ "ImageSemantic", "d_" :@ "TextureDataType"] Int $ do
     switch ("s_"~>"tag") $ do -- TODO: ADT switch
       case_ (nsPatADT "ImageSemantic" "Color") $ return_ $ toExp GL_RGBA
       case_ (nsPatADT "ImageSemantic" "Depth") $ return_ $ toExp GL_DEPTH_COMPONENT
     throw "FIXME: This texture format is not yet supported"
 
-  procedure "edgeMode" ["e" :@ SmartPtr "EdgeMode"] Int $ do
+  procedure "edgeMode" ["e" :@ "EdgeMode"] Int $ do
     switch ("e"~>"tag") $ do -- TODO: ADT switch
       case_ (nsPatADT "EdgeMode" "ClampToEdge") $ return_ $ toExp GL_CLAMP_TO_EDGE
       case_ (nsPatADT "EdgeMode" "Repeat") $ return_ $ toExp GL_REPEAT
       case_ (nsPatADT "EdgeMode" "MirroredRepeat") $ return_ $ toExp GL_MIRRORED_REPEAT
       default_ $ throw "unsupported edge mode"
 
-  procedure "filterMode" ["f" :@ SmartPtr "Filter"] Int $ do
+  procedure "filterMode" ["f" :@ "Filter"] Int $ do
     switch ("f"~>"tag") $ do -- TODO: ADT switch
       case_ (nsPatADT "Filter" "Nearest") $ return_ $ toExp GL_NEAREST
       case_ (nsPatADT "Filter" "Linear") $ return_ $ toExp GL_LINEAR
@@ -102,7 +102,7 @@ enumConversions = do
       default_ $ throw "unsupported filter mode"
 
 globalFunctions = do
-  procedure "setUniformValue" ["i" :@ Int, "v" :@ Ref "UniformValue"] Void $ do
+  procedure "setUniformValue" ["i" :@ Int, "v" :@ "UniformValue"] Void $ do
     switch ("v"."tag") $ do -- TODO: ADT switch
       case_ (nsPatADT "InputType" "Int")    $ callGLPrim $ GLUniform1iv "i" 1 ("v"."_int")
       case_ (nsPatADT "InputType" "Bool")   $ callGLPrim $ GLUniform1iv "i" 1 ("v"."_int")
@@ -123,7 +123,7 @@ globalFunctions = do
       case_ (nsPatADT "InputType" "M33F")   $ callGLPrim $ GLUniformMatrix3fv "i" 1 false ("v"."_float")
       case_ (nsPatADT "InputType" "M44F")   $ callGLPrim $ GLUniformMatrix4fv "i" 1 false ("v"."_float")
 
-  procedure "setStream" ["i" :@ Int, "s" :@ Ref "Stream"] Void $ do
+  procedure "setStream" ["i" :@ Int, "s" :@ "Stream"] Void $ do
     if_ ("s"."isArray") $ do
       then_ $ do
         callGL GLBindBuffer [toExp GL_ARRAY_BUFFER,"s"."buffer"~>"bufferObject"]
@@ -151,8 +151,8 @@ globalFunctions = do
                                               callGLPrim $ GLVertexAttrib4fv ("i" + 2) ("s"."attributeValue"."_float") 8
                                               callGLPrim $ GLVertexAttrib4fv ("i" + 3) ("s"."attributeValue"."_float") 12
 
-  procedure "createTexture" ["tx_" :@ SmartPtr "TextureDescriptor"] (SmartPtr "Texture") $ do
-    varConstructor (SmartPtr "Texture") "t" $ new "Texture" []
+  procedure "createTexture" ["tx_" :@ "TextureDescriptor"] ("Texture") $ do
+    varConstructor "Texture" "t" []
     callGLPrim $ GLGenTexture ("t"~>"texture")
     varADT "TextureDescriptor" "TextureDescriptor" "tx" "tx_"
     varADT "Value" "VV2U" "size" $ "tx"~>"textureSize"
@@ -196,15 +196,15 @@ globalFunctions = do
     callGL GLTexParameteri ["t"~>"target", toExp GL_TEXTURE_MAG_FILTER, callExp "filterMode" ["s"~>"samplerMagFilter"]]
     return_ "t"
 
-  procedure "createStreamData" ["s_" :@ SmartPtr "StreamData"] (SmartPtr "GLStreamData") $ do
+  procedure "createStreamData" ["s_" :@ "StreamData"] ("GLStreamData") $ do
     varADT "StreamData" "StreamData" "s" "s_"
-    varConstructor (SmartPtr "GLStreamData") "gls" $ new "GLStreamData" []
+    varConstructor "GLStreamData" "gls" []
 
     switch ("s"~>"streamPrimitive"~>"tag") $ do -- TODO: ADT switch
       case_ (nsPatADT "FetchPrimitive" "Points")    $ "gls"~>"glMode" .= toExp GL_POINTS
       case_ (nsPatADT "FetchPrimitive" "Lines")     $ "gls"~>"glMode" .= toExp GL_LINES
       case_ (nsPatADT "FetchPrimitive" "Triangles") $ "gls"~>"glMode" .= toExp GL_TRIANGLES
-    varConstructor (SmartPtr "GLBuffer") "buffer" $ new "GLBuffer" []
+    varConstructor "GLBuffer" "buffer" []
     map_foreach String "ArrayValue" "i" ("s"~>"streamData") $ do
       switch (it_value "i"~>"tag") $ do -- TODO: ADT switch
         case_ (nsPatADT "ArrayValue" "VBoolArray") $ do
@@ -215,7 +215,7 @@ globalFunctions = do
           varADT "ArrayValue" "VWordArray" "a" $ it_value "i"
         case_ (nsPatADT "ArrayValue" "VFloatArray") $ do
           varADT "ArrayValue" "VFloatArray" "a" $ it_value "i"
-          varAssign ("Type") "type" $ callExp "inputType" ["s"~>"streamType" `map_lookup` key "i"]
+          varAssign (Enum "Type") "type" $ callExp "inputType" ["s"~>"streamType" `map_lookup` key "i"]
           varNativeBufferFrom (Vector Float) "buf" ("a"~>"_0")
           call ("gls"~>"streams"."add") [key "i", "type", "buffer", callExp ("buffer"~>"add") ["buf",toExp GL_FLOAT,vector_size $ "a"~>"_0"]]
     call ("buffer"~>"freeze") []
@@ -229,7 +229,7 @@ globalFunctions = do
           break_
     return_ "gls"
 
-  procedure "createProgram" ["p_" :@ SmartPtr "Program"] (SmartPtr "GLProgram") $ do
+  procedure "createProgram" ["p_" :@ "Program"] ("GLProgram") $ do
     varADT "Program" "Program" "p" "p_"
     -- vertex shader
     varAssign UInt "vs" $ callExpGL GLCreateShader [toExp GL_VERTEX_SHADER]
@@ -247,7 +247,7 @@ globalFunctions = do
     callGL GLAttachShader ["po","fs"]
     callGL GLLinkProgram ["po"]
 
-    varConstructor (SmartPtr "GLProgram") "glp" $ new "GLProgram" []
+    varConstructor "GLProgram" "glp" []
     "glp"~>"program" .= "po"
     "glp"~>"vertexShader" .= "vs"
     "glp"~>"fragmentShader" .= "fs"
@@ -269,11 +269,13 @@ globalFunctions = do
       callGLPrim $ GLGetAttribLocation "po" (key "i") "loc"
       if_ ("loc" >= 0) $ then_ $ do
         varADT "Parameter" "Parameter" "param" $ it_value "i"
-        varRecordValue "StreamInfo" "s" [("name","param"~>"name"),("index","loc")]
+        varConstructor "StreamInfo" "s" []
+        "s"~>"name" .= "param"~>"name"
+        "s"~>"index" .= "loc"
         map_insert ("glp"~>"programStreams") (key "i") "s"
     return_ "glp"
 
-  procedure "setupRasterContext" ["ctx_" :@ SmartPtr "RasterContext"] Void $ do
+  procedure "setupRasterContext" ["ctx_" :@ "RasterContext"] Void $ do
     switch ("ctx_"~>"tag") $ do -- TODO: ADT switch
       case_ (nsPatADT "RasterContext" "PointCtx") $ do
         varADT "RasterContext" "PointCtx" "ctx" "ctx_"
@@ -307,7 +309,7 @@ globalFunctions = do
             callGL GLPolygonOffset ["o"~>"_0","o"~>"_1"]
             callGL GLEnable [toExp GL_POLYGON_OFFSET_FILL]
 
-  procedure "setupAccumulationContext" ["ctx_" :@ SmartPtr "AccumulationContext"] Void $ do
+  procedure "setupAccumulationContext" ["ctx_" :@ "AccumulationContext"] Void $ do
     varADT "AccumulationContext" "AccumulationContext" "ctx" "ctx_"
     varAssign Bool "noDepth" true
     varAssign Bool "noStencil" true
@@ -474,53 +476,53 @@ classes = do
           "offset_" += ("byteSize" `vector_lookup` "i")
         "bufferObject" .= "bo"
 
-      method "update" ["i" :@ Int, "v" :@ Ref (Vector Float)] Void $ return () -- TODO
+      method "update" ["i" :@ Int, "v" :@ (Vector Float)] Void $ return () -- TODO
 
   class_ "Stream" $ do
     public $ do
-      classVar "Type" ["type"]
-      classVar (SmartPtr "GLBuffer") ["buffer"]
+      classVar (Enum "Type") ["type"]
+      classVar ("GLBuffer") ["buffer"]
       classVar Int ["index"]
       classVar Bool ["isArray"]
       classVar Int ["glSize"]
       classVar "UniformValue" ["attributeValue"]
 
-      constructor ["v" :@ Ref Float] $ do
+      constructor ["v" :@ Float] $ do
         "type"    .= enumVal "Type" "FLOAT"
         "isArray" .= false
         -- FIXME: "_float"  .= "v"
         "glSize"  .= 1
-      constructor ["v" :@ Ref "V2F"] $ do
+      constructor ["v" :@ Builtin "V2F"] $ do
         "type"    .= enumVal "Type" "FLOAT_VEC2"
         "isArray" .= false
         -- FIXME: "_v2f"    .= "v"
         "glSize"  .= 2
-      constructor ["v" :@ Ref "V3F"] $ do
+      constructor ["v" :@ Builtin "V3F"] $ do
         "type"    .= enumVal "Type" "FLOAT_VEC3"
         "isArray" .= false
         -- FIXME: "_v3f"    .= "v"
         "glSize"  .= 3
-      constructor ["v" :@ Ref "V4F"] $ do
+      constructor ["v" :@ Builtin "V4F"] $ do
         "type"    .= enumVal "Type" "FLOAT_VEC4"
         "isArray" .= false
         -- FIXME: "_v4f"    .= "v"
         "glSize"  .= 4
-      constructor ["v" :@ Ref "M22F"] $ do
+      constructor ["v" :@ Builtin "M22F"] $ do
         "type"    .= enumVal "Type" "FLOAT_MAT2"
         "isArray" .= false
         -- FIXME: "_m22f"    .= "v"
         "glSize"  .= 4
-      constructor ["v" :@ Ref "M33F"] $ do
+      constructor ["v" :@ Builtin "M33F"] $ do
         "type"    .= enumVal "Type" "FLOAT_MAT3"
         "isArray" .= false
         -- FIXME: "_m33f"   .= "v"
         "glSize"  .= 9
-      constructor ["v" :@ Ref "M44F"] $ do
+      constructor ["v" :@ Builtin "M44F"] $ do
         "type"    .= enumVal "Type" "FLOAT_MAT4"
         "isArray" .= false
         -- FIXME: "_m44f"   .= "v"
         "glSize"  .= 16
-      constructor ["b" :@ SmartPtr "GLBuffer", "i" :@ Int, "t" :@ "Type"] $ do
+      constructor ["b" :@ "GLBuffer", "i" :@ Int, "t" :@ Enum "Type"] $ do
         "type"    .= "t"
         "buffer"  .= "b"
         "index"   .= "i"
@@ -537,17 +539,20 @@ classes = do
 
   class_ "StreamMap" $ do
     public $ do
-      classVar (Map String (SmartPtr "Stream")) ["map"]
+      classVar (Map String ("Stream")) ["map"]
       constructor [] allocClassVars
 
-      method "add" ["name" :@ String, "v" :@ Ref Float] Void $ map_insert "map" "name" $ callTypeConsructor (SmartPtr "Stream") $ new "Stream" ["v"]
-      method "add" ["name" :@ String, "v" :@ Ref "V2F"] Void $ map_insert "map" "name" $ callTypeConsructor (SmartPtr "Stream") $ new "Stream" ["v"]
-      method "add" ["name" :@ String, "v" :@ Ref "V3F"] Void $ map_insert "map" "name" $ callTypeConsructor (SmartPtr "Stream") $ new "Stream" ["v"]
-      method "add" ["name" :@ String, "v" :@ Ref "V4F"] Void $ map_insert "map" "name" $ callTypeConsructor (SmartPtr "Stream") $ new "Stream" ["v"]
-      method "add" ["name" :@ String, "v" :@ Ref "M22F"] Void $ map_insert "map" "name" $ callTypeConsructor (SmartPtr "Stream") $ new "Stream" ["v"]
-      method "add" ["name" :@ String, "v" :@ Ref "M33F"] Void $ map_insert "map" "name" $ callTypeConsructor (SmartPtr "Stream") $ new "Stream" ["v"]
-      method "add" ["name" :@ String, "v" :@ Ref "M44F"] Void $ map_insert "map" "name" $ callTypeConsructor (SmartPtr "Stream") $ new "Stream" ["v"]
-      method "add" ["name" :@ String, "t" :@ "Type", "b" :@ SmartPtr "GLBuffer", "index" :@ Int] Void $ map_insert "map" "name" $ callTypeConsructor (SmartPtr "Stream") $ new "Stream" ["b","index","t"]
+      let add args = do
+            varConstructor "Stream" "s" args
+            map_insert "map" "name" "s"
+      method "add" ["name" :@ String, "v" :@ Float] Void $ add ["v"]
+      method "add" ["name" :@ String, "v" :@ Builtin "V2F"] Void $ add ["v"]
+      method "add" ["name" :@ String, "v" :@ Builtin "V3F"] Void $ add ["v"]
+      method "add" ["name" :@ String, "v" :@ Builtin "V4F"] Void $ add ["v"]
+      method "add" ["name" :@ String, "v" :@ Builtin "M22F"] Void $ add ["v"]
+      method "add" ["name" :@ String, "v" :@ Builtin "M33F"] Void $ add ["v"]
+      method "add" ["name" :@ String, "v" :@ Builtin "M44F"] Void $ add ["v"]
+      method "add" ["name" :@ String, "t" :@ Enum "Type", "b" :@ "GLBuffer", "index" :@ Int] Void $ add ["b","index","t"]
       method "validate" [] Bool $ return_ true -- TODO
 
   class_ "UniformValue" $ public $ do
@@ -560,20 +565,20 @@ classes = do
       classVar Bool ["enabled"]
       classVar Int ["order","glMode","glCount"]
       classVar (Map String "UniformValue") ["uniforms"]
-      classVar (SmartPtr "StreamMap") ["streams"]
+      classVar ("StreamMap") ["streams"]
 
       destructor $ return () -- TODO
 
       method "enable" ["visible" :@ Bool] Void $ "enabled" .= "visible"
       method "setOrder" ["o" :@ Int] Void $ "order" .= "o"
 
-      let setUniform t tag n = method "setUniform" ["name" :@ String, "v" :@ Ref t] Void $ do
+      let setUniform t tag n = method "setUniform" ["name" :@ String, "v" :@ t] Void $ do
             if_ (map_elem "uniforms" "name") $ do
               then_ $ do
                 varAssign "UniformValue" "u" $ map_lookup "uniforms" "name"
                 copyToNativeArray t ("u".n) "v"
               else_ $ do
-                varConstructor (SmartPtr "UniformValue") "u" $ new "UniformValue" []
+                varConstructor "UniformValue" "u" []
                 "u"."tag" .= enumADT "InputType" tag
                 allocNativeArray t $ "u".n
                 copyToNativeArray t ("u".n) "v"
@@ -581,29 +586,29 @@ classes = do
       setUniform Int "Int" "_int"
       setUniform Bool "Bool" "_int"
       setUniform Float "Float" "_float"
-      setUniform "V2I" "V2I" "_int"
-      setUniform "V2B" "V2B" "_int"
-      setUniform "V2F" "V2F" "_float"
-      setUniform "V3I" "V3I" "_int"
-      setUniform "V3B" "V3B" "_int"
-      setUniform "V3F" "V3F" "_float"
-      setUniform "V4I" "V4I" "_int"
-      setUniform "V4B" "V4B" "_int"
-      setUniform "V4F" "V4F" "_float"
-      setUniform "M22F" "M22F" "_float"
-      setUniform "M33F" "M33F" "_float"
-      setUniform "M44F" "M44F" "_float"
+      setUniform (Builtin "V2I") "V2I" "_int"
+      setUniform (Builtin "V2B") "V2B" "_int"
+      setUniform (Builtin "V2F") "V2F" "_float"
+      setUniform (Builtin "V3I") "V3I" "_int"
+      setUniform (Builtin "V3B") "V3B" "_int"
+      setUniform (Builtin "V3F") "V3F" "_float"
+      setUniform (Builtin "V4I") "V4I" "_int"
+      setUniform (Builtin "V4B") "V4B" "_int"
+      setUniform (Builtin "V4F") "V4F" "_float"
+      setUniform (Builtin "M22F") "M22F" "_float"
+      setUniform (Builtin "M33F") "M33F" "_float"
+      setUniform (Builtin "M44F") "M44F" "_float"
 
   class_ "PipelineInput" $ do
     public $ do
-      classVar (Map String (SmartPtr (Vector (SmartPtr "GLObject")))) ["objectMap"]
+      classVar (Map String ((Vector ("GLObject")))) ["objectMap"]
       classVar (Map String "UniformValue") ["uniforms"]
       classVar Int ["screenWidth","screenHeight"]
 
       constructor [] allocClassVars
 
-      method "createObject" ["slotName" :@ String, "prim" :@ "Primitive", "attributes" :@ SmartPtr "StreamMap", "objectUniforms" :@ Vector String] (SmartPtr "GLObject") $ do
-        varConstructor (SmartPtr "GLObject") "o" $ new "GLObject" []
+      method "createObject" ["slotName" :@ String, "prim" :@ Enum "Primitive", "attributes" :@ "StreamMap", "objectUniforms" :@ Vector String] ("GLObject") $ do
+        varConstructor "GLObject" "o" []
         "o"~>"enabled" .= true
         "o"~>"order" .= 0
         "o"~>"glMode" .= callProcExp "primitiveMode" ["prim"]
@@ -618,14 +623,14 @@ classes = do
           then_ $ do
             vector_pushBackPtr ("objectMap" `map_lookup` "slotName") "o"
           else_ $ do
-            varAssign (Ptr $ Vector $ SmartPtr "GLObject") "ov" $ new (Vector $ SmartPtr "GLObject") []
+            varAssign (Vector $ "GLObject") "ov" $ new (Vector $ "GLObject") []
             vector_pushBackPtr "ov" "o"
-            map_insert "objectMap" "slotName" $ CallTypeConsructor (SmartPtr $ Vector $ SmartPtr "GLObject") "ov"
+            map_insert "objectMap" "slotName" "ov"
         return_ "o"
 
-      method "createObject" ["slotName" :@ String, "prim" :@ "Primitive", "attributes" :@ Ref "StreamMap"
-                            , "indexBuffer" :@ Ref "GLBuffer", "bufferIndex" :@ Int, "objectUniforms" :@ Vector String] (SmartPtr "GLObject") $ do
-        varConstructor (SmartPtr "GLObject") "o" $ new "GLObject" []
+      method "createObject" ["slotName" :@ String, "prim" :@ Enum "Primitive", "attributes" :@ "StreamMap"
+                            , "indexBuffer" :@ "GLBuffer", "bufferIndex" :@ Int, "objectUniforms" :@ Vector String] ("GLObject") $ do
+        varConstructor "GLObject" "o" []
         -- TODO
         return_ "o" 
 
@@ -635,13 +640,13 @@ classes = do
         "screenHeight" .= "h"
 
       -- same as GLObjects
-      let setUniform t tag n = method "setUniform" ["name" :@ String, "v" :@ Ref t] Void $ do
+      let setUniform t tag n = method "setUniform" ["name" :@ String, "v" :@ t] Void $ do
             if_ (map_elem "uniforms" "name") $ do
               then_ $ do
                 varAssign "UniformValue" "u" $ map_lookup "uniforms" "name"
                 copyToNativeArray t ("u".n) "v"
               else_ $ do
-                varConstructor (SmartPtr "UniformValue") "u" $ new "UniformValue" []
+                varConstructor "UniformValue" "u" []
                 "u"."tag" .= enumADT "InputType" tag
                 allocNativeArray t $ "u".n
                 copyToNativeArray t ("u".n) "v"
@@ -649,18 +654,18 @@ classes = do
       setUniform Int "Int" "_int"
       setUniform Bool "Bool" "_int"
       setUniform Float "Float" "_float"
-      setUniform "V2I" "V2I" "_int"
-      setUniform "V2B" "V2B" "_int"
-      setUniform "V2F" "V2F" "_float"
-      setUniform "V3I" "V3I" "_int"
-      setUniform "V3B" "V3B" "_int"
-      setUniform "V3F" "V3F" "_float"
-      setUniform "V4I" "V4I" "_int"
-      setUniform "V4B" "V4B" "_int"
-      setUniform "V4F" "V4F" "_float"
-      setUniform "M22F" "M22F" "_float"
-      setUniform "M33F" "M33F" "_float"
-      setUniform "M44F" "M44F" "_float"
+      setUniform (Builtin "V2I") "V2I" "_int"
+      setUniform (Builtin "V2B") "V2B" "_int"
+      setUniform (Builtin "V2F") "V2F" "_float"
+      setUniform (Builtin "V3I") "V3I" "_int"
+      setUniform (Builtin "V3B") "V3B" "_int"
+      setUniform (Builtin "V3F") "V3F" "_float"
+      setUniform (Builtin "V4I") "V4I" "_int"
+      setUniform (Builtin "V4B") "V4B" "_int"
+      setUniform (Builtin "V4F") "V4F" "_float"
+      setUniform (Builtin "M22F") "M22F" "_float"
+      setUniform (Builtin "M33F") "M33F" "_float"
+      setUniform (Builtin "M44F") "M44F" "_float"
 
   class_ "Texture" $ public $ do
     classVar Int ["target"]
@@ -685,16 +690,17 @@ classes = do
 
   class_ "GLES20Pipeline" $ do
     private $ do
-      classVar (SmartPtr "PipelineInput") ["input"]
-      classVar (SmartPtr $ ADTCons "Pipeline" "Pipeline") ["pipeline"]
-      classVar (Vector (SmartPtr "Texture")) ["textures"]
+      classVar ("PipelineInput") ["input"]
+      classVar Bool ["hasPipelineInput"]
+      classVar (ADTCons "Pipeline" "Pipeline") ["pipeline"]
+      classVar (Vector ("Texture")) ["textures"]
       classVar (Vector UInt) ["targets"]
-      classVar (Vector (SmartPtr "GLProgram")) ["programs"]
-      classVar (Vector (SmartPtr "GLStreamData")) ["streamData"]
+      classVar (Vector ("GLProgram")) ["programs"]
+      classVar (Vector ("GLStreamData")) ["streamData"]
       classVar UInt ["currentProgram"]
       classVar Bool ["hasCurrentProgram"]
 
-      method "createRenderTarget" ["t_" :@ SmartPtr "RenderTarget"] UInt $ do
+      method "createRenderTarget" ["t_" :@ "RenderTarget"] UInt $ do
         varADT "RenderTarget" "RenderTarget" "t" "t_"
         -- does this target have texture attachments?
         varAssign Int "textureCount" 0
@@ -742,8 +748,9 @@ classes = do
     public $ do
       classVar UInt ["screenTarget"]
 
-      constructor ["ppl_" :@ SmartPtr "Pipeline"] $ do
+      constructor ["ppl_" :@ "Pipeline"] $ do
         allocClassVars
+        "hasPipelineInput" .= false
         "screenTarget" .= 0
         "hasCurrentProgram" .= false
         varADT "Pipeline" "Pipeline" "ppl" $ "ppl_"
@@ -780,8 +787,9 @@ classes = do
           callGL GLDeleteShader ["i"~>"vertexShader"]
           callGL GLDeleteShader ["i"~>"fragmentShader"]
 
-      method "setPipelineInput" ["i" :@ SmartPtr "PipelineInput"] Void $ do
+      method "setPipelineInput" ["i" :@ "PipelineInput"] Void $ do
         "input" .= "i"
+        "hasPipelineInput" .= true
 
       method "render" [] Void $ do
         vector_foreach "Command" "i" ("pipeline"~>"commands") $ do
@@ -805,7 +813,7 @@ classes = do
               varADT "Command" "SetRenderTarget" "cmd" $ "i"
               varAssign UInt "t" $ "targets" `vector_lookup` ("cmd"~>"_0")
               callGL GLBindFramebuffer [toExp GL_FRAMEBUFFER, expIf ("t"==0) "screenTarget" "t"]
-              if_ (notNull "input") $ do
+              if_ ("hasPipelineInput") $ do
                 then_ $ callGL GLViewport [0,0,"input"~>"screenWidth","input"~>"screenHeight"]
             case_ (nsPatADT "Command" "ClearRenderTarget") $ do
               varADT "Command" "ClearRenderTarget" "cmd" $ "i"
@@ -845,11 +853,11 @@ classes = do
               varADT "Command" "SetSamplerUniform" "cmd" $ "i"
               varAssign Int "sampler" $ ("programs" `vector_lookup` "currentProgram")~>"programInTextures" `map_lookup` ("cmd"~>"_0")
               callGL GLUniform1i ["sampler","cmd"~>"_1"]
-            case_ (nsPatADT "Command" "RenderSlot") $ if_ (notNull "input" && notNull "pipeline" && "hasCurrentProgram") $ then_ $ do
+            case_ (nsPatADT "Command" "RenderSlot") $ if_ ("hasPipelineInput" && notNull "pipeline" && "hasCurrentProgram") $ then_ $ do
               varADT "Command" "RenderSlot" "cmd" $ "i"
               varADT "Slot" "Slot" "slot" $ "pipeline"~>"slots" `vector_lookup` ("cmd"~>"_0")
               if_ (map_notElem ("input"~>"objectMap") ("slot"~>"slotName")) $ then_ break_
-              vector_foreach "GLObject" "o" (deref $ "input"~>"objectMap" `map_lookup` ("slot"~>"slotName")) $ do
+              vector_foreach "GLObject" "o" ("input"~>"objectMap" `map_lookup` ("slot"~>"slotName")) $ do
                 if_ (not $ "o"~>"enabled") $ then_ continue_
                 -- setup uniforms
                 map_foreach String Int "u" (("programs" `vector_lookup` "currentProgram")~>"programUniforms") $ do
@@ -858,19 +866,19 @@ classes = do
                     else_ $ callProc "setUniformValue" [it_value "u","input"~>"uniforms" `map_lookup` (key "u")]
                 -- setup streams
                 map_foreach String "StreamInfo" "s" (("programs" `vector_lookup` "currentProgram")~>"programStreams") $ do
-                  callProc "setStream" [it_value "s"."index",deref $ "o"~>"streams"~>"map" `map_lookup` (it_value "s"."name")]
+                  callProc "setStream" [it_value "s"."index","o"~>"streams"~>"map" `map_lookup` (it_value "s"."name")]
                 -- draw call
                 -- TODO: support index buffers
                 callGL GLDrawArrays ["o"~>"glMode", 0, "o"~>"glCount"]
-            case_ (nsPatADT "Command" "RenderStream") $ if_ (notNull "input" && notNull "pipeline" && "hasCurrentProgram") $ then_ $ do
+            case_ (nsPatADT "Command" "RenderStream") $ if_ ("hasPipelineInput" && notNull "pipeline" && "hasCurrentProgram") $ then_ $ do
               varADT "Command" "RenderStream" "cmd" $ "i"
-              varAssign (SmartPtr "GLStreamData") "data" $ "streamData" `vector_lookup` ("cmd"~>"_0")
+              varAssign ("GLStreamData") "data" $ "streamData" `vector_lookup` ("cmd"~>"_0")
               -- setup uniforms
               map_foreach String Int "u" (("programs" `vector_lookup` "currentProgram")~>"programUniforms") $ do
                 callProc "setUniformValue" [it_value "u","input"~>"uniforms" `map_lookup` (key "u")]
               -- setup streams
               map_foreach String "StreamInfo" "s" (("programs" `vector_lookup` "currentProgram")~>"programStreams") $ do
-                callProc "setStream" [it_value "s"."index",deref $ "data"~>"streams"."map" `map_lookup` (it_value "s"."name")]
+                callProc "setStream" [it_value "s"."index","data"~>"streams"."map" `map_lookup` (it_value "s"."name")]
               -- draw call
               -- TODO: support index buffers
               callGL GLDrawArrays ["data"~>"glMode", 0, "data"~>"glCount"]

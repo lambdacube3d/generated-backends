@@ -10,6 +10,7 @@ import java.util.Map;
 
 public class GLES20Pipeline {
   protected PipelineInput input;
+  protected Boolean hasPipelineInput;
   protected Pipeline.Pipeline_ pipeline;
   protected ArrayList<Texture> textures;
   protected ArrayList<Integer> targets;
@@ -72,11 +73,13 @@ public class GLES20Pipeline {
   public Integer screenTarget;
   public GLES20Pipeline(Pipeline ppl_) throws Exception {
     
+    input = new PipelineInput();
     textures = new ArrayList<Texture>();
     targets = new ArrayList<Integer>();
     programs = new ArrayList<GLProgram>();
     streamData = new ArrayList<GLStreamData>();
 
+    hasPipelineInput = false;
     screenTarget = 0;
     hasCurrentProgram = false;
     Pipeline.Pipeline_ ppl = (Pipeline.Pipeline_)ppl_;
@@ -115,6 +118,7 @@ public class GLES20Pipeline {
 
   public void setPipelineInput(PipelineInput i) throws Exception {
     input = i;
+    hasPipelineInput = true;
   }
 
   public void render() throws Exception {
@@ -147,7 +151,7 @@ public class GLES20Pipeline {
           Command.SetRenderTarget_ cmd = (Command.SetRenderTarget_)i;
           Integer t = targets.get(cmd._0);
           GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, t == 0?screenTarget:t);
-          if (input!= null) {
+          if (hasPipelineInput) {
             GLES20.glViewport(0, 0, input.screenWidth, input.screenHeight);
           }
           break;
@@ -215,7 +219,7 @@ public class GLES20Pipeline {
           break;
         }
         case RenderSlot: {
-          if (input!= null && pipeline!= null && hasCurrentProgram) {
+          if (hasPipelineInput && pipeline!= null && hasCurrentProgram) {
             Command.RenderSlot_ cmd = (Command.RenderSlot_)i;
             Slot.Slot_ slot = (Slot.Slot_)pipeline.slots.get(cmd._0);
             if (!input.objectMap.containsKey(slot.slotName)) {
@@ -241,7 +245,7 @@ public class GLES20Pipeline {
           break;
         }
         case RenderStream: {
-          if (input!= null && pipeline!= null && hasCurrentProgram) {
+          if (hasPipelineInput && pipeline!= null && hasCurrentProgram) {
             Command.RenderStream_ cmd = (Command.RenderStream_)i;
             GLStreamData data = streamData.get(cmd._0);
             for (Map.Entry<String,Integer> u : programs.get(currentProgram).programUniforms.entrySet()) {

@@ -90,11 +90,12 @@ prettyType = \case
   UInt16-> "Integer"
   Void  -> "void"
   Class n -> n
+  Builtin n -> n
   Enum n  -> n
-  Const t -> prettyType t
-  Ref t   -> prettyType t
-  Ptr t   -> prettyType t
-  SmartPtr t -> prettyType t
+--  Const t -> prettyType t
+--  Ref t   -> prettyType t
+--  Ptr t   -> prettyType t
+--  SmartPtr t -> prettyType t
   Vector t -> "ArrayList<" ++ prettyType t ++ ">"
   Map k v -> "HashMap<" ++ prettyType k ++ "," ++ prettyType v ++ ">"
   String  -> "String"
@@ -141,7 +142,7 @@ prettyStmt classDefs ind = addIndentation ind . \case
   VarDef t n -> prettyType t ++ " " ++ intercalate ", " n ++ ";"
   VarADTDef t c n e -> t ++ "." ++ c ++ "_ " ++ n ++ " = (" ++ t ++ "." ++ c ++ "_)" ++ prettyExp e ++ ";"
   VarAssignDef t n e -> prettyType t ++ " " ++ n ++ " = " ++ prettyExp e ++ ";"
-  VarConstructor t n e -> prettyType t ++ " " ++ n ++ " = " ++ prettyExp e ++ ";"
+  VarConstructor t n e -> prettyType (Class t) ++ " " ++ n ++ " = new " ++ t ++ "(" ++ intercalate ", " (map prettyExp e) ++ ");"
   VarRecordValue t x a -> prettyType t ++ " " ++ x ++ " = new " ++ prettyType t ++ "();\n" ++ intercalate "\n" [addIndentation ind $ x ++ "." ++ n ++ " = " ++ prettyExp v ++ ";" | (n,v) <- a]
   VarNativeBufferFrom t n a -> let tStr = case t of
                                     Vector Float -> "FloatBuffer"
@@ -173,39 +174,39 @@ prettyStmt classDefs ind = addIndentation ind . \case
     Int   -> "int[1];"
     Bool  -> "int[1];"
     Float -> "float[1];"
-    "V2I" -> "int[2];"
-    "V2B" -> "int[2];"
-    "V2F" -> "float[2];"
-    "V3I" -> "int[3];"
-    "V3B" -> "int[3];"
-    "V3F" -> "float[3];"
-    "V4I" -> "int[4];"
-    "V4B" -> "int[4];"
-    "V4F" -> "float[4];"
-    "M22F"  -> "float[4];"
-    "M33F"  -> "float[9];"
-    "M44F"  -> "float[16];"
+    (Builtin "V2I") -> "int[2];"
+    (Builtin "V2B") -> "int[2];"
+    (Builtin "V2F") -> "float[2];"
+    (Builtin "V3I") -> "int[3];"
+    (Builtin "V3B") -> "int[3];"
+    (Builtin "V3F") -> "float[3];"
+    (Builtin "V4I") -> "int[4];"
+    (Builtin "V4B") -> "int[4];"
+    (Builtin "V4F") -> "float[4];"
+    (Builtin "M22F")  -> "float[4];"
+    (Builtin "M33F")  -> "float[9];"
+    (Builtin "M44F")  -> "float[16];"
   CopyToNativeArray t dst src -> case t of
       Int   -> f 0 ""
       Bool  -> f 0 "?1:0"
       Float -> f 0 ""
-      "V2I" -> intercalate indStr [f 0 ".x", f 1 ".y"]
-      "V2B" -> intercalate indStr [f 0 ".x?1:0", f 1 ".y?1:0"]
-      "V2F" -> intercalate indStr [f 0 ".x", f 1 ".y"]
-      "V3I" -> intercalate indStr [f 0 ".x", f 1 ".y", f 2 ".z"]
-      "V3B" -> intercalate indStr [f 0 ".x?1:0", f 1 ".y?1:0", f 2 ".z?1:0"]
-      "V3F" -> intercalate indStr [f 0 ".x", f 1 ".y", f 2 ".z"]
-      "V4I" -> intercalate indStr [f 0 ".x", f 1 ".y", f 2 ".z", f 3 ".w"]
-      "V4B" -> intercalate indStr [f 0 ".x?1:0", f 1 ".y?1:0", f 2 ".z?1:0", f 3 ".w?1:0"]
-      "V4F" -> intercalate indStr [f 0 ".x", f 1 ".y", f 2 ".z", f 3 ".w"]
-      "M22F"  -> intercalate indStr [ f 0 ".x.x", f 1 ".x.y"
+      (Builtin "V2I") -> intercalate indStr [f 0 ".x", f 1 ".y"]
+      (Builtin "V2B") -> intercalate indStr [f 0 ".x?1:0", f 1 ".y?1:0"]
+      (Builtin "V2F") -> intercalate indStr [f 0 ".x", f 1 ".y"]
+      (Builtin "V3I") -> intercalate indStr [f 0 ".x", f 1 ".y", f 2 ".z"]
+      (Builtin "V3B") -> intercalate indStr [f 0 ".x?1:0", f 1 ".y?1:0", f 2 ".z?1:0"]
+      (Builtin "V3F") -> intercalate indStr [f 0 ".x", f 1 ".y", f 2 ".z"]
+      (Builtin "V4I") -> intercalate indStr [f 0 ".x", f 1 ".y", f 2 ".z", f 3 ".w"]
+      (Builtin "V4B") -> intercalate indStr [f 0 ".x?1:0", f 1 ".y?1:0", f 2 ".z?1:0", f 3 ".w?1:0"]
+      (Builtin "V4F") -> intercalate indStr [f 0 ".x", f 1 ".y", f 2 ".z", f 3 ".w"]
+      (Builtin "M22F")  -> intercalate indStr [ f 0 ".x.x", f 1 ".x.y"
                          , f 2 ".y.x", f 3 ".y.y"
                          ]
-      "M33F"  -> intercalate indStr [ f 0 ".x.x", f 1 ".x.y", f 2 ".x.z"
+      (Builtin "M33F")  -> intercalate indStr [ f 0 ".x.x", f 1 ".x.y", f 2 ".x.z"
                          , f 3 ".y.x", f 4 ".y.y", f 5 ".y.z"
                          , f 6 ".z.x", f 7 ".z.y", f 8 ".z.z"
                          ]
-      "M44F"  -> intercalate indStr [ f 0 ".x.x", f 1 ".x.y", f 2 ".x.z", f 3 ".x.w"
+      (Builtin "M44F")  -> intercalate indStr [ f 0 ".x.x", f 1 ".x.y", f 2 ".x.z", f 3 ".x.w"
                          , f 4 ".y.x", f 5 ".y.y", f 6 ".y.z", f 7 ".y.w"
                          , f 8 ".z.x", f 9 ".z.y", f 10 ".z.z", f 11 ".z.w"
                          , f 12 ".w.x", f 13 ".w.y", f 14 ".w.z", f 15 ".w.w"
@@ -218,7 +219,7 @@ prettyStmt classDefs ind = addIndentation ind . \case
 prettyExp = \case
   a :-> b -> prettyExp a ++ "." ++ prettyExp b
   a :. b  -> prettyExp a ++ "." ++ prettyExp b
-  Deref e -> prettyExp e
+--  Deref e -> prettyExp e
   Var n   -> n
   EnumVal a b -> a ++ "." ++ b
   EnumADT a b -> a ++ ".Tag." ++ b
@@ -250,7 +251,7 @@ prettyExp = \case
   Map_notElem a b -> "!" ++ prettyExp a ++ ".containsKey(" ++ prettyExp b ++ ")"
   Map_elem a b -> prettyExp a ++ ".containsKey(" ++ prettyExp b ++ ")"
   Vector_size a -> prettyExp a ++ ".size()"
-  CallTypeConsructor t a -> prettyExp a
+--  CallTypeConsructor t a -> prettyExp a
   GLConstant a -> "GLES20." ++ show a
   GLCommand a -> "GLES20.gl" ++ drop 2 (show a)
   x -> error $ "java - prettyExp: " ++ show x

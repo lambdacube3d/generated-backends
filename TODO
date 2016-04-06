@@ -53,7 +53,7 @@ java backend:
     NativeBuffer: that can be created from native array (wrap)
   use heap model only (do not create values on stack)
   remove: Ptr type, deref
-  remove: SmartPtr
+  remove: SmartPtr, Ref (use shared_ptr everywhere in c++)
   diappeared - variable initialization
 
 now focus:

@@ -15,7 +15,7 @@ enum Type inputType(std::shared_ptr<InputType> t) {
   throw "illegal input type";
 }
 
-int32_t primitiveMode(Primitive p) {
+int32_t primitiveMode(enum Primitive p) {
   switch (p) {
     case ::Primitive::TriangleStrip: return GL_TRIANGLE_STRIP;
     case ::Primitive::TriangleList: return GL_TRIANGLES;
@@ -121,7 +121,7 @@ int32_t filterMode(std::shared_ptr<Filter> f) {
   }
 }
 
-void setUniformValue(int32_t i, UniformValue& v) {
+void setUniformValue(int32_t i, std::shared_ptr<UniformValue> v) {
   switch (v.tag) {
     case ::InputType::tag::Int: {
       glUniform1iv(i, 1, v._int);
@@ -186,7 +186,7 @@ void setUniformValue(int32_t i, UniformValue& v) {
   }
 }
 
-void setStream(int32_t i, Stream& s) {
+void setStream(int32_t i, std::shared_ptr<Stream> s) {
   if (s.isArray) {
     glBindBuffer(GL_ARRAY_BUFFER, s.buffer->bufferObject);
     glEnableVertexAttribArray(i);
@@ -308,7 +308,7 @@ std::shared_ptr<GLStreamData> createStreamData(std::shared_ptr<StreamData> s_) {
       }
       case ::ArrayValue::tag::VFloatArray: {
         auto a = std::static_pointer_cast<data::VFloatArray>(i.second);
-        Type type = inputType(s->streamType[i.first]);
+        enum Type type = inputType(s->streamType[i.first]);
         void* buf = a->_0.data();
         gls->streams.add(i.first, type, buffer, buffer->add(buf, GL_FLOAT, a->_0.size()));
         break;
@@ -360,7 +360,9 @@ std::shared_ptr<GLProgram> createProgram(std::shared_ptr<Program> p_) {
     loc = glGetAttribLocation(po, i.first.c_str());
     if (loc >= 0) {
       auto param = std::static_pointer_cast<data::Parameter>(i.second);
-      StreamInfo s = {.name = param->name, .index = loc}
+      std::shared_ptr<StreamInfo> s(new StreamInfo());
+      s->name = param->name;
+      s->index = loc;
       glp->programStreams[i.first] = s;
     }
   }
@@ -548,52 +550,52 @@ void GLBuffer::freeze() {
   bufferObject = bo;
 }
 
-void GLBuffer::update(int32_t i, std::vector<float>& v) {
+void GLBuffer::update(int32_t i, std::vector<float> v) {
 }
 
-Stream::Stream(float& v) {
+Stream::Stream(float v) {
   type = ::Type::FLOAT;
   isArray = false;
   glSize = 1;
 }
 
-Stream::Stream(V2F& v) {
+Stream::Stream(V2F v) {
   type = ::Type::FLOAT_VEC2;
   isArray = false;
   glSize = 2;
 }
 
-Stream::Stream(V3F& v) {
+Stream::Stream(V3F v) {
   type = ::Type::FLOAT_VEC3;
   isArray = false;
   glSize = 3;
 }
 
-Stream::Stream(V4F& v) {
+Stream::Stream(V4F v) {
   type = ::Type::FLOAT_VEC4;
   isArray = false;
   glSize = 4;
 }
 
-Stream::Stream(M22F& v) {
+Stream::Stream(M22F v) {
   type = ::Type::FLOAT_MAT2;
   isArray = false;
   glSize = 4;
 }
 
-Stream::Stream(M33F& v) {
+Stream::Stream(M33F v) {
   type = ::Type::FLOAT_MAT3;
   isArray = false;
   glSize = 9;
 }
 
-Stream::Stream(M44F& v) {
+Stream::Stream(M44F v) {
   type = ::Type::FLOAT_MAT4;
   isArray = false;
   glSize = 16;
 }
 
-Stream::Stream(std::shared_ptr<GLBuffer> b, int32_t i, Type t) {
+Stream::Stream(std::shared_ptr<GLBuffer> b, int32_t i, enum Type t) {
   type = t;
   buffer = b;
   index = i;
@@ -614,36 +616,44 @@ StreamMap::StreamMap() {
   
 }
 
-void StreamMap::add(std::string name, float& v) {
-  map[name] = std::shared_ptr<Stream>(new Stream(v));
+void StreamMap::add(std::string name, float v) {
+  std::shared_ptr<Stream> s(new Stream(v));
+  map[name] = s;
 }
 
-void StreamMap::add(std::string name, V2F& v) {
-  map[name] = std::shared_ptr<Stream>(new Stream(v));
+void StreamMap::add(std::string name, V2F v) {
+  std::shared_ptr<Stream> s(new Stream(v));
+  map[name] = s;
 }
 
-void StreamMap::add(std::string name, V3F& v) {
-  map[name] = std::shared_ptr<Stream>(new Stream(v));
+void StreamMap::add(std::string name, V3F v) {
+  std::shared_ptr<Stream> s(new Stream(v));
+  map[name] = s;
 }
 
-void StreamMap::add(std::string name, V4F& v) {
-  map[name] = std::shared_ptr<Stream>(new Stream(v));
+void StreamMap::add(std::string name, V4F v) {
+  std::shared_ptr<Stream> s(new Stream(v));
+  map[name] = s;
 }
 
-void StreamMap::add(std::string name, M22F& v) {
-  map[name] = std::shared_ptr<Stream>(new Stream(v));
+void StreamMap::add(std::string name, M22F v) {
+  std::shared_ptr<Stream> s(new Stream(v));
+  map[name] = s;
 }
 
-void StreamMap::add(std::string name, M33F& v) {
-  map[name] = std::shared_ptr<Stream>(new Stream(v));
+void StreamMap::add(std::string name, M33F v) {
+  std::shared_ptr<Stream> s(new Stream(v));
+  map[name] = s;
 }
 
-void StreamMap::add(std::string name, M44F& v) {
-  map[name] = std::shared_ptr<Stream>(new Stream(v));
+void StreamMap::add(std::string name, M44F v) {
+  std::shared_ptr<Stream> s(new Stream(v));
+  map[name] = s;
 }
 
-void StreamMap::add(std::string name, Type t, std::shared_ptr<GLBuffer> b, int32_t index) {
-  map[name] = std::shared_ptr<Stream>(new Stream(b,index,t));
+void StreamMap::add(std::string name, enum Type t, std::shared_ptr<GLBuffer> b, int32_t index) {
+  std::shared_ptr<Stream> s(new Stream(b, index, t));
+  map[name] = s;
 }
 
 bool StreamMap::validate() {
@@ -661,9 +671,9 @@ void GLObject::setOrder(int32_t o) {
   order = o;
 }
 
-void GLObject::setUniform(std::string name, int32_t& v) {
+void GLObject::setUniform(std::string name, int32_t v) {
   if (uniforms.count(name)>0) {
-    UniformValue u = uniforms[name];
+    std::shared_ptr<UniformValue> u = uniforms[name];
     
   } else {
     std::shared_ptr<UniformValue> u(new UniformValue());
@@ -674,9 +684,9 @@ void GLObject::setUniform(std::string name, int32_t& v) {
   }
 }
 
-void GLObject::setUniform(std::string name, bool& v) {
+void GLObject::setUniform(std::string name, bool v) {
   if (uniforms.count(name)>0) {
-    UniformValue u = uniforms[name];
+    std::shared_ptr<UniformValue> u = uniforms[name];
     
   } else {
     std::shared_ptr<UniformValue> u(new UniformValue());
@@ -687,9 +697,9 @@ void GLObject::setUniform(std::string name, bool& v) {
   }
 }
 
-void GLObject::setUniform(std::string name, float& v) {
+void GLObject::setUniform(std::string name, float v) {
   if (uniforms.count(name)>0) {
-    UniformValue u = uniforms[name];
+    std::shared_ptr<UniformValue> u = uniforms[name];
     
   } else {
     std::shared_ptr<UniformValue> u(new UniformValue());
@@ -700,9 +710,9 @@ void GLObject::setUniform(std::string name, float& v) {
   }
 }
 
-void GLObject::setUniform(std::string name, V2I& v) {
+void GLObject::setUniform(std::string name, V2I v) {
   if (uniforms.count(name)>0) {
-    UniformValue u = uniforms[name];
+    std::shared_ptr<UniformValue> u = uniforms[name];
     
   } else {
     std::shared_ptr<UniformValue> u(new UniformValue());
@@ -713,9 +723,9 @@ void GLObject::setUniform(std::string name, V2I& v) {
   }
 }
 
-void GLObject::setUniform(std::string name, V2B& v) {
+void GLObject::setUniform(std::string name, V2B v) {
   if (uniforms.count(name)>0) {
-    UniformValue u = uniforms[name];
+    std::shared_ptr<UniformValue> u = uniforms[name];
     
   } else {
     std::shared_ptr<UniformValue> u(new UniformValue());
@@ -726,9 +736,9 @@ void GLObject::setUniform(std::string name, V2B& v) {
   }
 }
 
-void GLObject::setUniform(std::string name, V2F& v) {
+void GLObject::setUniform(std::string name, V2F v) {
   if (uniforms.count(name)>0) {
-    UniformValue u = uniforms[name];
+    std::shared_ptr<UniformValue> u = uniforms[name];
     
   } else {
     std::shared_ptr<UniformValue> u(new UniformValue());
@@ -739,9 +749,9 @@ void GLObject::setUniform(std::string name, V2F& v) {
   }
 }
 
-void GLObject::setUniform(std::string name, V3I& v) {
+void GLObject::setUniform(std::string name, V3I v) {
   if (uniforms.count(name)>0) {
-    UniformValue u = uniforms[name];
+    std::shared_ptr<UniformValue> u = uniforms[name];
     
   } else {
     std::shared_ptr<UniformValue> u(new UniformValue());
@@ -752,9 +762,9 @@ void GLObject::setUniform(std::string name, V3I& v) {
   }
 }
 
-void GLObject::setUniform(std::string name, V3B& v) {
+void GLObject::setUniform(std::string name, V3B v) {
   if (uniforms.count(name)>0) {
-    UniformValue u = uniforms[name];
+    std::shared_ptr<UniformValue> u = uniforms[name];
     
   } else {
     std::shared_ptr<UniformValue> u(new UniformValue());
@@ -765,9 +775,9 @@ void GLObject::setUniform(std::string name, V3B& v) {
   }
 }
 
-void GLObject::setUniform(std::string name, V3F& v) {
+void GLObject::setUniform(std::string name, V3F v) {
   if (uniforms.count(name)>0) {
-    UniformValue u = uniforms[name];
+    std::shared_ptr<UniformValue> u = uniforms[name];
     
   } else {
     std::shared_ptr<UniformValue> u(new UniformValue());
@@ -778,9 +788,9 @@ void GLObject::setUniform(std::string name, V3F& v) {
   }
 }
 
-void GLObject::setUniform(std::string name, V4I& v) {
+void GLObject::setUniform(std::string name, V4I v) {
   if (uniforms.count(name)>0) {
-    UniformValue u = uniforms[name];
+    std::shared_ptr<UniformValue> u = uniforms[name];
     
   } else {
     std::shared_ptr<UniformValue> u(new UniformValue());
@@ -791,9 +801,9 @@ void GLObject::setUniform(std::string name, V4I& v) {
   }
 }
 
-void GLObject::setUniform(std::string name, V4B& v) {
+void GLObject::setUniform(std::string name, V4B v) {
   if (uniforms.count(name)>0) {
-    UniformValue u = uniforms[name];
+    std::shared_ptr<UniformValue> u = uniforms[name];
     
   } else {
     std::shared_ptr<UniformValue> u(new UniformValue());
@@ -804,9 +814,9 @@ void GLObject::setUniform(std::string name, V4B& v) {
   }
 }
 
-void GLObject::setUniform(std::string name, V4F& v) {
+void GLObject::setUniform(std::string name, V4F v) {
   if (uniforms.count(name)>0) {
-    UniformValue u = uniforms[name];
+    std::shared_ptr<UniformValue> u = uniforms[name];
     
   } else {
     std::shared_ptr<UniformValue> u(new UniformValue());
@@ -817,9 +827,9 @@ void GLObject::setUniform(std::string name, V4F& v) {
   }
 }
 
-void GLObject::setUniform(std::string name, M22F& v) {
+void GLObject::setUniform(std::string name, M22F v) {
   if (uniforms.count(name)>0) {
-    UniformValue u = uniforms[name];
+    std::shared_ptr<UniformValue> u = uniforms[name];
     
   } else {
     std::shared_ptr<UniformValue> u(new UniformValue());
@@ -830,9 +840,9 @@ void GLObject::setUniform(std::string name, M22F& v) {
   }
 }
 
-void GLObject::setUniform(std::string name, M33F& v) {
+void GLObject::setUniform(std::string name, M33F v) {
   if (uniforms.count(name)>0) {
-    UniformValue u = uniforms[name];
+    std::shared_ptr<UniformValue> u = uniforms[name];
     
   } else {
     std::shared_ptr<UniformValue> u(new UniformValue());
@@ -843,9 +853,9 @@ void GLObject::setUniform(std::string name, M33F& v) {
   }
 }
 
-void GLObject::setUniform(std::string name, M44F& v) {
+void GLObject::setUniform(std::string name, M44F v) {
   if (uniforms.count(name)>0) {
-    UniformValue u = uniforms[name];
+    std::shared_ptr<UniformValue> u = uniforms[name];
     
   } else {
     std::shared_ptr<UniformValue> u(new UniformValue());
@@ -860,7 +870,7 @@ PipelineInput::PipelineInput() {
   
 }
 
-std::shared_ptr<GLObject> PipelineInput::createObject(std::string slotName, Primitive prim, std::shared_ptr<StreamMap> attributes, std::vector<std::string> objectUniforms) {
+std::shared_ptr<GLObject> PipelineInput::createObject(std::string slotName, enum Primitive prim, std::shared_ptr<StreamMap> attributes, std::vector<std::string> objectUniforms) {
   std::shared_ptr<GLObject> o(new GLObject());
   o->enabled = true;
   o->order = 0;
@@ -877,14 +887,14 @@ std::shared_ptr<GLObject> PipelineInput::createObject(std::string slotName, Prim
   if (objectMap.count(slotName)>0) {
     objectMap[slotName]->push_back(o);
   } else {
-    std::vector<std::shared_ptr<GLObject>>* ov = new std::vector<std::shared_ptr<GLObject>>();
+    std::vector<std::shared_ptr<GLObject>> ov = new std::vector<std::shared_ptr<GLObject>>();
     ov->push_back(o);
-    objectMap[slotName] = std::shared_ptr<std::vector<std::shared_ptr<GLObject>>>(ov);
+    objectMap[slotName] = ov;
   }
   return o;
 }
 
-std::shared_ptr<GLObject> PipelineInput::createObject(std::string slotName, Primitive prim, StreamMap& attributes, GLBuffer& indexBuffer, int32_t bufferIndex, std::vector<std::string> objectUniforms) {
+std::shared_ptr<GLObject> PipelineInput::createObject(std::string slotName, enum Primitive prim, std::shared_ptr<StreamMap> attributes, std::shared_ptr<GLBuffer> indexBuffer, int32_t bufferIndex, std::vector<std::string> objectUniforms) {
   std::shared_ptr<GLObject> o(new GLObject());
   return o;
 }
@@ -897,9 +907,9 @@ void PipelineInput::setScreenSize(int32_t w, int32_t h) {
   screenHeight = h;
 }
 
-void PipelineInput::setUniform(std::string name, int32_t& v) {
+void PipelineInput::setUniform(std::string name, int32_t v) {
   if (uniforms.count(name)>0) {
-    UniformValue u = uniforms[name];
+    std::shared_ptr<UniformValue> u = uniforms[name];
     
   } else {
     std::shared_ptr<UniformValue> u(new UniformValue());
@@ -910,9 +920,9 @@ void PipelineInput::setUniform(std::string name, int32_t& v) {
   }
 }
 
-void PipelineInput::setUniform(std::string name, bool& v) {
+void PipelineInput::setUniform(std::string name, bool v) {
   if (uniforms.count(name)>0) {
-    UniformValue u = uniforms[name];
+    std::shared_ptr<UniformValue> u = uniforms[name];
     
   } else {
     std::shared_ptr<UniformValue> u(new UniformValue());
@@ -923,9 +933,9 @@ void PipelineInput::setUniform(std::string name, bool& v) {
   }
 }
 
-void PipelineInput::setUniform(std::string name, float& v) {
+void PipelineInput::setUniform(std::string name, float v) {
   if (uniforms.count(name)>0) {
-    UniformValue u = uniforms[name];
+    std::shared_ptr<UniformValue> u = uniforms[name];
     
   } else {
     std::shared_ptr<UniformValue> u(new UniformValue());
@@ -936,9 +946,9 @@ void PipelineInput::setUniform(std::string name, float& v) {
   }
 }
 
-void PipelineInput::setUniform(std::string name, V2I& v) {
+void PipelineInput::setUniform(std::string name, V2I v) {
   if (uniforms.count(name)>0) {
-    UniformValue u = uniforms[name];
+    std::shared_ptr<UniformValue> u = uniforms[name];
     
   } else {
     std::shared_ptr<UniformValue> u(new UniformValue());
@@ -949,9 +959,9 @@ void PipelineInput::setUniform(std::string name, V2I& v) {
   }
 }
 
-void PipelineInput::setUniform(std::string name, V2B& v) {
+void PipelineInput::setUniform(std::string name, V2B v) {
   if (uniforms.count(name)>0) {
-    UniformValue u = uniforms[name];
+    std::shared_ptr<UniformValue> u = uniforms[name];
     
   } else {
     std::shared_ptr<UniformValue> u(new UniformValue());
@@ -962,9 +972,9 @@ void PipelineInput::setUniform(std::string name, V2B& v) {
   }
 }
 
-void PipelineInput::setUniform(std::string name, V2F& v) {
+void PipelineInput::setUniform(std::string name, V2F v) {
   if (uniforms.count(name)>0) {
-    UniformValue u = uniforms[name];
+    std::shared_ptr<UniformValue> u = uniforms[name];
     
   } else {
     std::shared_ptr<UniformValue> u(new UniformValue());
@@ -975,9 +985,9 @@ void PipelineInput::setUniform(std::string name, V2F& v) {
   }
 }
 
-void PipelineInput::setUniform(std::string name, V3I& v) {
+void PipelineInput::setUniform(std::string name, V3I v) {
   if (uniforms.count(name)>0) {
-    UniformValue u = uniforms[name];
+    std::shared_ptr<UniformValue> u = uniforms[name];
     
   } else {
     std::shared_ptr<UniformValue> u(new UniformValue());
@@ -988,9 +998,9 @@ void PipelineInput::setUniform(std::string name, V3I& v) {
   }
 }
 
-void PipelineInput::setUniform(std::string name, V3B& v) {
+void PipelineInput::setUniform(std::string name, V3B v) {
   if (uniforms.count(name)>0) {
-    UniformValue u = uniforms[name];
+    std::shared_ptr<UniformValue> u = uniforms[name];
     
   } else {
     std::shared_ptr<UniformValue> u(new UniformValue());
@@ -1001,9 +1011,9 @@ void PipelineInput::setUniform(std::string name, V3B& v) {
   }
 }
 
-void PipelineInput::setUniform(std::string name, V3F& v) {
+void PipelineInput::setUniform(std::string name, V3F v) {
   if (uniforms.count(name)>0) {
-    UniformValue u = uniforms[name];
+    std::shared_ptr<UniformValue> u = uniforms[name];
     
   } else {
     std::shared_ptr<UniformValue> u(new UniformValue());
@@ -1014,9 +1024,9 @@ void PipelineInput::setUniform(std::string name, V3F& v) {
   }
 }
 
-void PipelineInput::setUniform(std::string name, V4I& v) {
+void PipelineInput::setUniform(std::string name, V4I v) {
   if (uniforms.count(name)>0) {
-    UniformValue u = uniforms[name];
+    std::shared_ptr<UniformValue> u = uniforms[name];
     
   } else {
     std::shared_ptr<UniformValue> u(new UniformValue());
@@ -1027,9 +1037,9 @@ void PipelineInput::setUniform(std::string name, V4I& v) {
   }
 }
 
-void PipelineInput::setUniform(std::string name, V4B& v) {
+void PipelineInput::setUniform(std::string name, V4B v) {
   if (uniforms.count(name)>0) {
-    UniformValue u = uniforms[name];
+    std::shared_ptr<UniformValue> u = uniforms[name];
     
   } else {
     std::shared_ptr<UniformValue> u(new UniformValue());
@@ -1040,9 +1050,9 @@ void PipelineInput::setUniform(std::string name, V4B& v) {
   }
 }
 
-void PipelineInput::setUniform(std::string name, V4F& v) {
+void PipelineInput::setUniform(std::string name, V4F v) {
   if (uniforms.count(name)>0) {
-    UniformValue u = uniforms[name];
+    std::shared_ptr<UniformValue> u = uniforms[name];
     
   } else {
     std::shared_ptr<UniformValue> u(new UniformValue());
@@ -1053,9 +1063,9 @@ void PipelineInput::setUniform(std::string name, V4F& v) {
   }
 }
 
-void PipelineInput::setUniform(std::string name, M22F& v) {
+void PipelineInput::setUniform(std::string name, M22F v) {
   if (uniforms.count(name)>0) {
-    UniformValue u = uniforms[name];
+    std::shared_ptr<UniformValue> u = uniforms[name];
     
   } else {
     std::shared_ptr<UniformValue> u(new UniformValue());
@@ -1066,9 +1076,9 @@ void PipelineInput::setUniform(std::string name, M22F& v) {
   }
 }
 
-void PipelineInput::setUniform(std::string name, M33F& v) {
+void PipelineInput::setUniform(std::string name, M33F v) {
   if (uniforms.count(name)>0) {
-    UniformValue u = uniforms[name];
+    std::shared_ptr<UniformValue> u = uniforms[name];
     
   } else {
     std::shared_ptr<UniformValue> u(new UniformValue());
@@ -1079,9 +1089,9 @@ void PipelineInput::setUniform(std::string name, M33F& v) {
   }
 }
 
-void PipelineInput::setUniform(std::string name, M44F& v) {
+void PipelineInput::setUniform(std::string name, M44F v) {
   if (uniforms.count(name)>0) {
-    UniformValue u = uniforms[name];
+    std::shared_ptr<UniformValue> u = uniforms[name];
     
   } else {
     std::shared_ptr<UniformValue> u(new UniformValue());
@@ -1154,6 +1164,7 @@ uint32_t GLES20Pipeline::createRenderTarget(std::shared_ptr<RenderTarget> t_) {
 
 GLES20Pipeline::GLES20Pipeline(std::shared_ptr<Pipeline> ppl_) {
   
+  hasPipelineInput = false;
   screenTarget = 0;
   hasCurrentProgram = false;
   auto ppl = std::static_pointer_cast<data::Pipeline>(ppl_);
@@ -1192,6 +1203,7 @@ GLES20Pipeline::~GLES20Pipeline() {
 
 void GLES20Pipeline::setPipelineInput(std::shared_ptr<PipelineInput> i) {
   input = i;
+  hasPipelineInput = true;
 }
 
 void GLES20Pipeline::render() {
@@ -1224,7 +1236,7 @@ void GLES20Pipeline::render() {
         auto cmd = std::static_pointer_cast<data::SetRenderTarget>(i);
         uint32_t t = targets[cmd->_0];
         glBindFramebuffer(GL_FRAMEBUFFER, t == 0?screenTarget:t);
-        if (input) {
+        if (hasPipelineInput) {
           glViewport(0, 0, input->screenWidth, input->screenHeight);
         }
         break;
@@ -1292,13 +1304,13 @@ void GLES20Pipeline::render() {
         break;
       }
       case ::Command::tag::RenderSlot: {
-        if (input && pipeline && hasCurrentProgram) {
+        if (hasPipelineInput && pipeline && hasCurrentProgram) {
           auto cmd = std::static_pointer_cast<data::RenderSlot>(i);
           auto slot = std::static_pointer_cast<data::Slot>(pipeline->slots[cmd->_0]);
           if (input->objectMap.count(slot->slotName)<=0) {
             break;
           }
-          for (auto o : *input->objectMap[slot->slotName]) {
+          for (auto o : input->objectMap[slot->slotName]) {
             if (!o->enabled) {
               continue;
             }
@@ -1310,7 +1322,7 @@ void GLES20Pipeline::render() {
               }
             }
             for (auto s : programs[currentProgram]->programStreams) {
-              setStream(s.second.index, *o->streams->map[s.second.name]);
+              setStream(s.second.index, o->streams->map[s.second.name]);
             }
             glDrawArrays(o->glMode, 0, o->glCount);
           }
@@ -1318,14 +1330,14 @@ void GLES20Pipeline::render() {
         break;
       }
       case ::Command::tag::RenderStream: {
-        if (input && pipeline && hasCurrentProgram) {
+        if (hasPipelineInput && pipeline && hasCurrentProgram) {
           auto cmd = std::static_pointer_cast<data::RenderStream>(i);
           std::shared_ptr<GLStreamData> data = streamData[cmd->_0];
           for (auto u : programs[currentProgram]->programUniforms) {
             setUniformValue(u.second, input->uniforms[u.first]);
           }
           for (auto s : programs[currentProgram]->programStreams) {
-            setStream(s.second.index, *data->streams.map[s.second.name]);
+            setStream(s.second.index, data->streams.map[s.second.name]);
           }
           glDrawArrays(data->glMode, 0, data->glCount);
         }

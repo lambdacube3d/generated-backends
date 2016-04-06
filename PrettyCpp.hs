@@ -85,18 +85,19 @@ prettyType = \case
   UInt8 -> "uint8_t"
   UInt16-> "uint16_t"
   Void  -> "void"
-  Class n -> n
+  Class n -> "std::shared_ptr<" ++ n ++ ">"
+  Builtin n -> n
   Enum n  -> "enum " ++ n
-  Const t -> "const " ++ prettyType t
-  Ref t   -> prettyType t ++ "&"
-  Ptr t   -> prettyType t ++ "*"
-  SmartPtr t -> "std::shared_ptr<" ++ prettyType t ++ ">"
+--  Const t -> "const " ++ prettyType t
+--  Ref t   -> prettyType t ++ "&"
+--  Ptr t   -> prettyType t ++ "*"
+--  SmartPtr t -> "std::shared_ptr<" ++ prettyType t ++ ">"
   Vector t -> "std::vector<" ++ prettyType t ++ ">"
   Map k v -> "std::map<" ++ prettyType k ++ "," ++ prettyType v ++ ">"
   String  -> "std::string"
   ADTEnum a -> "::" ++ a ++ "::tag"
-  ADTCons a b -> "::data::" ++ b
-  NativeArray t -> prettyType t ++ "[]"
+  ADTCons a b -> "std::shared_ptr<::data::" ++ b ++ ">"
+  NativeArray t -> prettyType t ++ "*"
   NativeBuffer -> "void*"
   x -> error $ "cpp - prettyType: " ++ show x
 
@@ -136,7 +137,7 @@ prettyStmt classDefs ind = addIndentation ind . \case
   VarDef t n -> prettyType t ++ " " ++ intercalate ", " n ++ ";"
   VarADTDef t c n e -> "auto " ++ n ++ " = std::static_pointer_cast<data::" ++ c ++ ">(" ++ prettyExp e ++ ");"
   VarAssignDef t n e -> prettyType t ++ " " ++ n ++ " = " ++ prettyExp e ++ ";"
-  VarConstructor t n e -> prettyType t ++ " " ++ n ++ "(" ++ prettyExp e ++ ");"
+  VarConstructor t n e -> prettyType (Class t) ++ " " ++ n ++ "(new " ++ t ++ "(" ++ intercalate ", " (map prettyExp e) ++ "));"
   VarRecordValue t n a -> prettyType t ++ " " ++ n ++ " = " ++ "{" ++ intercalate ", " ["." ++ n ++ " = " ++ prettyExp v | (n,v) <- a] ++ "}"
   VarNativeBufferFrom t n a -> "void* " ++ n ++ " = " ++ prettyExp a ++ ".data();"
   a := b -> prettyExp a ++ " = " ++ prettyExp b ++ ";"
@@ -166,7 +167,7 @@ prettyExp = \case
   EnumADT a b -> "::" ++ a ++ "::tag::" ++ b
   Integer a   -> show a
   FloatLit a  -> show a
-  Deref e     -> "*" ++ prettyExp e
+--  Deref e     -> "*" ++ prettyExp e
   BoolLit True  -> "true"
   BoolLit False -> "false"
   Vector_lookup a b -> prettyExp a ++ "[" ++ prettyExp b ++ "]"
@@ -193,7 +194,7 @@ prettyExp = \case
   Map_notElem a b -> prettyExp a ++ ".count(" ++ prettyExp b ++ ")<=0"
   Map_elem a b -> prettyExp a ++ ".count(" ++ prettyExp b ++ ")>0"
   Vector_size a -> prettyExp a ++ ".size()"
-  CallTypeConsructor t a -> prettyType t ++ "(" ++ prettyExp a ++ ")"
+--  CallTypeConsructor t a -> prettyType t ++ "(" ++ prettyExp a ++ ")"
   GLConstant a -> show a
   GLCommand a -> "gl" ++ drop 2 (show a)
   x -> error $ "cpp - prettyExp: " ++ show x
