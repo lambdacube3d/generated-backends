@@ -158,7 +158,8 @@ prettyStmt classDefs ind = addIndentation ind . \case
   For_range n a b s -> "for (int " ++ n ++ " = " ++ prettyExp a ++ "; " ++ n ++ " < " ++ prettyExp b ++ "; " ++ n ++ "++) {\n" ++ unlines (map (prettyStmt classDefs $ ind + 1) s) ++ addIndentation ind "}"
   Vector_foreach t n e s -> "for (" ++ prettyType t ++ " " ++ n ++ " : " ++ prettyExp e ++ ") {\n" ++ unlines (map (prettyStmt classDefs $ ind + 1) s) ++ addIndentation ind "}"
   Vector_pushBack a b -> prettyExp a ++ ".add(" ++ prettyExp b ++ ");"
-  Vector_pushBackPtr a b -> prettyExp a ++ ".add(" ++ prettyExp b ++ ");"
+--  Vector_pushBackPtr a b -> prettyExp a ++ ".add(" ++ prettyExp b ++ ");"
+  Vector_new t n -> prettyType (Vector t) ++ " " ++ n ++ " = new " ++ prettyType (Vector t) ++ "();"
   Break -> "break;"
   Continue -> "continue;"
   Inc e -> prettyExp e ++ "++;"
@@ -243,7 +244,7 @@ prettyExp = \case
   CallProcExp n a -> "Util." ++ prettyExp n ++ "(" ++ intercalate ", " (map prettyExp a) ++ ")"
   ExpIf a b c -> prettyExp a ++ "?" ++ prettyExp b ++ ":" ++ prettyExp c
   NullPtr -> "null"
-  New t a -> "new " ++ prettyType t ++ "(" ++ intercalate "," (map prettyExp a) ++ ")"
+--  New t a -> "new " ++ prettyType t ++ "(" ++ intercalate "," (map prettyExp a) ++ ")"
   IteratorValue e -> prettyExp e ++ ".getValue()" -- used with foreach
   IteratorKey e -> prettyExp e ++ ".getKey()" -- used with foreach
   NotNull e -> prettyExp e ++ "!= null"

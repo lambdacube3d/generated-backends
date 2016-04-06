@@ -95,10 +95,10 @@ prettyType = \case
   Vector t -> "std::vector<" ++ prettyType t ++ ">"
   Map k v -> "std::map<" ++ prettyType k ++ "," ++ prettyType v ++ ">"
   String  -> "std::string"
-  ADTEnum a -> "::" ++ a ++ "::tag"
+  ADTEnum a -> "enum ::" ++ a ++ "::tag"
   ADTCons a b -> "std::shared_ptr<::data::" ++ b ++ ">"
-  NativeArray t -> prettyType t ++ "*"
-  NativeBuffer -> "void*"
+  NativeArray t -> "const " ++ prettyType t ++ "*"
+  NativeBuffer -> "const void*"
   x -> error $ "cpp - prettyType: " ++ show x
 
 addIndentation ind s = concat (replicate ind "  ") ++ s
@@ -150,13 +150,14 @@ prettyStmt classDefs ind = addIndentation ind . \case
   For_range n a b s -> "for (int " ++ n ++ " = " ++ prettyExp a ++ "; " ++ n ++ " < " ++ prettyExp b ++ "; " ++ n ++ "++) {\n" ++ unlines (map (prettyStmt [] $ ind + 1) s) ++ addIndentation ind "}"
   Vector_foreach t n e s -> "for (auto " ++ n ++ " : " ++ prettyExp e ++ ") {\n" ++ unlines (map (prettyStmt [] $ ind + 1) s) ++ addIndentation ind "}"
   Vector_pushBack a b -> prettyExp a ++ ".push_back(" ++ prettyExp b ++ ");"
-  Vector_pushBackPtr a b -> prettyExp a ++ "->push_back(" ++ prettyExp b ++ ");"
+--  Vector_pushBackPtr a b -> prettyExp a ++ "->push_back(" ++ prettyExp b ++ ");"
+  Vector_new t n -> prettyType (Vector t) ++ " " ++ n ++ ";"
   Break -> "break;"
   Continue -> "continue;"
   Inc e -> prettyExp e ++ "++;"
-  AllocClassVars -> ""
-  AllocNativeArray t n -> ""
-  CopyToNativeArray t dst src -> ""
+  AllocClassVars -> "" -- TODO
+  AllocNativeArray t n -> "" -- TODO
+  CopyToNativeArray t dst src -> "" -- TODO
   x -> error $ "cpp - prettyStmt: " ++ show x
 
 prettyExp = \case
@@ -186,7 +187,7 @@ prettyExp = \case
   CallProcExp n a -> prettyExp n ++ "(" ++ intercalate ", " (map prettyExp a) ++ ")"
   ExpIf a b c -> prettyExp a ++ "?" ++ prettyExp b ++ ":" ++ prettyExp c
   NullPtr -> "nullptr"
-  New t a -> "new " ++ prettyType t ++ "(" ++ intercalate "," (map prettyExp a) ++ ")"
+--  New t a -> "new " ++ prettyType t ++ "(" ++ intercalate "," (map prettyExp a) ++ ")"
   IteratorValue e -> prettyExp e ++ ".second" -- used with foreach
   IteratorKey e -> prettyExp e ++ ".first" -- used with foreach
   NotNull e -> prettyExp e -- HACK
@@ -200,12 +201,12 @@ prettyExp = \case
   x -> error $ "cpp - prettyExp: " ++ show x
 
 prettyGLPrim = \case
-  GLGenTexture e -> "{ int glObj; glGenTextures(1, &glObj); " ++ prettyExp e ++ " = glObj; }"
-  GLGenFramebuffer e -> "{ int glObj; glGenFramebuffers(1, &glObj); " ++ prettyExp e ++ " = glObj; }"
-  GLGenBuffer e -> "{ int glObj; glGenBuffers(1, &glObj); " ++ prettyExp e ++ " = glObj; }"
-  GLDeleteTexture e -> "{ int glObj = " ++ prettyExp e ++ "; glDeleteTextures(1, &glObj); }"
-  GLDeleteFramebuffer e -> "{ int glObj = " ++ prettyExp e ++ "; glDeleteFramebuffers(1, &glObj); }"
-  GLShaderSource vs src -> "{ char* glslSrc = " ++ prettyExp src ++ ".c_str(); glShaderSource(" ++ prettyExp vs ++ ", 1, &glslSrc, 0); }"
+  GLGenTexture e -> "{ unsigned int glObj; glGenTextures(1, &glObj); " ++ prettyExp e ++ " = glObj; }"
+  GLGenFramebuffer e -> "{ unsigned int glObj; glGenFramebuffers(1, &glObj); " ++ prettyExp e ++ " = glObj; }"
+  GLGenBuffer e -> "{ unsigned int glObj; glGenBuffers(1, &glObj); " ++ prettyExp e ++ " = glObj; }"
+  GLDeleteTexture e -> "{ unsigned int glObj = " ++ prettyExp e ++ "; glDeleteTextures(1, &glObj); }"
+  GLDeleteFramebuffer e -> "{ unsigned int glObj = " ++ prettyExp e ++ "; glDeleteFramebuffers(1, &glObj); }"
+  GLShaderSource vs src -> "{ const char* glslSrc = " ++ prettyExp src ++ ".c_str(); glShaderSource(" ++ prettyExp vs ++ ", 1, &glslSrc, 0); }"
   GLGetUniformLocation p n v -> prettyExp v ++ " = glGetUniformLocation(" ++ prettyExp p ++ ", " ++ prettyExp n ++ ".c_str());"
   GLGetAttribLocation p n v -> prettyExp v ++ " = glGetAttribLocation(" ++ prettyExp p ++ ", " ++ prettyExp n ++ ".c_str());"
   GLUniform1iv a b c -> "glUniform1iv(" ++ prettyExp a ++ ", " ++ prettyExp b ++ ", " ++ prettyExp c ++ ");"
@@ -219,9 +220,9 @@ prettyGLPrim = \case
   GLUniformMatrix2fv a b c d -> "glUniformMatrix2fv(" ++ prettyExp a ++ ", " ++ prettyExp b ++ ", " ++ prettyExp c ++ ", " ++ prettyExp d ++ ");"
   GLUniformMatrix3fv a b c d -> "glUniformMatrix3fv(" ++ prettyExp a ++ ", " ++ prettyExp b ++ ", " ++ prettyExp c ++ ", " ++ prettyExp d ++ ");"
   GLUniformMatrix4fv a b c d -> "glUniformMatrix4fv(" ++ prettyExp a ++ ", " ++ prettyExp b ++ ", " ++ prettyExp c ++ ", " ++ prettyExp d ++ ");"
-  GLVertexAttribPointer a b c d e f -> "glVertexAttribPointer(" ++ intercalate ", " (map prettyExp [a,b,c,d,e,f]) ++ ");"
-  GLVertexAttrib1fv a b c -> "glVertexAttrib1fv(" ++ intercalate ", " (map prettyExp [a,b,c]) ++ ");"
-  GLVertexAttrib2fv a b c -> "glVertexAttrib2fv(" ++ intercalate ", " (map prettyExp [a,b,c]) ++ ");"
-  GLVertexAttrib3fv a b c -> "glVertexAttrib3fv(" ++ intercalate ", " (map prettyExp [a,b,c]) ++ ");"
-  GLVertexAttrib4fv a b c -> "glVertexAttrib4fv(" ++ intercalate ", " (map prettyExp [a,b,c]) ++ ");"
+  GLVertexAttribPointer a b c d e f -> "glVertexAttribPointer(" ++ intercalate ", " (map prettyExp [a,b,c,d,e]) ++ ", (const void*) " ++ prettyExp f ++ ");"
+  GLVertexAttrib1fv a b c -> "glVertexAttrib1fv(" ++ intercalate ", " (map prettyExp [a,b]) ++ " + " ++ prettyExp c ++ ");"
+  GLVertexAttrib2fv a b c -> "glVertexAttrib2fv(" ++ intercalate ", " (map prettyExp [a,b]) ++ " + " ++ prettyExp c ++ ");"
+  GLVertexAttrib3fv a b c -> "glVertexAttrib3fv(" ++ intercalate ", " (map prettyExp [a,b]) ++ " + " ++ prettyExp c ++ ");"
+  GLVertexAttrib4fv a b c -> "glVertexAttrib4fv(" ++ intercalate ", " (map prettyExp [a,b]) ++ " + " ++ prettyExp c ++ ");"
   x -> error $ "cpp - prettyGLPrim: " ++ show x

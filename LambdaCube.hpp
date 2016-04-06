@@ -27,12 +27,19 @@ class GLBuffer {
   public:
     std::vector<int32_t> size, byteSize, glType;
     std::vector<int64_t> offset;
-    std::vector<void*> data;
+    std::vector<const void*> data;
     uint32_t bufferObject;
     GLBuffer();
-    int32_t add(void* buf, int32_t elemGLType, int32_t elemCount);
+    int32_t add(const void* buf, int32_t elemGLType, int32_t elemCount);
     void freeze();
     void update(int32_t i, std::vector<float> v);
+};
+
+class UniformValue {
+  public:
+    enum ::InputType::tag tag;
+    const int32_t* _int;
+    const float* _float;
 };
 
 class Stream {
@@ -66,13 +73,6 @@ class StreamMap {
     void add(std::string name, M44F v);
     void add(std::string name, enum Type t, std::shared_ptr<GLBuffer> b, int32_t index);
     bool validate();
-};
-
-class UniformValue {
-  public:
-    ::InputType::tag tag;
-    int32_t* _int;
-    float* _float;
 };
 
 class GLObject {

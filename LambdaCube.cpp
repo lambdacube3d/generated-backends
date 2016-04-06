@@ -122,110 +122,110 @@ int32_t filterMode(std::shared_ptr<Filter> f) {
 }
 
 void setUniformValue(int32_t i, std::shared_ptr<UniformValue> v) {
-  switch (v.tag) {
+  switch (v->tag) {
     case ::InputType::tag::Int: {
-      glUniform1iv(i, 1, v._int);
+      glUniform1iv(i, 1, v->_int);
       break;
     }
     case ::InputType::tag::Bool: {
-      glUniform1iv(i, 1, v._int);
+      glUniform1iv(i, 1, v->_int);
       break;
     }
     case ::InputType::tag::Float: {
-      glUniform1fv(i, 1, v._float);
+      glUniform1fv(i, 1, v->_float);
       break;
     }
     case ::InputType::tag::V2I: {
-      glUniform2iv(i, 1, v._int);
+      glUniform2iv(i, 1, v->_int);
       break;
     }
     case ::InputType::tag::V2B: {
-      glUniform2iv(i, 1, v._int);
+      glUniform2iv(i, 1, v->_int);
       break;
     }
     case ::InputType::tag::V2F: {
-      glUniform2fv(i, 1, v._float);
+      glUniform2fv(i, 1, v->_float);
       break;
     }
     case ::InputType::tag::V3I: {
-      glUniform3iv(i, 1, v._int);
+      glUniform3iv(i, 1, v->_int);
       break;
     }
     case ::InputType::tag::V3B: {
-      glUniform3iv(i, 1, v._int);
+      glUniform3iv(i, 1, v->_int);
       break;
     }
     case ::InputType::tag::V3F: {
-      glUniform3fv(i, 1, v._float);
+      glUniform3fv(i, 1, v->_float);
       break;
     }
     case ::InputType::tag::V4I: {
-      glUniform4iv(i, 1, v._int);
+      glUniform4iv(i, 1, v->_int);
       break;
     }
     case ::InputType::tag::V4B: {
-      glUniform4iv(i, 1, v._int);
+      glUniform4iv(i, 1, v->_int);
       break;
     }
     case ::InputType::tag::V4F: {
-      glUniform4fv(i, 1, v._float);
+      glUniform4fv(i, 1, v->_float);
       break;
     }
     case ::InputType::tag::M22F: {
-      glUniformMatrix2fv(i, 1, false, v._float);
+      glUniformMatrix2fv(i, 1, false, v->_float);
       break;
     }
     case ::InputType::tag::M33F: {
-      glUniformMatrix3fv(i, 1, false, v._float);
+      glUniformMatrix3fv(i, 1, false, v->_float);
       break;
     }
     case ::InputType::tag::M44F: {
-      glUniformMatrix4fv(i, 1, false, v._float);
+      glUniformMatrix4fv(i, 1, false, v->_float);
       break;
     }
   }
 }
 
 void setStream(int32_t i, std::shared_ptr<Stream> s) {
-  if (s.isArray) {
-    glBindBuffer(GL_ARRAY_BUFFER, s.buffer->bufferObject);
+  if (s->isArray) {
+    glBindBuffer(GL_ARRAY_BUFFER, s->buffer->bufferObject);
     glEnableVertexAttribArray(i);
-    glVertexAttribPointer(i, s.glSize, s.buffer->glType[s.index], false, 0, s.buffer->offset[s.index]);
+    glVertexAttribPointer(i, s->glSize, s->buffer->glType[s->index], false, 0, (const void*) s->buffer->offset[s->index]);
   } else {
     glDisableVertexAttribArray(i);
-    switch (s.type) {
+    switch (s->type) {
       case ::Type::FLOAT: {
-        glVertexAttrib1fv(i, s.attributeValue._float, 0);
+        glVertexAttrib1fv(i, s->attributeValue->_float + 0);
         break;
       }
       case ::Type::FLOAT_VEC2: {
-        glVertexAttrib2fv(i, s.attributeValue._float, 0);
+        glVertexAttrib2fv(i, s->attributeValue->_float + 0);
         break;
       }
       case ::Type::FLOAT_VEC3: {
-        glVertexAttrib3fv(i, s.attributeValue._float, 0);
+        glVertexAttrib3fv(i, s->attributeValue->_float + 0);
         break;
       }
       case ::Type::FLOAT_VEC4: {
-        glVertexAttrib4fv(i, s.attributeValue._float, 0);
+        glVertexAttrib4fv(i, s->attributeValue->_float + 0);
         break;
       }
       case ::Type::FLOAT_MAT2: {
-        glVertexAttrib2fv(i, s.attributeValue._float, 0);
-        glVertexAttrib2fv(i + 1, s.attributeValue._float, 2);
+        glVertexAttrib2fv(i, s->attributeValue->_float + 0);
+        glVertexAttrib2fv(i + 1, s->attributeValue->_float + 2);
         break;
       }
       case ::Type::FLOAT_MAT3: {
-        glVertexAttrib3fv(i, s.attributeValue._float, 0);
-        glVertexAttrib3fv(i + 1, s.attributeValue._float, 3);
-        glVertexAttrib3fv(i + 2, s.attributeValue._float, 6);
+        glVertexAttrib3fv(i, s->attributeValue->_float + 0);
+        glVertexAttrib3fv(i + 1, s->attributeValue->_float + 3);
+        glVertexAttrib3fv(i + 2, s->attributeValue->_float + 6);
         break;
       }
       case ::Type::FLOAT_MAT4: {
-        glVertexAttrib4fv(i, s.attributeValue._float, 0);
-        glVertexAttrib4fv(i + 1, s.attributeValue._float, 4);
-        glVertexAttrib4fv(i + 2, s.attributeValue._float, 8);
-        glVertexAttrib4fv(i + 3, s.attributeValue._float, 12);
+        glVertexAttrib4fv(i, s->attributeValue->_float + 0);
+        glVertexAttrib4fv(i + 1, s->attributeValue->_float + 4);
+        glVertexAttrib4fv(i + 2, s->attributeValue->_float + 8);
+        glVertexAttrib4fv(i + 3, s->attributeValue->_float + 12);
         break;
       }
     }
@@ -234,7 +234,7 @@ void setStream(int32_t i, std::shared_ptr<Stream> s) {
 
 std::shared_ptr<Texture> createTexture(std::shared_ptr<TextureDescriptor> tx_) {
   std::shared_ptr<Texture> t(new Texture());
-  { int glObj; glGenTextures(1, &glObj); t->texture = glObj; }
+  { unsigned int glObj; glGenTextures(1, &glObj); t->texture = glObj; }
   auto tx = std::static_pointer_cast<data::TextureDescriptor>(tx_);
   auto size = std::static_pointer_cast<data::VV2U>(tx->textureSize);
   int32_t width = size->_0.x;
@@ -310,15 +310,15 @@ std::shared_ptr<GLStreamData> createStreamData(std::shared_ptr<StreamData> s_) {
         auto a = std::static_pointer_cast<data::VFloatArray>(i.second);
         enum Type type = inputType(s->streamType[i.first]);
         void* buf = a->_0.data();
-        gls->streams.add(i.first, type, buffer, buffer->add(buf, GL_FLOAT, a->_0.size()));
+        gls->streams->add(i.first, type, buffer, buffer->add(buf, GL_FLOAT, a->_0.size()));
         break;
       }
     }
   }
   buffer->freeze();
-  gls->streams.validate();
+  gls->streams->validate();
   gls->glCount = 0;
-  for (auto i : gls->streams.map) {
+  for (auto i : gls->streams->map) {
     if (i.second->isArray) {
       gls->glCount = i.second->buffer->size[i.second->index] / i.second->glSize;
       break;
@@ -330,10 +330,10 @@ std::shared_ptr<GLStreamData> createStreamData(std::shared_ptr<StreamData> s_) {
 std::shared_ptr<GLProgram> createProgram(std::shared_ptr<Program> p_) {
   auto p = std::static_pointer_cast<data::Program>(p_);
   uint32_t vs = glCreateShader(GL_VERTEX_SHADER);
-  { char* glslSrc = p->vertexShader.c_str(); glShaderSource(vs, 1, &glslSrc, 0); }
+  { const char* glslSrc = p->vertexShader.c_str(); glShaderSource(vs, 1, &glslSrc, 0); }
   glCompileShader(vs);
   uint32_t fs = glCreateShader(GL_FRAGMENT_SHADER);
-  { char* glslSrc = p->fragmentShader.c_str(); glShaderSource(fs, 1, &glslSrc, 0); }
+  { const char* glslSrc = p->fragmentShader.c_str(); glShaderSource(fs, 1, &glslSrc, 0); }
   glCompileShader(fs);
   uint32_t po = glCreateProgram();
   glAttachShader(po, vs);
@@ -513,7 +513,7 @@ GLBuffer::GLBuffer() {
   
 }
 
-int32_t GLBuffer::add(void* buf, int32_t elemGLType, int32_t elemCount) {
+int32_t GLBuffer::add(const void* buf, int32_t elemGLType, int32_t elemCount) {
   int32_t i = data.size();
   int32_t elemSize = 1;
   switch (elemGLType) {
@@ -539,7 +539,7 @@ void GLBuffer::freeze() {
     bufferSize += i;
   }
   uint32_t bo;
-  { int glObj; glGenBuffers(1, &glObj); bo = glObj; }
+  { unsigned int glObj; glGenBuffers(1, &glObj); bo = glObj; }
   glBindBuffer(GL_ARRAY_BUFFER, bo);
   glBufferData(GL_ARRAY_BUFFER, bufferSize, nullptr, GL_STATIC_DRAW);
   uint32_t offset_ = 0;
@@ -677,7 +677,7 @@ void GLObject::setUniform(std::string name, int32_t v) {
     
   } else {
     std::shared_ptr<UniformValue> u(new UniformValue());
-    u.tag = ::InputType::tag::Int;
+    u->tag = ::InputType::tag::Int;
     
     
     uniforms[name] = u;
@@ -690,7 +690,7 @@ void GLObject::setUniform(std::string name, bool v) {
     
   } else {
     std::shared_ptr<UniformValue> u(new UniformValue());
-    u.tag = ::InputType::tag::Bool;
+    u->tag = ::InputType::tag::Bool;
     
     
     uniforms[name] = u;
@@ -703,7 +703,7 @@ void GLObject::setUniform(std::string name, float v) {
     
   } else {
     std::shared_ptr<UniformValue> u(new UniformValue());
-    u.tag = ::InputType::tag::Float;
+    u->tag = ::InputType::tag::Float;
     
     
     uniforms[name] = u;
@@ -716,7 +716,7 @@ void GLObject::setUniform(std::string name, V2I v) {
     
   } else {
     std::shared_ptr<UniformValue> u(new UniformValue());
-    u.tag = ::InputType::tag::V2I;
+    u->tag = ::InputType::tag::V2I;
     
     
     uniforms[name] = u;
@@ -729,7 +729,7 @@ void GLObject::setUniform(std::string name, V2B v) {
     
   } else {
     std::shared_ptr<UniformValue> u(new UniformValue());
-    u.tag = ::InputType::tag::V2B;
+    u->tag = ::InputType::tag::V2B;
     
     
     uniforms[name] = u;
@@ -742,7 +742,7 @@ void GLObject::setUniform(std::string name, V2F v) {
     
   } else {
     std::shared_ptr<UniformValue> u(new UniformValue());
-    u.tag = ::InputType::tag::V2F;
+    u->tag = ::InputType::tag::V2F;
     
     
     uniforms[name] = u;
@@ -755,7 +755,7 @@ void GLObject::setUniform(std::string name, V3I v) {
     
   } else {
     std::shared_ptr<UniformValue> u(new UniformValue());
-    u.tag = ::InputType::tag::V3I;
+    u->tag = ::InputType::tag::V3I;
     
     
     uniforms[name] = u;
@@ -768,7 +768,7 @@ void GLObject::setUniform(std::string name, V3B v) {
     
   } else {
     std::shared_ptr<UniformValue> u(new UniformValue());
-    u.tag = ::InputType::tag::V3B;
+    u->tag = ::InputType::tag::V3B;
     
     
     uniforms[name] = u;
@@ -781,7 +781,7 @@ void GLObject::setUniform(std::string name, V3F v) {
     
   } else {
     std::shared_ptr<UniformValue> u(new UniformValue());
-    u.tag = ::InputType::tag::V3F;
+    u->tag = ::InputType::tag::V3F;
     
     
     uniforms[name] = u;
@@ -794,7 +794,7 @@ void GLObject::setUniform(std::string name, V4I v) {
     
   } else {
     std::shared_ptr<UniformValue> u(new UniformValue());
-    u.tag = ::InputType::tag::V4I;
+    u->tag = ::InputType::tag::V4I;
     
     
     uniforms[name] = u;
@@ -807,7 +807,7 @@ void GLObject::setUniform(std::string name, V4B v) {
     
   } else {
     std::shared_ptr<UniformValue> u(new UniformValue());
-    u.tag = ::InputType::tag::V4B;
+    u->tag = ::InputType::tag::V4B;
     
     
     uniforms[name] = u;
@@ -820,7 +820,7 @@ void GLObject::setUniform(std::string name, V4F v) {
     
   } else {
     std::shared_ptr<UniformValue> u(new UniformValue());
-    u.tag = ::InputType::tag::V4F;
+    u->tag = ::InputType::tag::V4F;
     
     
     uniforms[name] = u;
@@ -833,7 +833,7 @@ void GLObject::setUniform(std::string name, M22F v) {
     
   } else {
     std::shared_ptr<UniformValue> u(new UniformValue());
-    u.tag = ::InputType::tag::M22F;
+    u->tag = ::InputType::tag::M22F;
     
     
     uniforms[name] = u;
@@ -846,7 +846,7 @@ void GLObject::setUniform(std::string name, M33F v) {
     
   } else {
     std::shared_ptr<UniformValue> u(new UniformValue());
-    u.tag = ::InputType::tag::M33F;
+    u->tag = ::InputType::tag::M33F;
     
     
     uniforms[name] = u;
@@ -859,7 +859,7 @@ void GLObject::setUniform(std::string name, M44F v) {
     
   } else {
     std::shared_ptr<UniformValue> u(new UniformValue());
-    u.tag = ::InputType::tag::M44F;
+    u->tag = ::InputType::tag::M44F;
     
     
     uniforms[name] = u;
@@ -885,10 +885,10 @@ std::shared_ptr<GLObject> PipelineInput::createObject(std::string slotName, enum
   o->glCount = count;
   o->streams = attributes;
   if (objectMap.count(slotName)>0) {
-    objectMap[slotName]->push_back(o);
+    objectMap[slotName].push_back(o);
   } else {
-    std::vector<std::shared_ptr<GLObject>> ov = new std::vector<std::shared_ptr<GLObject>>();
-    ov->push_back(o);
+    std::vector<std::shared_ptr<GLObject>> ov;
+    ov.push_back(o);
     objectMap[slotName] = ov;
   }
   return o;
@@ -913,7 +913,7 @@ void PipelineInput::setUniform(std::string name, int32_t v) {
     
   } else {
     std::shared_ptr<UniformValue> u(new UniformValue());
-    u.tag = ::InputType::tag::Int;
+    u->tag = ::InputType::tag::Int;
     
     
     uniforms[name] = u;
@@ -926,7 +926,7 @@ void PipelineInput::setUniform(std::string name, bool v) {
     
   } else {
     std::shared_ptr<UniformValue> u(new UniformValue());
-    u.tag = ::InputType::tag::Bool;
+    u->tag = ::InputType::tag::Bool;
     
     
     uniforms[name] = u;
@@ -939,7 +939,7 @@ void PipelineInput::setUniform(std::string name, float v) {
     
   } else {
     std::shared_ptr<UniformValue> u(new UniformValue());
-    u.tag = ::InputType::tag::Float;
+    u->tag = ::InputType::tag::Float;
     
     
     uniforms[name] = u;
@@ -952,7 +952,7 @@ void PipelineInput::setUniform(std::string name, V2I v) {
     
   } else {
     std::shared_ptr<UniformValue> u(new UniformValue());
-    u.tag = ::InputType::tag::V2I;
+    u->tag = ::InputType::tag::V2I;
     
     
     uniforms[name] = u;
@@ -965,7 +965,7 @@ void PipelineInput::setUniform(std::string name, V2B v) {
     
   } else {
     std::shared_ptr<UniformValue> u(new UniformValue());
-    u.tag = ::InputType::tag::V2B;
+    u->tag = ::InputType::tag::V2B;
     
     
     uniforms[name] = u;
@@ -978,7 +978,7 @@ void PipelineInput::setUniform(std::string name, V2F v) {
     
   } else {
     std::shared_ptr<UniformValue> u(new UniformValue());
-    u.tag = ::InputType::tag::V2F;
+    u->tag = ::InputType::tag::V2F;
     
     
     uniforms[name] = u;
@@ -991,7 +991,7 @@ void PipelineInput::setUniform(std::string name, V3I v) {
     
   } else {
     std::shared_ptr<UniformValue> u(new UniformValue());
-    u.tag = ::InputType::tag::V3I;
+    u->tag = ::InputType::tag::V3I;
     
     
     uniforms[name] = u;
@@ -1004,7 +1004,7 @@ void PipelineInput::setUniform(std::string name, V3B v) {
     
   } else {
     std::shared_ptr<UniformValue> u(new UniformValue());
-    u.tag = ::InputType::tag::V3B;
+    u->tag = ::InputType::tag::V3B;
     
     
     uniforms[name] = u;
@@ -1017,7 +1017,7 @@ void PipelineInput::setUniform(std::string name, V3F v) {
     
   } else {
     std::shared_ptr<UniformValue> u(new UniformValue());
-    u.tag = ::InputType::tag::V3F;
+    u->tag = ::InputType::tag::V3F;
     
     
     uniforms[name] = u;
@@ -1030,7 +1030,7 @@ void PipelineInput::setUniform(std::string name, V4I v) {
     
   } else {
     std::shared_ptr<UniformValue> u(new UniformValue());
-    u.tag = ::InputType::tag::V4I;
+    u->tag = ::InputType::tag::V4I;
     
     
     uniforms[name] = u;
@@ -1043,7 +1043,7 @@ void PipelineInput::setUniform(std::string name, V4B v) {
     
   } else {
     std::shared_ptr<UniformValue> u(new UniformValue());
-    u.tag = ::InputType::tag::V4B;
+    u->tag = ::InputType::tag::V4B;
     
     
     uniforms[name] = u;
@@ -1056,7 +1056,7 @@ void PipelineInput::setUniform(std::string name, V4F v) {
     
   } else {
     std::shared_ptr<UniformValue> u(new UniformValue());
-    u.tag = ::InputType::tag::V4F;
+    u->tag = ::InputType::tag::V4F;
     
     
     uniforms[name] = u;
@@ -1069,7 +1069,7 @@ void PipelineInput::setUniform(std::string name, M22F v) {
     
   } else {
     std::shared_ptr<UniformValue> u(new UniformValue());
-    u.tag = ::InputType::tag::M22F;
+    u->tag = ::InputType::tag::M22F;
     
     
     uniforms[name] = u;
@@ -1082,7 +1082,7 @@ void PipelineInput::setUniform(std::string name, M33F v) {
     
   } else {
     std::shared_ptr<UniformValue> u(new UniformValue());
-    u.tag = ::InputType::tag::M33F;
+    u->tag = ::InputType::tag::M33F;
     
     
     uniforms[name] = u;
@@ -1095,7 +1095,7 @@ void PipelineInput::setUniform(std::string name, M44F v) {
     
   } else {
     std::shared_ptr<UniformValue> u(new UniformValue());
-    u.tag = ::InputType::tag::M44F;
+    u->tag = ::InputType::tag::M44F;
     
     
     uniforms[name] = u;
@@ -1123,7 +1123,7 @@ uint32_t GLES20Pipeline::createRenderTarget(std::shared_ptr<RenderTarget> t_) {
     return 0;
   }
   uint32_t fb;
-  { int glObj; glGenFramebuffers(1, &glObj); fb = glObj; }
+  { unsigned int glObj; glGenFramebuffers(1, &glObj); fb = glObj; }
   glBindFramebuffer(GL_FRAMEBUFFER, fb);
   int32_t attachment = 0;
   int32_t textarget = 0;
@@ -1140,7 +1140,7 @@ uint32_t GLES20Pipeline::createRenderTarget(std::shared_ptr<RenderTarget> t_) {
       switch (i->targetRef.data->tag) {
         case ::ImageRef::tag::TextureImage: {
           auto ti = std::static_pointer_cast<data::TextureImage>(i->targetRef.data);
-          texture = textures[ti->_0].texture;
+          texture = textures[ti->_0]->texture;
           textarget = GL_TEXTURE_2D;
           level = ti->_1;
           break;
@@ -1189,10 +1189,10 @@ GLES20Pipeline::GLES20Pipeline(std::shared_ptr<Pipeline> ppl_) {
 
 GLES20Pipeline::~GLES20Pipeline() {
   for (auto i : textures) {
-    { int glObj = i.texture; glDeleteTextures(1, &glObj); }
+    { unsigned int glObj = i->texture; glDeleteTextures(1, &glObj); }
   }
   for (auto i : targets) {
-    { int glObj = i; glDeleteFramebuffers(1, &glObj); }
+    { unsigned int glObj = i; glDeleteFramebuffers(1, &glObj); }
   }
   for (auto i : programs) {
     glDeleteProgram(i->program);
@@ -1222,7 +1222,7 @@ void GLES20Pipeline::render() {
       case ::Command::tag::SetTexture: {
         auto cmd = std::static_pointer_cast<data::SetTexture>(i);
         glActiveTexture(GL_TEXTURE0 + cmd->_0);
-        glBindTexture(textures[cmd->_1].target, textures[cmd->_1].texture);
+        glBindTexture(textures[cmd->_1]->target, textures[cmd->_1]->texture);
         break;
       }
       case ::Command::tag::SetProgram: {
@@ -1322,7 +1322,7 @@ void GLES20Pipeline::render() {
               }
             }
             for (auto s : programs[currentProgram]->programStreams) {
-              setStream(s.second.index, o->streams->map[s.second.name]);
+              setStream(s.second->index, o->streams->map[s.second->name]);
             }
             glDrawArrays(o->glMode, 0, o->glCount);
           }
@@ -1337,7 +1337,7 @@ void GLES20Pipeline::render() {
             setUniformValue(u.second, input->uniforms[u.first]);
           }
           for (auto s : programs[currentProgram]->programStreams) {
-            setStream(s.second.index, data->streams.map[s.second.name]);
+            setStream(s.second->index, data->streams->map[s.second->name]);
           }
           glDrawArrays(data->glMode, 0, data->glCount);
         }

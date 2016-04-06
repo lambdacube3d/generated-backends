@@ -209,7 +209,7 @@ data Exp
   | CallProcExp Exp [Exp]
   | ExpIf Exp Exp Exp
   | NullPtr
-  | New Type [Exp]
+--  | New Type [Exp]
   | IteratorValue Exp -- used with foreach
   | IteratorKey Exp
   | NotNull Exp
@@ -251,12 +251,13 @@ data Stmt
   | Exp :+= Exp
   | Map_foreach Type Type String Exp [Stmt]
   | Vector_foreach Type String Exp [Stmt]
+  | Vector_new Type String
   | Map_insert Exp Exp Exp
   | Break
   | Continue
   | Inc Exp
   | Vector_pushBack Exp Exp
-  | Vector_pushBackPtr Exp Exp
+--  | Vector_pushBackPtr Exp Exp
   | AllocClassVars
   | AllocNativeArray Type Exp
   | CopyToNativeArray Type Exp Exp
@@ -405,8 +406,8 @@ call fun args = tell [Call fun args]
 callExp :: Exp -> [Exp] -> Exp
 callExp a b = CallExp a b
 
-new :: Type -> [Exp] -> Exp
-new = New
+--new :: Type -> [Exp] -> Exp
+--new = New
 
 false :: Exp
 false = BoolLit False
@@ -494,8 +495,11 @@ vector_foreach t n e stmtM = tell [Vector_foreach t n e (execWriter stmtM)]
 vector_pushBack :: Exp -> Exp -> StmtM ()
 vector_pushBack a b = tell [Vector_pushBack a b]
 
-vector_pushBackPtr :: Exp -> Exp -> StmtM ()
-vector_pushBackPtr a b = tell [Vector_pushBackPtr a b]
+vector_new :: Type -> String -> StmtM ()
+vector_new t n = tell [Vector_new t n]
+
+--vector_pushBackPtr :: Exp -> Exp -> StmtM ()
+--vector_pushBackPtr a b = tell [Vector_pushBackPtr a b]
 
 allocClassVars :: StmtM ()
 allocClassVars = tell [AllocClassVars]
