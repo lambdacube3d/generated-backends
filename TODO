@@ -51,9 +51,9 @@ java backend:
         public Integer add(java.nio.Buffer buf,int elemGLType, int elemCount) throws Exception {
     NativeArray = type[]
     NativeBuffer: that can be created from native array (wrap)
-  use heap model only (do not create values on stack)
-  remove: Ptr type, deref
-  remove: SmartPtr, Ref (use shared_ptr everywhere in c++)
+  done - use heap model only (do not create values on stack)
+  done - remove: Ptr type, deref
+  done - remove: SmartPtr, Ref (use shared_ptr everywhere in c++)
   diappeared - variable initialization
 
 now focus:

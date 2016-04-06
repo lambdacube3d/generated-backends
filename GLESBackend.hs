@@ -7,7 +7,7 @@ import PrettyJava
 
 enumConversions = do
   procedure "inputType" ["t" :@ "InputType"] (Enum "Type") $ do
-    switch ("t"~>"tag") $ do -- TODO: ADT switch
+    switch ("t"."tag") $ do -- TODO: ADT switch
       case_ (nsPatADT "InputType" "Float") $ return_ $ enumVal "Type" "FLOAT"
       case_ (nsPatADT "InputType" "V2F")   $ return_ $ enumVal "Type" "FLOAT_VEC2"
       case_ (nsPatADT "InputType" "V3F")   $ return_ $ enumVal "Type" "FLOAT_VEC3"
@@ -29,7 +29,7 @@ enumConversions = do
     throw "illegal primitive mode"
 
   procedure "blendingFactor" ["bf" :@ "BlendingFactor"] Int $ do
-    switch ("bf"~>"tag") $ do -- TODO: ADT switch
+    switch ("bf"."tag") $ do -- TODO: ADT switch
       case_ (nsPatADT "BlendingFactor" "ConstantAlpha") $ return_ $ toExp GL_CONSTANT_ALPHA
       case_ (nsPatADT "BlendingFactor" "ConstantColor") $ return_ $ toExp GL_CONSTANT_COLOR
       case_ (nsPatADT "BlendingFactor" "DstAlpha") $ return_ $ toExp GL_DST_ALPHA
@@ -48,14 +48,14 @@ enumConversions = do
     throw "illegal blending factor"
 
   procedure "blendEquation" ["be" :@ "BlendEquation"] Int $ do
-    switch ("be"~>"tag") $ do -- TODO: ADT switch
+    switch ("be"."tag") $ do -- TODO: ADT switch
       case_ (nsPatADT "BlendEquation" "FuncAdd") $ return_ $ toExp GL_FUNC_ADD
       case_ (nsPatADT "BlendEquation" "FuncReverseSubtract") $ return_ $ toExp GL_FUNC_REVERSE_SUBTRACT
       case_ (nsPatADT "BlendEquation" "FuncSubtract") $ return_ $ toExp GL_FUNC_SUBTRACT
     throw "illegal blend equation"
 
   procedure "comparisonFunction" ["cf" :@ "ComparisonFunction"] Int $ do
-    switch ("cf"~>"tag") $ do -- TODO: ADT switch
+    switch ("cf"."tag") $ do -- TODO: ADT switch
       case_ (nsPatADT "ComparisonFunction" "Always") $ return_ $ toExp GL_ALWAYS
       case_ (nsPatADT "ComparisonFunction" "Equal") $ return_ $ toExp GL_EQUAL
       case_ (nsPatADT "ComparisonFunction" "Gequal") $ return_ $ toExp GL_GEQUAL
@@ -67,32 +67,32 @@ enumConversions = do
     throw "illegal comparison function"
 
   procedure "frontFace" ["ff" :@ "FrontFace"] Int $ do
-    switch ("ff"~>"tag") $ do -- TODO: ADT switch
+    switch ("ff"."tag") $ do -- TODO: ADT switch
       case_ (nsPatADT "FrontFace" "CCW") $ return_ $ toExp GL_CCW
       case_ (nsPatADT "FrontFace" "CW") $ return_ $ toExp GL_CW
     throw "illegal front face value"
 
   procedure "textureDataTypeToGLType" ["s_" :@ "ImageSemantic", "d_" :@ "TextureDataType"] Int $ do
-    switch ("s_"~>"tag") $ do -- TODO: ADT switch
+    switch ("s_"."tag") $ do -- TODO: ADT switch
       case_ (nsPatADT "ImageSemantic" "Color") $ return_ $ toExp GL_RGBA
       case_ (nsPatADT "ImageSemantic" "Depth") $ return_ $ toExp GL_DEPTH_COMPONENT
     throw "FIXME: This texture format is not yet supported"
 
   procedure "textureDataTypeToGLArityType" ["s_" :@ "ImageSemantic", "d_" :@ "TextureDataType"] Int $ do
-    switch ("s_"~>"tag") $ do -- TODO: ADT switch
+    switch ("s_"."tag") $ do -- TODO: ADT switch
       case_ (nsPatADT "ImageSemantic" "Color") $ return_ $ toExp GL_RGBA
       case_ (nsPatADT "ImageSemantic" "Depth") $ return_ $ toExp GL_DEPTH_COMPONENT
     throw "FIXME: This texture format is not yet supported"
 
   procedure "edgeMode" ["e" :@ "EdgeMode"] Int $ do
-    switch ("e"~>"tag") $ do -- TODO: ADT switch
+    switch ("e"."tag") $ do -- TODO: ADT switch
       case_ (nsPatADT "EdgeMode" "ClampToEdge") $ return_ $ toExp GL_CLAMP_TO_EDGE
       case_ (nsPatADT "EdgeMode" "Repeat") $ return_ $ toExp GL_REPEAT
       case_ (nsPatADT "EdgeMode" "MirroredRepeat") $ return_ $ toExp GL_MIRRORED_REPEAT
       default_ $ throw "unsupported edge mode"
 
   procedure "filterMode" ["f" :@ "Filter"] Int $ do
-    switch ("f"~>"tag") $ do -- TODO: ADT switch
+    switch ("f"."tag") $ do -- TODO: ADT switch
       case_ (nsPatADT "Filter" "Nearest") $ return_ $ toExp GL_NEAREST
       case_ (nsPatADT "Filter" "Linear") $ return_ $ toExp GL_LINEAR
       case_ (nsPatADT "Filter" "NearestMipmapNearest") $ return_ $ toExp GL_NEAREST_MIPMAP_NEAREST
@@ -103,81 +103,81 @@ enumConversions = do
 
 globalFunctions = do
   procedure "setUniformValue" ["i" :@ Int, "v" :@ "UniformValue"] Void $ do
-    switch ("v"~>"tag") $ do -- TODO: ADT switch
-      case_ (nsPatADT "InputType" "Int")    $ callGLPrim $ GLUniform1iv "i" 1 ("v"~>"_int")
-      case_ (nsPatADT "InputType" "Bool")   $ callGLPrim $ GLUniform1iv "i" 1 ("v"~>"_int")
-      case_ (nsPatADT "InputType" "Float")  $ callGLPrim $ GLUniform1fv "i" 1 ("v"~>"_float")
-      case_ (nsPatADT "InputType" "V2I")    $ callGLPrim $ GLUniform2iv "i" 1 ("v"~>"_int")
-      case_ (nsPatADT "InputType" "V2B")    $ callGLPrim $ GLUniform2iv "i" 1 ("v"~>"_int")
-      case_ (nsPatADT "InputType" "V2F")    $ callGLPrim $ GLUniform2fv "i" 1 ("v"~>"_float")
+    switch ("v"."tag") $ do -- TODO: ADT switch
+      case_ (nsPatADT "InputType" "Int")    $ callGLPrim $ GLUniform1iv "i" 1 ("v"."_int")
+      case_ (nsPatADT "InputType" "Bool")   $ callGLPrim $ GLUniform1iv "i" 1 ("v"."_int")
+      case_ (nsPatADT "InputType" "Float")  $ callGLPrim $ GLUniform1fv "i" 1 ("v"."_float")
+      case_ (nsPatADT "InputType" "V2I")    $ callGLPrim $ GLUniform2iv "i" 1 ("v"."_int")
+      case_ (nsPatADT "InputType" "V2B")    $ callGLPrim $ GLUniform2iv "i" 1 ("v"."_int")
+      case_ (nsPatADT "InputType" "V2F")    $ callGLPrim $ GLUniform2fv "i" 1 ("v"."_float")
 
-      case_ (nsPatADT "InputType" "V3I")    $ callGLPrim $ GLUniform3iv "i" 1 ("v"~>"_int")
-      case_ (nsPatADT "InputType" "V3B")    $ callGLPrim $ GLUniform3iv "i" 1 ("v"~>"_int")
-      case_ (nsPatADT "InputType" "V3F")    $ callGLPrim $ GLUniform3fv "i" 1 ("v"~>"_float")
+      case_ (nsPatADT "InputType" "V3I")    $ callGLPrim $ GLUniform3iv "i" 1 ("v"."_int")
+      case_ (nsPatADT "InputType" "V3B")    $ callGLPrim $ GLUniform3iv "i" 1 ("v"."_int")
+      case_ (nsPatADT "InputType" "V3F")    $ callGLPrim $ GLUniform3fv "i" 1 ("v"."_float")
 
-      case_ (nsPatADT "InputType" "V4I")    $ callGLPrim $ GLUniform4iv "i" 1 ("v"~>"_int")
-      case_ (nsPatADT "InputType" "V4B")    $ callGLPrim $ GLUniform4iv "i" 1 ("v"~>"_int")
-      case_ (nsPatADT "InputType" "V4F")    $ callGLPrim $ GLUniform4fv "i" 1 ("v"~>"_float")
+      case_ (nsPatADT "InputType" "V4I")    $ callGLPrim $ GLUniform4iv "i" 1 ("v"."_int")
+      case_ (nsPatADT "InputType" "V4B")    $ callGLPrim $ GLUniform4iv "i" 1 ("v"."_int")
+      case_ (nsPatADT "InputType" "V4F")    $ callGLPrim $ GLUniform4fv "i" 1 ("v"."_float")
 
-      case_ (nsPatADT "InputType" "M22F")   $ callGLPrim $ GLUniformMatrix2fv "i" 1 false ("v"~>"_float")
-      case_ (nsPatADT "InputType" "M33F")   $ callGLPrim $ GLUniformMatrix3fv "i" 1 false ("v"~>"_float")
-      case_ (nsPatADT "InputType" "M44F")   $ callGLPrim $ GLUniformMatrix4fv "i" 1 false ("v"~>"_float")
+      case_ (nsPatADT "InputType" "M22F")   $ callGLPrim $ GLUniformMatrix2fv "i" 1 false ("v"."_float")
+      case_ (nsPatADT "InputType" "M33F")   $ callGLPrim $ GLUniformMatrix3fv "i" 1 false ("v"."_float")
+      case_ (nsPatADT "InputType" "M44F")   $ callGLPrim $ GLUniformMatrix4fv "i" 1 false ("v"."_float")
 
   procedure "setStream" ["i" :@ Int, "s" :@ "Stream"] Void $ do
-    if_ ("s"~>"isArray") $ do
+    if_ ("s"."isArray") $ do
       then_ $ do
-        callGL GLBindBuffer [toExp GL_ARRAY_BUFFER,"s"~>"buffer"~>"bufferObject"]
+        callGL GLBindBuffer [toExp GL_ARRAY_BUFFER,"s"."buffer"."bufferObject"]
         callGL GLEnableVertexAttribArray ["i"]
-        callGLPrim $ GLVertexAttribPointer "i" ("s"~>"glSize")
-          (("s"~>"buffer"~>"glType") `vector_lookup` ("s"~>"index")) false 0
-          (("s"~>"buffer"~>"offset") `vector_lookup` ("s"~>"index"))
+        callGLPrim $ GLVertexAttribPointer "i" ("s"."glSize")
+          (("s"."buffer"."glType") `vector_lookup` ("s"."index")) false 0
+          (("s"."buffer"."offset") `vector_lookup` ("s"."index"))
       else_ $ do
         callGL GLDisableVertexAttribArray ["i"]
-        switch ("s"~>"type") $ do
-          case_ (nsPat "Type" "FLOAT")      $ callGLPrim $ GLVertexAttrib1fv "i" ("s"~>"attributeValue"~>"_float") 0
-          case_ (nsPat "Type" "FLOAT_VEC2") $ callGLPrim $ GLVertexAttrib2fv "i" ("s"~>"attributeValue"~>"_float") 0
-          case_ (nsPat "Type" "FLOAT_VEC3") $ callGLPrim $ GLVertexAttrib3fv "i" ("s"~>"attributeValue"~>"_float") 0
-          case_ (nsPat "Type" "FLOAT_VEC4") $ callGLPrim $ GLVertexAttrib4fv "i" ("s"~>"attributeValue"~>"_float") 0
+        switch ("s"."type") $ do
+          case_ (nsPat "Type" "FLOAT")      $ callGLPrim $ GLVertexAttrib1fv "i" ("s"."attributeValue"."_float") 0
+          case_ (nsPat "Type" "FLOAT_VEC2") $ callGLPrim $ GLVertexAttrib2fv "i" ("s"."attributeValue"."_float") 0
+          case_ (nsPat "Type" "FLOAT_VEC3") $ callGLPrim $ GLVertexAttrib3fv "i" ("s"."attributeValue"."_float") 0
+          case_ (nsPat "Type" "FLOAT_VEC4") $ callGLPrim $ GLVertexAttrib4fv "i" ("s"."attributeValue"."_float") 0
           case_ (nsPat "Type" "FLOAT_MAT2") $ do
-                                              callGLPrim $ GLVertexAttrib2fv "i"       ("s"~>"attributeValue"~>"_float") 0
-                                              callGLPrim $ GLVertexAttrib2fv ("i" + 1) ("s"~>"attributeValue"~>"_float") 2
+                                              callGLPrim $ GLVertexAttrib2fv "i"       ("s"."attributeValue"."_float") 0
+                                              callGLPrim $ GLVertexAttrib2fv ("i" + 1) ("s"."attributeValue"."_float") 2
           case_ (nsPat "Type" "FLOAT_MAT3") $ do
-                                              callGLPrim $ GLVertexAttrib3fv "i"       ("s"~>"attributeValue"~>"_float") 0
-                                              callGLPrim $ GLVertexAttrib3fv ("i" + 1) ("s"~>"attributeValue"~>"_float") 3
-                                              callGLPrim $ GLVertexAttrib3fv ("i" + 2) ("s"~>"attributeValue"~>"_float") 6
+                                              callGLPrim $ GLVertexAttrib3fv "i"       ("s"."attributeValue"."_float") 0
+                                              callGLPrim $ GLVertexAttrib3fv ("i" + 1) ("s"."attributeValue"."_float") 3
+                                              callGLPrim $ GLVertexAttrib3fv ("i" + 2) ("s"."attributeValue"."_float") 6
           case_ (nsPat "Type" "FLOAT_MAT4") $ do
-                                              callGLPrim $ GLVertexAttrib4fv "i"       ("s"~>"attributeValue"~>"_float") 0
-                                              callGLPrim $ GLVertexAttrib4fv ("i" + 1) ("s"~>"attributeValue"~>"_float") 4
-                                              callGLPrim $ GLVertexAttrib4fv ("i" + 2) ("s"~>"attributeValue"~>"_float") 8
-                                              callGLPrim $ GLVertexAttrib4fv ("i" + 3) ("s"~>"attributeValue"~>"_float") 12
+                                              callGLPrim $ GLVertexAttrib4fv "i"       ("s"."attributeValue"."_float") 0
+                                              callGLPrim $ GLVertexAttrib4fv ("i" + 1) ("s"."attributeValue"."_float") 4
+                                              callGLPrim $ GLVertexAttrib4fv ("i" + 2) ("s"."attributeValue"."_float") 8
+                                              callGLPrim $ GLVertexAttrib4fv ("i" + 3) ("s"."attributeValue"."_float") 12
 
   procedure "createTexture" ["tx_" :@ "TextureDescriptor"] ("Texture") $ do
     varConstructor "Texture" "t" []
-    callGLPrim $ GLGenTexture ("t"~>"texture")
+    callGLPrim $ GLGenTexture ("t"."texture")
     varADT "TextureDescriptor" "TextureDescriptor" "tx" "tx_"
-    varADT "Value" "VV2U" "size" $ "tx"~>"textureSize"
-    varAssign Int "width" $ "size"~>"_0"."x"
-    varAssign Int "height" $ "size"~>"_0"."y"
+    varADT "Value" "VV2U" "size" $ "tx"."textureSize"
+    varAssign Int "width" $ "size"."_0"@."x"
+    varAssign Int "height" $ "size"."_0"@."y"
     var Int ["internalFormat","dataFormat"]
-    switch ("tx"~>"textureType"~>"tag") $ do -- TODO: ADT switch
+    switch ("tx"."textureType"."tag") $ do -- TODO: ADT switch
       case_ (nsPatADT "TextureType" "Texture2D") $ do
-        "t"~>"target" .= toExp GL_TEXTURE_2D
-        varADT "TextureType" "Texture2D" "tx2D" $ "tx"~>"textureType"
-        "internalFormat" .= callExp "textureDataTypeToGLType" ["tx"~>"textureSemantic","tx2D"~>"_0"]
-        "dataFormat" .= callExp "textureDataTypeToGLArityType" ["tx"~>"textureSemantic","tx2D"~>"_0"]
+        "t"."target" .= toExp GL_TEXTURE_2D
+        varADT "TextureType" "Texture2D" "tx2D" $ "tx"."textureType"
+        "internalFormat" .= callExp "textureDataTypeToGLType" ["tx"."textureSemantic","tx2D"."_0"]
+        "dataFormat" .= callExp "textureDataTypeToGLArityType" ["tx"."textureSemantic","tx2D"."_0"]
       case_ (nsPatADT "TextureType" "TextureCube") $ do
-        "t"~>"target" .= toExp GL_TEXTURE_CUBE_MAP
-        varADT "TextureType" "TextureCube" "txCube" $ "tx"~>"textureType"
-        "internalFormat" .= callExp "textureDataTypeToGLType" ["tx"~>"textureSemantic","txCube"~>"_0"]
-        "dataFormat" .= callExp "textureDataTypeToGLArityType" ["tx"~>"textureSemantic","txCube"~>"_0"]
+        "t"."target" .= toExp GL_TEXTURE_CUBE_MAP
+        varADT "TextureType" "TextureCube" "txCube" $ "tx"."textureType"
+        "internalFormat" .= callExp "textureDataTypeToGLType" ["tx"."textureSemantic","txCube"."_0"]
+        "dataFormat" .= callExp "textureDataTypeToGLArityType" ["tx"."textureSemantic","txCube"."_0"]
       default_ $ throw "unsupported texture type"
 
-    callGL GLBindTexture ["t"~>"target", "t"~>"texture"]
+    callGL GLBindTexture ["t"."target", "t"."texture"]
     varAssign Int "dataType" $ expIf ("dataFormat" == toExp GL_DEPTH_COMPONENT) (toExp GL_UNSIGNED_SHORT) (toExp GL_UNSIGNED_BYTE)
-    for (varAssign Int "level" $ "tx"~>"textureBaseLevel") ("level" <= "tx"~>"textureMaxLevel") (incExp "level") $ do
-      if_ ("t"~>"target" == toExp GL_TEXTURE_2D) $ do
+    for (varAssign Int "level" $ "tx"."textureBaseLevel") ("level" <= "tx"."textureMaxLevel") (incExp "level") $ do
+      if_ ("t"."target" == toExp GL_TEXTURE_2D) $ do
         then_ $ do
-          callGL GLTexImage2D ["t"~>"target","level","internalFormat", "width", "height", 0, "dataFormat", "dataType", nullptr]
+          callGL GLTexImage2D ["t"."target","level","internalFormat", "width", "height", 0, "dataFormat", "dataType", nullptr]
         else_ $ do
           callGL GLTexImage2D [toExp GL_TEXTURE_CUBE_MAP_POSITIVE_X,"level","internalFormat", "width", "height", 0, "dataFormat", "dataType", nullptr]
           callGL GLTexImage2D [toExp GL_TEXTURE_CUBE_MAP_NEGATIVE_X,"level","internalFormat", "width", "height", 0, "dataFormat", "dataType", nullptr]
@@ -189,24 +189,24 @@ globalFunctions = do
       "height" /= 2
 
     -- setup texture sampling
-    varADT "SamplerDescriptor" "SamplerDescriptor" "s" $ "tx"~>"textureSampler"
-    callGL GLTexParameteri ["t"~>"target", toExp GL_TEXTURE_WRAP_S, callExp "edgeMode" ["s"~>"samplerWrapS"]]
-    callGL GLTexParameteri ["t"~>"target", toExp GL_TEXTURE_WRAP_T, callExp "edgeMode" ["s"~>"samplerWrapT"."data"]]
-    callGL GLTexParameteri ["t"~>"target", toExp GL_TEXTURE_MIN_FILTER, callExp "filterMode" ["s"~>"samplerMinFilter"]]
-    callGL GLTexParameteri ["t"~>"target", toExp GL_TEXTURE_MAG_FILTER, callExp "filterMode" ["s"~>"samplerMagFilter"]]
+    varADT "SamplerDescriptor" "SamplerDescriptor" "s" $ "tx"."textureSampler"
+    callGL GLTexParameteri ["t"."target", toExp GL_TEXTURE_WRAP_S, callExp "edgeMode" ["s"."samplerWrapS"]]
+    callGL GLTexParameteri ["t"."target", toExp GL_TEXTURE_WRAP_T, callExp "edgeMode" ["s"."samplerWrapT"@."data"]]
+    callGL GLTexParameteri ["t"."target", toExp GL_TEXTURE_MIN_FILTER, callExp "filterMode" ["s"."samplerMinFilter"]]
+    callGL GLTexParameteri ["t"."target", toExp GL_TEXTURE_MAG_FILTER, callExp "filterMode" ["s"."samplerMagFilter"]]
     return_ "t"
 
   procedure "createStreamData" ["s_" :@ "StreamData"] ("GLStreamData") $ do
     varADT "StreamData" "StreamData" "s" "s_"
     varConstructor "GLStreamData" "gls" []
 
-    switch ("s"~>"streamPrimitive"~>"tag") $ do -- TODO: ADT switch
-      case_ (nsPatADT "FetchPrimitive" "Points")    $ "gls"~>"glMode" .= toExp GL_POINTS
-      case_ (nsPatADT "FetchPrimitive" "Lines")     $ "gls"~>"glMode" .= toExp GL_LINES
-      case_ (nsPatADT "FetchPrimitive" "Triangles") $ "gls"~>"glMode" .= toExp GL_TRIANGLES
+    switch ("s"."streamPrimitive"."tag") $ do -- TODO: ADT switch
+      case_ (nsPatADT "FetchPrimitive" "Points")    $ "gls"."glMode" .= toExp GL_POINTS
+      case_ (nsPatADT "FetchPrimitive" "Lines")     $ "gls"."glMode" .= toExp GL_LINES
+      case_ (nsPatADT "FetchPrimitive" "Triangles") $ "gls"."glMode" .= toExp GL_TRIANGLES
     varConstructor "GLBuffer" "buffer" []
-    map_foreach String "ArrayValue" "i" ("s"~>"streamData") $ do
-      switch (it_value "i"~>"tag") $ do -- TODO: ADT switch
+    map_foreach String "ArrayValue" "i" ("s"."streamData") $ do
+      switch (it_value "i"."tag") $ do -- TODO: ADT switch
         case_ (nsPatADT "ArrayValue" "VBoolArray") $ do
           varADT "ArrayValue" "VBoolArray" "a" $ it_value "i"
         case_ (nsPatADT "ArrayValue" "VIntArray") $ do
@@ -215,17 +215,17 @@ globalFunctions = do
           varADT "ArrayValue" "VWordArray" "a" $ it_value "i"
         case_ (nsPatADT "ArrayValue" "VFloatArray") $ do
           varADT "ArrayValue" "VFloatArray" "a" $ it_value "i"
-          varAssign (Enum "Type") "type" $ callExp "inputType" ["s"~>"streamType" `map_lookup` key "i"]
-          varNativeBufferFrom (Vector Float) "buf" ("a"~>"_0")
-          call ("gls"~>"streams"~>"add") [key "i", "type", "buffer", callExp ("buffer"~>"add") ["buf",toExp GL_FLOAT,vector_size $ "a"~>"_0"]]
-    call ("buffer"~>"freeze") []
-    call ("gls"~>"streams"~>"validate") []
+          varAssign (Enum "Type") "type" $ callExp "inputType" ["s"."streamType" `map_lookup` key "i"]
+          varNativeBufferFrom (Vector Float) "buf" ("a"."_0")
+          call ("gls"."streams"."add") [key "i", "type", "buffer", callExp ("buffer"."add") ["buf",toExp GL_FLOAT,vector_size $ "a"."_0"]]
+    call ("buffer"."freeze") []
+    call ("gls"."streams"."validate") []
 
-    "gls"~>"glCount" .= 0
-    map_foreach String "Stream" "i" ("gls"~>"streams"~>"map") $ do
-      if_ (it_value "i"~>"isArray") $ do
+    "gls"."glCount" .= 0
+    map_foreach String "Stream" "i" ("gls"."streams"."map") $ do
+      if_ (it_value "i"."isArray") $ do
         then_ $ do
-          ("gls"~>"glCount") .= ((it_value "i"~>"buffer"~>"size" `vector_lookup` it_value "i"~>"index") / it_value "i"~>"glSize")
+          ("gls"."glCount") .= ((it_value "i"."buffer"."size" `vector_lookup` it_value "i"."index") / it_value "i"."glSize")
           break_
     return_ "gls"
 
@@ -233,12 +233,12 @@ globalFunctions = do
     varADT "Program" "Program" "p" "p_"
     -- vertex shader
     varAssign UInt "vs" $ callExpGL GLCreateShader [toExp GL_VERTEX_SHADER]
-    callGLPrim $ GLShaderSource "vs" ("p"~>"vertexShader")
+    callGLPrim $ GLShaderSource "vs" ("p"."vertexShader")
     callGL GLCompileShader ["vs"]
 
     -- fragment shader
     varAssign UInt "fs" $ callExpGL GLCreateShader [toExp GL_FRAGMENT_SHADER]
-    callGLPrim $ GLShaderSource "fs" ("p"~>"fragmentShader")
+    callGLPrim $ GLShaderSource "fs" ("p"."fragmentShader")
     callGL GLCompileShader ["fs"]
 
     -- create program
@@ -248,65 +248,65 @@ globalFunctions = do
     callGL GLLinkProgram ["po"]
 
     varConstructor "GLProgram" "glp" []
-    "glp"~>"program" .= "po"
-    "glp"~>"vertexShader" .= "vs"
-    "glp"~>"fragmentShader" .= "fs"
+    "glp"."program" .= "po"
+    "glp"."vertexShader" .= "vs"
+    "glp"."fragmentShader" .= "fs"
 
     -- query uniforms
     var Int ["loc"]
-    map_foreach String "InputType" "i" ("p"~>"programUniforms") $ do
+    map_foreach String "InputType" "i" ("p"."programUniforms") $ do
       callGLPrim $ GLGetUniformLocation "po" (key "i") "loc"
       if_ ("loc" >= 0) $ then_ $ do
-        map_insert ("glp"~>"programUniforms") (key "i") "loc"
+        map_insert ("glp"."programUniforms") (key "i") "loc"
 
     -- query sampler uniforms
-    map_foreach String "InputType" "i" ("p"~>"programInTextures") $ do
+    map_foreach String "InputType" "i" ("p"."programInTextures") $ do
       callGLPrim $ GLGetUniformLocation "po" (key "i") "loc"
       if_ ("loc" >= 0) $ then_ $ do
-        map_insert ("glp"~>"programInTextures") (key "i") "loc"
+        map_insert ("glp"."programInTextures") (key "i") "loc"
     -- query vertex attributes
-    map_foreach String "Parameter" "i" ("p"~>"programStreams") $ do
+    map_foreach String "Parameter" "i" ("p"."programStreams") $ do
       callGLPrim $ GLGetAttribLocation "po" (key "i") "loc"
       if_ ("loc" >= 0) $ then_ $ do
         varADT "Parameter" "Parameter" "param" $ it_value "i"
         varConstructor "StreamInfo" "s" []
-        "s"~>"name" .= "param"~>"name"
-        "s"~>"index" .= "loc"
-        map_insert ("glp"~>"programStreams") (key "i") "s"
+        "s"."name" .= "param"."name"
+        "s"."index" .= "loc"
+        map_insert ("glp"."programStreams") (key "i") "s"
     return_ "glp"
 
   procedure "setupRasterContext" ["ctx_" :@ "RasterContext"] Void $ do
-    switch ("ctx_"~>"tag") $ do -- TODO: ADT switch
+    switch ("ctx_"."tag") $ do -- TODO: ADT switch
       case_ (nsPatADT "RasterContext" "PointCtx") $ do
         varADT "RasterContext" "PointCtx" "ctx" "ctx_"
-        switch ("ctx"~>"_0"~>"tag") $ do -- TODO: ADT switch
+        switch ("ctx"."_0"."tag") $ do -- TODO: ADT switch
           case_ (nsPatADT "PointSize" "ProgramPointSize") $ return ()
           default_ $ do
             throw "unsupported point size"
       case_ (nsPatADT "RasterContext" "LineCtx") $ do
         varADT "RasterContext" "LineCtx" "ctx" "ctx_"
-        callGL GLLineWidth ["ctx"~>"_0"]
+        callGL GLLineWidth ["ctx"."_0"]
       case_ (nsPatADT "RasterContext" "TriangleCtx") $ do
         varADT "RasterContext" "TriangleCtx" "ctx" "ctx_"
-        switch ("ctx"~>"_0"~>"tag") $ do -- TODO: ADT switch
+        switch ("ctx"."_0"."tag") $ do -- TODO: ADT switch
           case_ (nsPatADT "CullMode" "CullNone") $ do
             callGL GLDisable [toExp GL_CULL_FACE]
           case_ (nsPatADT "CullMode" "CullFront") $ do
-            varADT "CullMode" "CullFront" "f" $ "ctx"~>"_0"
+            varADT "CullMode" "CullFront" "f" $ "ctx"."_0"
             callGL GLEnable [toExp GL_CULL_FACE]
             callGL GLCullFace [toExp GL_FRONT]
-            callGL GLFrontFace [callExp "frontFace" ["f"~>"_0"]]
+            callGL GLFrontFace [callExp "frontFace" ["f"."_0"]]
           case_ (nsPatADT "CullMode" "CullBack") $ do
-            varADT "CullMode" "CullBack" "f" $ "ctx"~>"_0"
+            varADT "CullMode" "CullBack" "f" $ "ctx"."_0"
             callGL GLEnable [toExp GL_CULL_FACE]
             callGL GLCullFace [toExp GL_BACK]
-            callGL GLFrontFace [callExp "frontFace" ["f"~>"_0"]]
+            callGL GLFrontFace [callExp "frontFace" ["f"."_0"]]
         callGL GLDisable [toExp GL_POLYGON_OFFSET_FILL]
-        switch ("ctx"~>"_2"~>"tag") $ do -- TODO: ADT switch
+        switch ("ctx"."_2"."tag") $ do -- TODO: ADT switch
           case_ (nsPatADT "PolygonOffset" "NoOffset") $ return () -- TODO
           case_ (nsPatADT "PolygonOffset" "Offset") $ do
-            varADT "PolygonOffset" "Offset" "o" $ "ctx"~>"_2"
-            callGL GLPolygonOffset ["o"~>"_0","o"~>"_1"]
+            varADT "PolygonOffset" "Offset" "o" $ "ctx"."_2"
+            callGL GLPolygonOffset ["o"."_0","o"."_1"]
             callGL GLEnable [toExp GL_POLYGON_OFFSET_FILL]
 
   procedure "setupAccumulationContext" ["ctx_" :@ "AccumulationContext"] Void $ do
@@ -314,18 +314,18 @@ globalFunctions = do
     varAssign Bool "noDepth" true
     varAssign Bool "noStencil" true
     varAssign Bool "noColor" true
-    vector_foreach "FragmentOperation" "i" ("ctx"~>"accOperations") $ do
-      switch ("i"~>"tag") $ do -- TODO: ADT switch
+    vector_foreach "FragmentOperation" "i" ("ctx"."accOperations") $ do
+      switch ("i"."tag") $ do -- TODO: ADT switch
         case_ (nsPatADT "FragmentOperation" "DepthOp") $ do
           varADT "FragmentOperation" "DepthOp" "o" "i"
           "noDepth" .= false
-          varAssign Int "df" $ callExp "comparisonFunction" ["o"~>"_0"]
-          if_ ("df" == toExp GL_ALWAYS && "o"~>"_1" == false) $ do
+          varAssign Int "df" $ callExp "comparisonFunction" ["o"."_0"]
+          if_ ("df" == toExp GL_ALWAYS && "o"."_1" == false) $ do
             then_ $ callGL GLDisable [toExp GL_DEPTH_TEST]
             else_ $ do
               callGL GLEnable [toExp GL_DEPTH_TEST]
               callGL GLDepthFunc ["df"]
-              callGL GLDepthMask ["o"~>"_1"]
+              callGL GLDepthMask ["o"."_1"]
 
         case_ (nsPatADT "FragmentOperation" "StencilOp") $ do
           varADT "FragmentOperation" "StencilOp" "o" "i"
@@ -334,42 +334,42 @@ globalFunctions = do
         case_ (nsPatADT "FragmentOperation" "ColorOp") $ do
           varADT "FragmentOperation" "ColorOp" "o" "i"
           "noColor" .= false
-          switch ("o"~>"_0"~>"tag") $ do -- TODO: ADT switch
+          switch ("o"."_0"."tag") $ do -- TODO: ADT switch
             case_ (nsPatADT "Blending" "NoBlending") $ do
               callGL GLDisable [toExp GL_BLEND]
             case_ (nsPatADT "Blending" "BlendLogicOp") $ do
               callGL GLDisable [toExp GL_BLEND]
             case_ (nsPatADT "Blending" "Blend") $ do
-              varADT "Blending" "Blend" "b" $ "o"~>"_0"
+              varADT "Blending" "Blend" "b" $ "o"."_0"
               callGL GLEnable [toExp GL_BLEND]
-              callGL GLBlendEquationSeparate [callExp "blendEquation" ["b"~>"colorEqSrc"], callExp "blendEquation" ["b"~>"alphaEqSrc"]]
-              callGL GLBlendColor ["b"~>"color"."x","b"~>"color"."y","b"~>"color"."z","b"~>"color"."w"]
-              callGL GLBlendFuncSeparate [ callExp "blendingFactor" ["b"~>"colorFSrc"], callExp "blendingFactor" ["b"~>"colorFDst"]
-                                          , callExp "blendingFactor" ["b"~>"alphaFSrc"], callExp "blendingFactor" ["b"~>"alphaFDst"]
+              callGL GLBlendEquationSeparate [callExp "blendEquation" ["b"."colorEqSrc"], callExp "blendEquation" ["b"."alphaEqSrc"]]
+              callGL GLBlendColor ["b"."color"@."x","b"."color"@."y","b"."color"@."z","b"."color"@."w"]
+              callGL GLBlendFuncSeparate [ callExp "blendingFactor" ["b"."colorFSrc"], callExp "blendingFactor" ["b"."colorFDst"]
+                                          , callExp "blendingFactor" ["b"."alphaFSrc"], callExp "blendingFactor" ["b"."alphaFDst"]
                                           ]
           varAssign Bool "maskR" true
           varAssign Bool "maskG" true
           varAssign Bool "maskB" true
           varAssign Bool "maskA" true
-          switch ("o"~>"_1"~>"tag") $ do -- TODO: ADT switch
+          switch ("o"."_1"."tag") $ do -- TODO: ADT switch
             case_ (nsPatADT "Value" "VBool") $ do
-              varADT "Value" "VBool" "v" $ "o"~>"_1"
-              "maskR" .= "v"~>"_0"
+              varADT "Value" "VBool" "v" $ "o"."_1"
+              "maskR" .= "v"."_0"
             case_ (nsPatADT "Value" "VV2B") $ do
-              varADT "Value" "VV2B" "v" $ "o"~>"_1"
-              "maskR" .= "v"~>"_0"."x"
-              "maskG" .= "v"~>"_0"."y"
+              varADT "Value" "VV2B" "v" $ "o"."_1"
+              "maskR" .= "v"."_0"@."x"
+              "maskG" .= "v"."_0"@."y"
             case_ (nsPatADT "Value" "VV3B") $ do
-              varADT "Value" "VV3B" "v" $ "o"~>"_1"
-              "maskR" .= "v"~>"_0"."x"
-              "maskG" .= "v"~>"_0"."y"
-              "maskB" .= "v"~>"_0"."z"
+              varADT "Value" "VV3B" "v" $ "o"."_1"
+              "maskR" .= "v"."_0"@."x"
+              "maskG" .= "v"."_0"@."y"
+              "maskB" .= "v"."_0"@."z"
             case_ (nsPatADT "Value" "VV4B") $ do
-              varADT "Value" "VV4B" "v" $ "o"~>"_1"
-              "maskR" .= "v"~>"_0"."x"
-              "maskG" .= "v"~>"_0"."y"
-              "maskB" .= "v"~>"_0"."z"
-              "maskA" .= "v"~>"_0"."w"
+              varADT "Value" "VV4B" "v" $ "o"."_1"
+              "maskR" .= "v"."_0"@."x"
+              "maskG" .= "v"."_0"@."y"
+              "maskB" .= "v"."_0"@."z"
+              "maskA" .= "v"."_0"@."w"
           callGL GLColorMask ["maskR","maskG","maskB","maskA"]
     if_ "noStencil" $ then_ $ callGL GLDisable [toExp GL_STENCIL_TEST]
     if_ "noDepth" $ then_ $ callGL GLDisable [toExp GL_DEPTH_TEST]
@@ -576,12 +576,12 @@ classes = do
             if_ (map_elem "uniforms" "name") $ do
               then_ $ do
                 varAssign "UniformValue" "u" $ map_lookup "uniforms" "name"
-                copyToNativeArray t ("u"~>n) "v"
+                copyToNativeArray t ("u".n) "v"
               else_ $ do
                 varConstructor "UniformValue" "u" []
-                "u"~>"tag" .= enumADT "InputType" tag
-                allocNativeArray t $ "u"~>n
-                copyToNativeArray t ("u"~>n) "v"
+                "u"."tag" .= enumADT "InputType" tag
+                allocNativeArray t $ "u".n
+                copyToNativeArray t ("u".n) "v"
                 map_insert "uniforms" "name" "u"
       setUniform Int "Int" "_int"
       setUniform Bool "Bool" "_int"
@@ -609,16 +609,16 @@ classes = do
 
       method "createObject" ["slotName" :@ String, "prim" :@ Enum "Primitive", "attributes" :@ "StreamMap", "objectUniforms" :@ Vector String] ("GLObject") $ do
         varConstructor "GLObject" "o" []
-        "o"~>"enabled" .= true
-        "o"~>"order" .= 0
-        "o"~>"glMode" .= callProcExp "primitiveMode" ["prim"]
+        "o"."enabled" .= true
+        "o"."order" .= 0
+        "o"."glMode" .= callProcExp "primitiveMode" ["prim"]
         varAssign Int "count" 0
-        map_foreach String "Stream" "i" ("attributes"~>"map") $ do
-          if_ (it_value "i" ~> "isArray") $ then_ $ do
-            "count" .= it_value "i" ~> "buffer" ~> ("size" `vector_lookup` (it_value "i" ~> "index")) / it_value "i" ~> "glSize"
+        map_foreach String "Stream" "i" ("attributes"."map") $ do
+          if_ (it_value "i" . "isArray") $ then_ $ do
+            "count" .= it_value "i" . "buffer" . ("size" `vector_lookup` (it_value "i" . "index")) / it_value "i" . "glSize"
             break_
-        "o"~>"glCount" .= "count"
-        "o"~>"streams" .= "attributes"
+        "o"."glCount" .= "count"
+        "o"."streams" .= "attributes"
         if_ (map_elem "objectMap" "slotName") $ do
           then_ $ do
             vector_pushBack ("objectMap" `map_lookup` "slotName") "o"
@@ -644,12 +644,12 @@ classes = do
             if_ (map_elem "uniforms" "name") $ do
               then_ $ do
                 varAssign "UniformValue" "u" $ map_lookup "uniforms" "name"
-                copyToNativeArray t ("u"~>n) "v"
+                copyToNativeArray t ("u".n) "v"
               else_ $ do
                 varConstructor "UniformValue" "u" []
-                "u"~>"tag" .= enumADT "InputType" tag
-                allocNativeArray t $ "u"~>n
-                copyToNativeArray t ("u"~>n) "v"
+                "u"."tag" .= enumADT "InputType" tag
+                allocNativeArray t $ "u".n
+                copyToNativeArray t ("u".n) "v"
                 map_insert "uniforms" "name" "u"
       setUniform Int "Int" "_int"
       setUniform Bool "Bool" "_int"
@@ -704,9 +704,9 @@ classes = do
         varADT "RenderTarget" "RenderTarget" "t" "t_"
         -- does this target have texture attachments?
         varAssign Int "textureCount" 0
-        vector_foreach "TargetItem" "i_" ("t"~>"renderTargets") $ do
+        vector_foreach "TargetItem" "i_" ("t"."renderTargets") $ do
           varADT "TargetItem" "TargetItem" "i" "i_"
-          if_ ("i"~>"targetRef"."valid" && "i"~>"targetRef"."data"~>"tag" == enumADT "ImageRef" "TextureImage") $ then_ $ do
+          if_ ("i"."targetRef"@."valid" && "i"."targetRef"@."data"."tag" == enumADT "ImageRef" "TextureImage") $ then_ $ do
             inc "textureCount"
         if_ ("textureCount" == 0) $ then_ $ do
           return_ 0
@@ -718,22 +718,22 @@ classes = do
         varAssign Int "textarget" 0
         varAssign Int "level" 0
         varAssign UInt "texture" 0
-        vector_foreach "TargetItem" "i_" ("t"~>"renderTargets") $ do
+        vector_foreach "TargetItem" "i_" ("t"."renderTargets") $ do
           varADT "TargetItem" "TargetItem" "i" "i_"
-          switch ("i"~>"targetSemantic"~>"tag") $ do -- TODO: ADT switch
+          switch ("i"."targetSemantic"."tag") $ do -- TODO: ADT switch
             case_ (nsPatADT "ImageSemantic" "Color") $ do 
               "attachment" .= toExp GL_COLOR_ATTACHMENT0
             case_ (nsPatADT "ImageSemantic" "Depth") $ do 
               "attachment" .= toExp GL_DEPTH_ATTACHMENT
             case_ (nsPatADT "ImageSemantic" "Stencil") $ do 
               "attachment" .= toExp GL_STENCIL_ATTACHMENT
-          if_ ("i"~>"targetRef"."valid") $ do
-            then_ $ switch ("i"~>"targetRef"."data"~>"tag") $ do -- TODO: ADT switch
+          if_ ("i"."targetRef"@."valid") $ do
+            then_ $ switch ("i"."targetRef"@."data"."tag") $ do -- TODO: ADT switch
               case_ (nsPatADT "ImageRef" "TextureImage") $ do
-                varADT "ImageRef" "TextureImage" "ti" $ "i"~>"targetRef"."data"
-                "texture" .= ("textures" `vector_lookup` ("ti"~>"_0"))~>"texture"
+                varADT "ImageRef" "TextureImage" "ti" $ "i"."targetRef"@."data"
+                "texture" .= ("textures" `vector_lookup` ("ti"."_0"))."texture"
                 "textarget" .= toExp GL_TEXTURE_2D -- TODO
-                "level" .= "ti"~>"_1"
+                "level" .= "ti"."_1"
               case_ (nsPatADT "ImageRef" "Framebuffer") $ do
                 "texture" .= 0
                 "textarget" .= toExp GL_TEXTURE_2D
@@ -756,20 +756,20 @@ classes = do
         varADT "Pipeline" "Pipeline" "ppl" $ "ppl_"
         "pipeline" .= "ppl"
         -- check backend compatibility
-        if_ ("ppl"~>"backend"~>"tag" != enumADT "Backend" "WebGL1") $ then_ $ do
+        if_ ("ppl"."backend"."tag" != enumADT "Backend" "WebGL1") $ then_ $ do
           throw "unsupported backend"
         -- allocate all resources
         --  textures
-        vector_foreach "TextureDescriptor" "i" ("ppl"~>"textures") $ do
+        vector_foreach "TextureDescriptor" "i" ("ppl"."textures") $ do
           vector_pushBack "textures" (callProcExp "createTexture" ["i"])
         --  targets
-        vector_foreach "RenderTarget" "i" ("ppl"~>"targets") $ do
+        vector_foreach "RenderTarget" "i" ("ppl"."targets") $ do
           vector_pushBack "targets" (callExp "createRenderTarget" ["i"])
         --  programs
-        vector_foreach "Program" "i" ("ppl"~>"programs") $ do
+        vector_foreach "Program" "i" ("ppl"."programs") $ do
           vector_pushBack "programs" (callProcExp "createProgram" ["i"])
         --  stream data
-        vector_foreach "StreamData" "i" ("ppl"~>"streams") $ do
+        vector_foreach "StreamData" "i" ("ppl"."streams") $ do
           vector_pushBack "streamData" (callProcExp "createStreamData" ["i"])
         callGL GLReleaseShaderCompiler []
 
@@ -777,73 +777,73 @@ classes = do
         -- release resources
         -- textures
         vector_foreach "Texture" "i" "textures" $ do
-          callGLPrim $ GLDeleteTexture $ "i"~>"texture"
+          callGLPrim $ GLDeleteTexture $ "i"."texture"
         -- targets
         vector_foreach Int "i" "targets" $ do
           callGLPrim $ GLDeleteFramebuffer "i"
         -- programs
         vector_foreach "GLProgram" "i" "programs" $ do
-          callGL GLDeleteProgram ["i"~>"program"]
-          callGL GLDeleteShader ["i"~>"vertexShader"]
-          callGL GLDeleteShader ["i"~>"fragmentShader"]
+          callGL GLDeleteProgram ["i"."program"]
+          callGL GLDeleteShader ["i"."vertexShader"]
+          callGL GLDeleteShader ["i"."fragmentShader"]
 
       method "setPipelineInput" ["i" :@ "PipelineInput"] Void $ do
         "input" .= "i"
         "hasPipelineInput" .= true
 
       method "render" [] Void $ do
-        vector_foreach "Command" "i" ("pipeline"~>"commands") $ do
-          switch ("i"~>"tag") $ do -- TODO: ADT switch
+        vector_foreach "Command" "i" ("pipeline"."commands") $ do
+          switch ("i"."tag") $ do -- TODO: ADT switch
             case_ (nsPatADT "Command" "SetRasterContext") $ do
               varADT "Command" "SetRasterContext" "cmd" $ "i"
-              callProc "setupRasterContext" ["cmd"~>"_0"]
+              callProc "setupRasterContext" ["cmd"."_0"]
             case_ (nsPatADT "Command" "SetAccumulationContext") $ do
               varADT "Command" "SetAccumulationContext" "cmd" $ "i"
-              callProc "setupAccumulationContext" ["cmd"~>"_0"]
+              callProc "setupAccumulationContext" ["cmd"."_0"]
             case_ (nsPatADT "Command" "SetTexture") $ do
               varADT "Command" "SetTexture" "cmd" $ "i"
-              callGL GLActiveTexture [toExp GL_TEXTURE0 + "cmd"~>"_0"]
-              callGL GLBindTexture [("textures" `vector_lookup` ("cmd"~>"_1"))~>"target",("textures" `vector_lookup` ("cmd"~>"_1"))~>"texture"]
+              callGL GLActiveTexture [toExp GL_TEXTURE0 + "cmd"."_0"]
+              callGL GLBindTexture [("textures" `vector_lookup` ("cmd"."_1"))."target",("textures" `vector_lookup` ("cmd"."_1"))."texture"]
             case_ (nsPatADT "Command" "SetProgram") $ do
               varADT "Command" "SetProgram" "cmd" $ "i"
               "hasCurrentProgram" .= true
-              "currentProgram" .= "cmd"~>"_0"
-              callGL GLUseProgram [("programs" `vector_lookup` "currentProgram")~>"program"]
+              "currentProgram" .= "cmd"."_0"
+              callGL GLUseProgram [("programs" `vector_lookup` "currentProgram")."program"]
             case_ (nsPatADT "Command" "SetRenderTarget") $ do
               varADT "Command" "SetRenderTarget" "cmd" $ "i"
-              varAssign UInt "t" $ "targets" `vector_lookup` ("cmd"~>"_0")
+              varAssign UInt "t" $ "targets" `vector_lookup` ("cmd"."_0")
               callGL GLBindFramebuffer [toExp GL_FRAMEBUFFER, expIf ("t"==0) "screenTarget" "t"]
               if_ ("hasPipelineInput") $ do
-                then_ $ callGL GLViewport [0,0,"input"~>"screenWidth","input"~>"screenHeight"]
+                then_ $ callGL GLViewport [0,0,"input"."screenWidth","input"."screenHeight"]
             case_ (nsPatADT "Command" "ClearRenderTarget") $ do
               varADT "Command" "ClearRenderTarget" "cmd" $ "i"
               varAssign UInt "mask" 0
-              vector_foreach "ClearImage" "a" ("cmd"~>"_0") $ do
+              vector_foreach "ClearImage" "a" ("cmd"."_0") $ do
                 varADT "ClearImage" "ClearImage" "image" $ "a"
-                switch ("image"~>"imageSemantic"~>"tag") $ do -- TODO: ADT switch
+                switch ("image"."imageSemantic"."tag") $ do -- TODO: ADT switch
                   case_ (nsPatADT "ImageSemantic" "Depth") $ do
-                    varADT "Value" "VFloat" "v" $ "image"~>"clearValue"
+                    varADT "Value" "VFloat" "v" $ "image"."clearValue"
                     callGL GLDepthMask [true]
-                    callGL GLClearDepthf ["v"~>"_0"]
+                    callGL GLClearDepthf ["v"."_0"]
                     "mask" |= toExp GL_DEPTH_BUFFER_BIT
                   case_ (nsPatADT "ImageSemantic" "Stencil") $ do
-                    varADT "Value" "VWord" "v" $ "image"~>"clearValue"
-                    callGL GLClearStencil ["v"~>"_0"]
+                    varADT "Value" "VWord" "v" $ "image"."clearValue"
+                    callGL GLClearStencil ["v"."_0"]
                     "mask" |= toExp GL_STENCIL_BUFFER_BIT
                   case_ (nsPatADT "ImageSemantic" "Color") $ do
-                    switch ("image"~>"clearValue"~>"tag") $ do -- TODO: ADT switch
+                    switch ("image"."clearValue"."tag") $ do -- TODO: ADT switch
                       case_ (nsPatADT "Value" "VFloat") $ do
-                        varADT "Value" "VFloat" "v" $ "image"~>"clearValue"
-                        callGL GLClearColor ["v"~>"_0",0.0,0.0,1.0]
+                        varADT "Value" "VFloat" "v" $ "image"."clearValue"
+                        callGL GLClearColor ["v"."_0",0.0,0.0,1.0]
                       case_ (nsPatADT "Value" "VV2F") $ do
-                        varADT "Value" "VV2F" "v" $ "image"~>"clearValue"
-                        callGL GLClearColor ["v"~>"_0"."x","v"~>"_0"."y",0.0,1.0]
+                        varADT "Value" "VV2F" "v" $ "image"."clearValue"
+                        callGL GLClearColor ["v"."_0"@."x","v"."_0"@."y",0.0,1.0]
                       case_ (nsPatADT "Value" "VV3F") $ do
-                        varADT "Value" "VV3F" "v" $ "image"~>"clearValue"
-                        callGL GLClearColor ["v"~>"_0"."x","v"~>"_0"."y","v"~>"_0"."z",1.0]
+                        varADT "Value" "VV3F" "v" $ "image"."clearValue"
+                        callGL GLClearColor ["v"."_0"@."x","v"."_0"@."y","v"."_0"@."z",1.0]
                       case_ (nsPatADT "Value" "VV4F") $ do
-                        varADT "Value" "VV4F" "v" $ "image"~>"clearValue"
-                        callGL GLClearColor ["v"~>"_0"."x","v"~>"_0"."y","v"~>"_0"."z","v"~>"_0"."w"]
+                        varADT "Value" "VV4F" "v" $ "image"."clearValue"
+                        callGL GLClearColor ["v"."_0"@."x","v"."_0"@."y","v"."_0"@."z","v"."_0"@."w"]
                       default_ $ do
                         callGL GLClearColor [0.0,0.0,0.0,1.0]
                     callGL GLColorMask [true,true,true,true]
@@ -851,37 +851,37 @@ classes = do
               callGL GLClear ["mask"]
             case_ (nsPatADT "Command" "SetSamplerUniform") $  if_ "hasCurrentProgram" $ then_ $ do
               varADT "Command" "SetSamplerUniform" "cmd" $ "i"
-              varAssign Int "sampler" $ ("programs" `vector_lookup` "currentProgram")~>"programInTextures" `map_lookup` ("cmd"~>"_0")
-              callGL GLUniform1i ["sampler","cmd"~>"_1"]
+              varAssign Int "sampler" $ ("programs" `vector_lookup` "currentProgram")."programInTextures" `map_lookup` ("cmd"."_0")
+              callGL GLUniform1i ["sampler","cmd"."_1"]
             case_ (nsPatADT "Command" "RenderSlot") $ if_ ("hasPipelineInput" && notNull "pipeline" && "hasCurrentProgram") $ then_ $ do
               varADT "Command" "RenderSlot" "cmd" $ "i"
-              varADT "Slot" "Slot" "slot" $ "pipeline"~>"slots" `vector_lookup` ("cmd"~>"_0")
-              if_ (map_notElem ("input"~>"objectMap") ("slot"~>"slotName")) $ then_ break_
-              vector_foreach "GLObject" "o" ("input"~>"objectMap" `map_lookup` ("slot"~>"slotName")) $ do
-                if_ (not $ "o"~>"enabled") $ then_ continue_
+              varADT "Slot" "Slot" "slot" $ "pipeline"."slots" `vector_lookup` ("cmd"."_0")
+              if_ (map_notElem ("input"."objectMap") ("slot"."slotName")) $ then_ break_
+              vector_foreach "GLObject" "o" ("input"."objectMap" `map_lookup` ("slot"."slotName")) $ do
+                if_ (not $ "o"."enabled") $ then_ continue_
                 -- setup uniforms
-                map_foreach String Int "u" (("programs" `vector_lookup` "currentProgram")~>"programUniforms") $ do
-                  if_ (map_elem ("o"~>"uniforms") (key "u")) $ do
-                    then_ $ callProc "setUniformValue" [it_value "u","o"~>"uniforms" `map_lookup` (key "u")]
-                    else_ $ callProc "setUniformValue" [it_value "u","input"~>"uniforms" `map_lookup` (key "u")]
+                map_foreach String Int "u" (("programs" `vector_lookup` "currentProgram")."programUniforms") $ do
+                  if_ (map_elem ("o"."uniforms") (key "u")) $ do
+                    then_ $ callProc "setUniformValue" [it_value "u","o"."uniforms" `map_lookup` (key "u")]
+                    else_ $ callProc "setUniformValue" [it_value "u","input"."uniforms" `map_lookup` (key "u")]
                 -- setup streams
-                map_foreach String "StreamInfo" "s" (("programs" `vector_lookup` "currentProgram")~>"programStreams") $ do
-                  callProc "setStream" [it_value "s"~>"index","o"~>"streams"~>"map" `map_lookup` (it_value "s"~>"name")]
+                map_foreach String "StreamInfo" "s" (("programs" `vector_lookup` "currentProgram")."programStreams") $ do
+                  callProc "setStream" [it_value "s"."index","o"."streams"."map" `map_lookup` (it_value "s"."name")]
                 -- draw call
                 -- TODO: support index buffers
-                callGL GLDrawArrays ["o"~>"glMode", 0, "o"~>"glCount"]
+                callGL GLDrawArrays ["o"."glMode", 0, "o"."glCount"]
             case_ (nsPatADT "Command" "RenderStream") $ if_ ("hasPipelineInput" && notNull "pipeline" && "hasCurrentProgram") $ then_ $ do
               varADT "Command" "RenderStream" "cmd" $ "i"
-              varAssign ("GLStreamData") "data" $ "streamData" `vector_lookup` ("cmd"~>"_0")
+              varAssign ("GLStreamData") "data" $ "streamData" `vector_lookup` ("cmd"."_0")
               -- setup uniforms
-              map_foreach String Int "u" (("programs" `vector_lookup` "currentProgram")~>"programUniforms") $ do
-                callProc "setUniformValue" [it_value "u","input"~>"uniforms" `map_lookup` (key "u")]
+              map_foreach String Int "u" (("programs" `vector_lookup` "currentProgram")."programUniforms") $ do
+                callProc "setUniformValue" [it_value "u","input"."uniforms" `map_lookup` (key "u")]
               -- setup streams
-              map_foreach String "StreamInfo" "s" (("programs" `vector_lookup` "currentProgram")~>"programStreams") $ do
-                callProc "setStream" [it_value "s"~>"index","data"~>"streams"~>"map" `map_lookup` (it_value "s"~>"name")]
+              map_foreach String "StreamInfo" "s" (("programs" `vector_lookup` "currentProgram")."programStreams") $ do
+                callProc "setStream" [it_value "s"."index","data"."streams"."map" `map_lookup` (it_value "s"."name")]
               -- draw call
               -- TODO: support index buffers
-              callGL GLDrawArrays ["data"~>"glMode", 0, "data"~>"glCount"]
+              callGL GLDrawArrays ["data"."glMode", 0, "data"."glCount"]
 
 backend = do
   enumConversions

@@ -367,11 +367,11 @@ not = Not
 notNull :: Exp -> Exp
 notNull = NotNull
 
-(~>) :: Exp -> Exp -> Exp
-(~>) = (:->)
-
 (.) :: Exp -> Exp -> Exp
-(.) = (:.)
+(.) = (:->)
+
+(@.) :: Exp -> Exp -> Exp
+(@.) = (:.)
 
 callGLPrim :: GLPrim -> StmtM ()
 callGLPrim prim = tell [CallGLPrim prim]
