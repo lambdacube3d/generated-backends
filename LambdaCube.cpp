@@ -674,12 +674,12 @@ void GLObject::setOrder(int32_t o) {
 void GLObject::setUniform(std::string name, int32_t v) {
   if (uniforms.count(name)>0) {
     std::shared_ptr<UniformValue> u = uniforms[name];
-    
+    u->_int[0] = v;
   } else {
     std::shared_ptr<UniformValue> u(new UniformValue());
     u->tag = ::InputType::tag::Int;
-    
-    
+    u->_int = new int[1];
+    u->_int[0] = v;
     uniforms[name] = u;
   }
 }
@@ -687,12 +687,12 @@ void GLObject::setUniform(std::string name, int32_t v) {
 void GLObject::setUniform(std::string name, bool v) {
   if (uniforms.count(name)>0) {
     std::shared_ptr<UniformValue> u = uniforms[name];
-    
+    u->_int[0] = v?1:0;
   } else {
     std::shared_ptr<UniformValue> u(new UniformValue());
     u->tag = ::InputType::tag::Bool;
-    
-    
+    u->_int = new int[1];
+    u->_int[0] = v?1:0;
     uniforms[name] = u;
   }
 }
@@ -700,12 +700,12 @@ void GLObject::setUniform(std::string name, bool v) {
 void GLObject::setUniform(std::string name, float v) {
   if (uniforms.count(name)>0) {
     std::shared_ptr<UniformValue> u = uniforms[name];
-    
+    u->_float[0] = v;
   } else {
     std::shared_ptr<UniformValue> u(new UniformValue());
     u->tag = ::InputType::tag::Float;
-    
-    
+    u->_float = new float[1];
+    u->_float[0] = v;
     uniforms[name] = u;
   }
 }
@@ -713,12 +713,14 @@ void GLObject::setUniform(std::string name, float v) {
 void GLObject::setUniform(std::string name, V2I v) {
   if (uniforms.count(name)>0) {
     std::shared_ptr<UniformValue> u = uniforms[name];
-    
+    u->_int[0] = v.x;
+    u->_int[1] = v.y;
   } else {
     std::shared_ptr<UniformValue> u(new UniformValue());
     u->tag = ::InputType::tag::V2I;
-    
-    
+    u->_int = new int[2];
+    u->_int[0] = v.x;
+    u->_int[1] = v.y;
     uniforms[name] = u;
   }
 }
@@ -726,12 +728,14 @@ void GLObject::setUniform(std::string name, V2I v) {
 void GLObject::setUniform(std::string name, V2B v) {
   if (uniforms.count(name)>0) {
     std::shared_ptr<UniformValue> u = uniforms[name];
-    
+    u->_int[0] = v.x?1:0;
+    u->_int[1] = v.y?1:0;
   } else {
     std::shared_ptr<UniformValue> u(new UniformValue());
     u->tag = ::InputType::tag::V2B;
-    
-    
+    u->_int = new int[2];
+    u->_int[0] = v.x?1:0;
+    u->_int[1] = v.y?1:0;
     uniforms[name] = u;
   }
 }
@@ -739,12 +743,14 @@ void GLObject::setUniform(std::string name, V2B v) {
 void GLObject::setUniform(std::string name, V2F v) {
   if (uniforms.count(name)>0) {
     std::shared_ptr<UniformValue> u = uniforms[name];
-    
+    u->_float[0] = v.x;
+    u->_float[1] = v.y;
   } else {
     std::shared_ptr<UniformValue> u(new UniformValue());
     u->tag = ::InputType::tag::V2F;
-    
-    
+    u->_float = new float[2];
+    u->_float[0] = v.x;
+    u->_float[1] = v.y;
     uniforms[name] = u;
   }
 }
@@ -752,12 +758,16 @@ void GLObject::setUniform(std::string name, V2F v) {
 void GLObject::setUniform(std::string name, V3I v) {
   if (uniforms.count(name)>0) {
     std::shared_ptr<UniformValue> u = uniforms[name];
-    
+    u->_int[0] = v.x;
+    u->_int[1] = v.y;
+    u->_int[2] = v.z;
   } else {
     std::shared_ptr<UniformValue> u(new UniformValue());
     u->tag = ::InputType::tag::V3I;
-    
-    
+    u->_int = new int[3];
+    u->_int[0] = v.x;
+    u->_int[1] = v.y;
+    u->_int[2] = v.z;
     uniforms[name] = u;
   }
 }
@@ -765,12 +775,16 @@ void GLObject::setUniform(std::string name, V3I v) {
 void GLObject::setUniform(std::string name, V3B v) {
   if (uniforms.count(name)>0) {
     std::shared_ptr<UniformValue> u = uniforms[name];
-    
+    u->_int[0] = v.x?1:0;
+    u->_int[1] = v.y?1:0;
+    u->_int[2] = v.z?1:0;
   } else {
     std::shared_ptr<UniformValue> u(new UniformValue());
     u->tag = ::InputType::tag::V3B;
-    
-    
+    u->_int = new int[3];
+    u->_int[0] = v.x?1:0;
+    u->_int[1] = v.y?1:0;
+    u->_int[2] = v.z?1:0;
     uniforms[name] = u;
   }
 }
@@ -778,12 +792,16 @@ void GLObject::setUniform(std::string name, V3B v) {
 void GLObject::setUniform(std::string name, V3F v) {
   if (uniforms.count(name)>0) {
     std::shared_ptr<UniformValue> u = uniforms[name];
-    
+    u->_float[0] = v.x;
+    u->_float[1] = v.y;
+    u->_float[2] = v.z;
   } else {
     std::shared_ptr<UniformValue> u(new UniformValue());
     u->tag = ::InputType::tag::V3F;
-    
-    
+    u->_float = new float[3];
+    u->_float[0] = v.x;
+    u->_float[1] = v.y;
+    u->_float[2] = v.z;
     uniforms[name] = u;
   }
 }
@@ -791,12 +809,18 @@ void GLObject::setUniform(std::string name, V3F v) {
 void GLObject::setUniform(std::string name, V4I v) {
   if (uniforms.count(name)>0) {
     std::shared_ptr<UniformValue> u = uniforms[name];
-    
+    u->_int[0] = v.x;
+    u->_int[1] = v.y;
+    u->_int[2] = v.z;
+    u->_int[3] = v.w;
   } else {
     std::shared_ptr<UniformValue> u(new UniformValue());
     u->tag = ::InputType::tag::V4I;
-    
-    
+    u->_int = new int[4];
+    u->_int[0] = v.x;
+    u->_int[1] = v.y;
+    u->_int[2] = v.z;
+    u->_int[3] = v.w;
     uniforms[name] = u;
   }
 }
@@ -804,12 +828,18 @@ void GLObject::setUniform(std::string name, V4I v) {
 void GLObject::setUniform(std::string name, V4B v) {
   if (uniforms.count(name)>0) {
     std::shared_ptr<UniformValue> u = uniforms[name];
-    
+    u->_int[0] = v.x?1:0;
+    u->_int[1] = v.y?1:0;
+    u->_int[2] = v.z?1:0;
+    u->_int[3] = v.w?1:0;
   } else {
     std::shared_ptr<UniformValue> u(new UniformValue());
     u->tag = ::InputType::tag::V4B;
-    
-    
+    u->_int = new int[4];
+    u->_int[0] = v.x?1:0;
+    u->_int[1] = v.y?1:0;
+    u->_int[2] = v.z?1:0;
+    u->_int[3] = v.w?1:0;
     uniforms[name] = u;
   }
 }
@@ -817,12 +847,18 @@ void GLObject::setUniform(std::string name, V4B v) {
 void GLObject::setUniform(std::string name, V4F v) {
   if (uniforms.count(name)>0) {
     std::shared_ptr<UniformValue> u = uniforms[name];
-    
+    u->_float[0] = v.x;
+    u->_float[1] = v.y;
+    u->_float[2] = v.z;
+    u->_float[3] = v.w;
   } else {
     std::shared_ptr<UniformValue> u(new UniformValue());
     u->tag = ::InputType::tag::V4F;
-    
-    
+    u->_float = new float[4];
+    u->_float[0] = v.x;
+    u->_float[1] = v.y;
+    u->_float[2] = v.z;
+    u->_float[3] = v.w;
     uniforms[name] = u;
   }
 }
@@ -830,12 +866,18 @@ void GLObject::setUniform(std::string name, V4F v) {
 void GLObject::setUniform(std::string name, M22F v) {
   if (uniforms.count(name)>0) {
     std::shared_ptr<UniformValue> u = uniforms[name];
-    
+    u->_float[0] = v.x.x;
+    u->_float[1] = v.x.y;
+    u->_float[2] = v.y.x;
+    u->_float[3] = v.y.y;
   } else {
     std::shared_ptr<UniformValue> u(new UniformValue());
     u->tag = ::InputType::tag::M22F;
-    
-    
+    u->_float = new float[4];
+    u->_float[0] = v.x.x;
+    u->_float[1] = v.x.y;
+    u->_float[2] = v.y.x;
+    u->_float[3] = v.y.y;
     uniforms[name] = u;
   }
 }
@@ -843,12 +885,28 @@ void GLObject::setUniform(std::string name, M22F v) {
 void GLObject::setUniform(std::string name, M33F v) {
   if (uniforms.count(name)>0) {
     std::shared_ptr<UniformValue> u = uniforms[name];
-    
+    u->_float[0] = v.x.x;
+    u->_float[1] = v.x.y;
+    u->_float[2] = v.x.z;
+    u->_float[3] = v.y.x;
+    u->_float[4] = v.y.y;
+    u->_float[5] = v.y.z;
+    u->_float[6] = v.z.x;
+    u->_float[7] = v.z.y;
+    u->_float[8] = v.z.z;
   } else {
     std::shared_ptr<UniformValue> u(new UniformValue());
     u->tag = ::InputType::tag::M33F;
-    
-    
+    u->_float = new float[9];
+    u->_float[0] = v.x.x;
+    u->_float[1] = v.x.y;
+    u->_float[2] = v.x.z;
+    u->_float[3] = v.y.x;
+    u->_float[4] = v.y.y;
+    u->_float[5] = v.y.z;
+    u->_float[6] = v.z.x;
+    u->_float[7] = v.z.y;
+    u->_float[8] = v.z.z;
     uniforms[name] = u;
   }
 }
@@ -856,12 +914,42 @@ void GLObject::setUniform(std::string name, M33F v) {
 void GLObject::setUniform(std::string name, M44F v) {
   if (uniforms.count(name)>0) {
     std::shared_ptr<UniformValue> u = uniforms[name];
-    
+    u->_float[0] = v.x.x;
+    u->_float[1] = v.x.y;
+    u->_float[2] = v.x.z;
+    u->_float[3] = v.x.w;
+    u->_float[4] = v.y.x;
+    u->_float[5] = v.y.y;
+    u->_float[6] = v.y.z;
+    u->_float[7] = v.y.w;
+    u->_float[8] = v.z.x;
+    u->_float[9] = v.z.y;
+    u->_float[10] = v.z.z;
+    u->_float[11] = v.z.w;
+    u->_float[12] = v.w.x;
+    u->_float[13] = v.w.y;
+    u->_float[14] = v.w.z;
+    u->_float[15] = v.w.w;
   } else {
     std::shared_ptr<UniformValue> u(new UniformValue());
     u->tag = ::InputType::tag::M44F;
-    
-    
+    u->_float = new float[16];
+    u->_float[0] = v.x.x;
+    u->_float[1] = v.x.y;
+    u->_float[2] = v.x.z;
+    u->_float[3] = v.x.w;
+    u->_float[4] = v.y.x;
+    u->_float[5] = v.y.y;
+    u->_float[6] = v.y.z;
+    u->_float[7] = v.y.w;
+    u->_float[8] = v.z.x;
+    u->_float[9] = v.z.y;
+    u->_float[10] = v.z.z;
+    u->_float[11] = v.z.w;
+    u->_float[12] = v.w.x;
+    u->_float[13] = v.w.y;
+    u->_float[14] = v.w.z;
+    u->_float[15] = v.w.w;
     uniforms[name] = u;
   }
 }
@@ -910,12 +998,12 @@ void PipelineInput::setScreenSize(int32_t w, int32_t h) {
 void PipelineInput::setUniform(std::string name, int32_t v) {
   if (uniforms.count(name)>0) {
     std::shared_ptr<UniformValue> u = uniforms[name];
-    
+    u->_int[0] = v;
   } else {
     std::shared_ptr<UniformValue> u(new UniformValue());
     u->tag = ::InputType::tag::Int;
-    
-    
+    u->_int = new int[1];
+    u->_int[0] = v;
     uniforms[name] = u;
   }
 }
@@ -923,12 +1011,12 @@ void PipelineInput::setUniform(std::string name, int32_t v) {
 void PipelineInput::setUniform(std::string name, bool v) {
   if (uniforms.count(name)>0) {
     std::shared_ptr<UniformValue> u = uniforms[name];
-    
+    u->_int[0] = v?1:0;
   } else {
     std::shared_ptr<UniformValue> u(new UniformValue());
     u->tag = ::InputType::tag::Bool;
-    
-    
+    u->_int = new int[1];
+    u->_int[0] = v?1:0;
     uniforms[name] = u;
   }
 }
@@ -936,12 +1024,12 @@ void PipelineInput::setUniform(std::string name, bool v) {
 void PipelineInput::setUniform(std::string name, float v) {
   if (uniforms.count(name)>0) {
     std::shared_ptr<UniformValue> u = uniforms[name];
-    
+    u->_float[0] = v;
   } else {
     std::shared_ptr<UniformValue> u(new UniformValue());
     u->tag = ::InputType::tag::Float;
-    
-    
+    u->_float = new float[1];
+    u->_float[0] = v;
     uniforms[name] = u;
   }
 }
@@ -949,12 +1037,14 @@ void PipelineInput::setUniform(std::string name, float v) {
 void PipelineInput::setUniform(std::string name, V2I v) {
   if (uniforms.count(name)>0) {
     std::shared_ptr<UniformValue> u = uniforms[name];
-    
+    u->_int[0] = v.x;
+    u->_int[1] = v.y;
   } else {
     std::shared_ptr<UniformValue> u(new UniformValue());
     u->tag = ::InputType::tag::V2I;
-    
-    
+    u->_int = new int[2];
+    u->_int[0] = v.x;
+    u->_int[1] = v.y;
     uniforms[name] = u;
   }
 }
@@ -962,12 +1052,14 @@ void PipelineInput::setUniform(std::string name, V2I v) {
 void PipelineInput::setUniform(std::string name, V2B v) {
   if (uniforms.count(name)>0) {
     std::shared_ptr<UniformValue> u = uniforms[name];
-    
+    u->_int[0] = v.x?1:0;
+    u->_int[1] = v.y?1:0;
   } else {
     std::shared_ptr<UniformValue> u(new UniformValue());
     u->tag = ::InputType::tag::V2B;
-    
-    
+    u->_int = new int[2];
+    u->_int[0] = v.x?1:0;
+    u->_int[1] = v.y?1:0;
     uniforms[name] = u;
   }
 }
@@ -975,12 +1067,14 @@ void PipelineInput::setUniform(std::string name, V2B v) {
 void PipelineInput::setUniform(std::string name, V2F v) {
   if (uniforms.count(name)>0) {
     std::shared_ptr<UniformValue> u = uniforms[name];
-    
+    u->_float[0] = v.x;
+    u->_float[1] = v.y;
   } else {
     std::shared_ptr<UniformValue> u(new UniformValue());
     u->tag = ::InputType::tag::V2F;
-    
-    
+    u->_float = new float[2];
+    u->_float[0] = v.x;
+    u->_float[1] = v.y;
     uniforms[name] = u;
   }
 }
@@ -988,12 +1082,16 @@ void PipelineInput::setUniform(std::string name, V2F v) {
 void PipelineInput::setUniform(std::string name, V3I v) {
   if (uniforms.count(name)>0) {
     std::shared_ptr<UniformValue> u = uniforms[name];
-    
+    u->_int[0] = v.x;
+    u->_int[1] = v.y;
+    u->_int[2] = v.z;
   } else {
     std::shared_ptr<UniformValue> u(new UniformValue());
     u->tag = ::InputType::tag::V3I;
-    
-    
+    u->_int = new int[3];
+    u->_int[0] = v.x;
+    u->_int[1] = v.y;
+    u->_int[2] = v.z;
     uniforms[name] = u;
   }
 }
@@ -1001,12 +1099,16 @@ void PipelineInput::setUniform(std::string name, V3I v) {
 void PipelineInput::setUniform(std::string name, V3B v) {
   if (uniforms.count(name)>0) {
     std::shared_ptr<UniformValue> u = uniforms[name];
-    
+    u->_int[0] = v.x?1:0;
+    u->_int[1] = v.y?1:0;
+    u->_int[2] = v.z?1:0;
   } else {
     std::shared_ptr<UniformValue> u(new UniformValue());
     u->tag = ::InputType::tag::V3B;
-    
-    
+    u->_int = new int[3];
+    u->_int[0] = v.x?1:0;
+    u->_int[1] = v.y?1:0;
+    u->_int[2] = v.z?1:0;
     uniforms[name] = u;
   }
 }
@@ -1014,12 +1116,16 @@ void PipelineInput::setUniform(std::string name, V3B v) {
 void PipelineInput::setUniform(std::string name, V3F v) {
   if (uniforms.count(name)>0) {
     std::shared_ptr<UniformValue> u = uniforms[name];
-    
+    u->_float[0] = v.x;
+    u->_float[1] = v.y;
+    u->_float[2] = v.z;
   } else {
     std::shared_ptr<UniformValue> u(new UniformValue());
     u->tag = ::InputType::tag::V3F;
-    
-    
+    u->_float = new float[3];
+    u->_float[0] = v.x;
+    u->_float[1] = v.y;
+    u->_float[2] = v.z;
     uniforms[name] = u;
   }
 }
@@ -1027,12 +1133,18 @@ void PipelineInput::setUniform(std::string name, V3F v) {
 void PipelineInput::setUniform(std::string name, V4I v) {
   if (uniforms.count(name)>0) {
     std::shared_ptr<UniformValue> u = uniforms[name];
-    
+    u->_int[0] = v.x;
+    u->_int[1] = v.y;
+    u->_int[2] = v.z;
+    u->_int[3] = v.w;
   } else {
     std::shared_ptr<UniformValue> u(new UniformValue());
     u->tag = ::InputType::tag::V4I;
-    
-    
+    u->_int = new int[4];
+    u->_int[0] = v.x;
+    u->_int[1] = v.y;
+    u->_int[2] = v.z;
+    u->_int[3] = v.w;
     uniforms[name] = u;
   }
 }
@@ -1040,12 +1152,18 @@ void PipelineInput::setUniform(std::string name, V4I v) {
 void PipelineInput::setUniform(std::string name, V4B v) {
   if (uniforms.count(name)>0) {
     std::shared_ptr<UniformValue> u = uniforms[name];
-    
+    u->_int[0] = v.x?1:0;
+    u->_int[1] = v.y?1:0;
+    u->_int[2] = v.z?1:0;
+    u->_int[3] = v.w?1:0;
   } else {
     std::shared_ptr<UniformValue> u(new UniformValue());
     u->tag = ::InputType::tag::V4B;
-    
-    
+    u->_int = new int[4];
+    u->_int[0] = v.x?1:0;
+    u->_int[1] = v.y?1:0;
+    u->_int[2] = v.z?1:0;
+    u->_int[3] = v.w?1:0;
     uniforms[name] = u;
   }
 }
@@ -1053,12 +1171,18 @@ void PipelineInput::setUniform(std::string name, V4B v) {
 void PipelineInput::setUniform(std::string name, V4F v) {
   if (uniforms.count(name)>0) {
     std::shared_ptr<UniformValue> u = uniforms[name];
-    
+    u->_float[0] = v.x;
+    u->_float[1] = v.y;
+    u->_float[2] = v.z;
+    u->_float[3] = v.w;
   } else {
     std::shared_ptr<UniformValue> u(new UniformValue());
     u->tag = ::InputType::tag::V4F;
-    
-    
+    u->_float = new float[4];
+    u->_float[0] = v.x;
+    u->_float[1] = v.y;
+    u->_float[2] = v.z;
+    u->_float[3] = v.w;
     uniforms[name] = u;
   }
 }
@@ -1066,12 +1190,18 @@ void PipelineInput::setUniform(std::string name, V4F v) {
 void PipelineInput::setUniform(std::string name, M22F v) {
   if (uniforms.count(name)>0) {
     std::shared_ptr<UniformValue> u = uniforms[name];
-    
+    u->_float[0] = v.x.x;
+    u->_float[1] = v.x.y;
+    u->_float[2] = v.y.x;
+    u->_float[3] = v.y.y;
   } else {
     std::shared_ptr<UniformValue> u(new UniformValue());
     u->tag = ::InputType::tag::M22F;
-    
-    
+    u->_float = new float[4];
+    u->_float[0] = v.x.x;
+    u->_float[1] = v.x.y;
+    u->_float[2] = v.y.x;
+    u->_float[3] = v.y.y;
     uniforms[name] = u;
   }
 }
@@ -1079,12 +1209,28 @@ void PipelineInput::setUniform(std::string name, M22F v) {
 void PipelineInput::setUniform(std::string name, M33F v) {
   if (uniforms.count(name)>0) {
     std::shared_ptr<UniformValue> u = uniforms[name];
-    
+    u->_float[0] = v.x.x;
+    u->_float[1] = v.x.y;
+    u->_float[2] = v.x.z;
+    u->_float[3] = v.y.x;
+    u->_float[4] = v.y.y;
+    u->_float[5] = v.y.z;
+    u->_float[6] = v.z.x;
+    u->_float[7] = v.z.y;
+    u->_float[8] = v.z.z;
   } else {
     std::shared_ptr<UniformValue> u(new UniformValue());
     u->tag = ::InputType::tag::M33F;
-    
-    
+    u->_float = new float[9];
+    u->_float[0] = v.x.x;
+    u->_float[1] = v.x.y;
+    u->_float[2] = v.x.z;
+    u->_float[3] = v.y.x;
+    u->_float[4] = v.y.y;
+    u->_float[5] = v.y.z;
+    u->_float[6] = v.z.x;
+    u->_float[7] = v.z.y;
+    u->_float[8] = v.z.z;
     uniforms[name] = u;
   }
 }
@@ -1092,12 +1238,42 @@ void PipelineInput::setUniform(std::string name, M33F v) {
 void PipelineInput::setUniform(std::string name, M44F v) {
   if (uniforms.count(name)>0) {
     std::shared_ptr<UniformValue> u = uniforms[name];
-    
+    u->_float[0] = v.x.x;
+    u->_float[1] = v.x.y;
+    u->_float[2] = v.x.z;
+    u->_float[3] = v.x.w;
+    u->_float[4] = v.y.x;
+    u->_float[5] = v.y.y;
+    u->_float[6] = v.y.z;
+    u->_float[7] = v.y.w;
+    u->_float[8] = v.z.x;
+    u->_float[9] = v.z.y;
+    u->_float[10] = v.z.z;
+    u->_float[11] = v.z.w;
+    u->_float[12] = v.w.x;
+    u->_float[13] = v.w.y;
+    u->_float[14] = v.w.z;
+    u->_float[15] = v.w.w;
   } else {
     std::shared_ptr<UniformValue> u(new UniformValue());
     u->tag = ::InputType::tag::M44F;
-    
-    
+    u->_float = new float[16];
+    u->_float[0] = v.x.x;
+    u->_float[1] = v.x.y;
+    u->_float[2] = v.x.z;
+    u->_float[3] = v.x.w;
+    u->_float[4] = v.y.x;
+    u->_float[5] = v.y.y;
+    u->_float[6] = v.y.z;
+    u->_float[7] = v.y.w;
+    u->_float[8] = v.z.x;
+    u->_float[9] = v.z.y;
+    u->_float[10] = v.z.z;
+    u->_float[11] = v.z.w;
+    u->_float[12] = v.w.x;
+    u->_float[13] = v.w.y;
+    u->_float[14] = v.w.z;
+    u->_float[15] = v.w.w;
     uniforms[name] = u;
   }
 }

@@ -38,8 +38,8 @@ class GLBuffer {
 class UniformValue {
   public:
     enum ::InputType::tag tag;
-    const int32_t* _int;
-    const float* _float;
+    int32_t* _int;
+    float* _float;
 };
 
 class Stream {

@@ -93,7 +93,7 @@ prettyType = \case
   String  -> "std::string"
   ADTEnum a -> "enum ::" ++ a ++ "::tag"
   ADTCons a b -> "std::shared_ptr<::data::" ++ b ++ ">"
-  NativeArray t -> "const " ++ prettyType t ++ "*"
+  NativeArray t -> prettyType t ++ "*"
   NativeBuffer -> "const void*"
   x -> error $ "cpp - prettyType: " ++ show x
 
@@ -151,8 +151,52 @@ prettyStmt classDefs ind = addIndentation ind . \case
   Continue -> "continue;"
   Inc e -> prettyExp e ++ "++;"
   AllocClassVars -> "" -- TODO
-  AllocNativeArray t n -> "" -- TODO
-  CopyToNativeArray t dst src -> "" -- TODO
+  --AllocNativeArray t n -> "" -- TODO
+  --CopyToNativeArray t dst src -> "" -- TODO
+  AllocNativeArray t n -> prettyExp n ++ " = new " ++ case t of
+    Int   -> "int[1];"
+    Bool  -> "int[1];"
+    Float -> "float[1];"
+    (Builtin "V2I") -> "int[2];"
+    (Builtin "V2B") -> "int[2];"
+    (Builtin "V2F") -> "float[2];"
+    (Builtin "V3I") -> "int[3];"
+    (Builtin "V3B") -> "int[3];"
+    (Builtin "V3F") -> "float[3];"
+    (Builtin "V4I") -> "int[4];"
+    (Builtin "V4B") -> "int[4];"
+    (Builtin "V4F") -> "float[4];"
+    (Builtin "M22F")  -> "float[4];"
+    (Builtin "M33F")  -> "float[9];"
+    (Builtin "M44F")  -> "float[16];"
+  CopyToNativeArray t dst src -> case t of
+      Int   -> f 0 ""
+      Bool  -> f 0 "?1:0"
+      Float -> f 0 ""
+      (Builtin "V2I") -> intercalate indStr [f 0 ".x", f 1 ".y"]
+      (Builtin "V2B") -> intercalate indStr [f 0 ".x?1:0", f 1 ".y?1:0"]
+      (Builtin "V2F") -> intercalate indStr [f 0 ".x", f 1 ".y"]
+      (Builtin "V3I") -> intercalate indStr [f 0 ".x", f 1 ".y", f 2 ".z"]
+      (Builtin "V3B") -> intercalate indStr [f 0 ".x?1:0", f 1 ".y?1:0", f 2 ".z?1:0"]
+      (Builtin "V3F") -> intercalate indStr [f 0 ".x", f 1 ".y", f 2 ".z"]
+      (Builtin "V4I") -> intercalate indStr [f 0 ".x", f 1 ".y", f 2 ".z", f 3 ".w"]
+      (Builtin "V4B") -> intercalate indStr [f 0 ".x?1:0", f 1 ".y?1:0", f 2 ".z?1:0", f 3 ".w?1:0"]
+      (Builtin "V4F") -> intercalate indStr [f 0 ".x", f 1 ".y", f 2 ".z", f 3 ".w"]
+      (Builtin "M22F")  -> intercalate indStr [ f 0 ".x.x", f 1 ".x.y"
+                         , f 2 ".y.x", f 3 ".y.y"
+                         ]
+      (Builtin "M33F")  -> intercalate indStr [ f 0 ".x.x", f 1 ".x.y", f 2 ".x.z"
+                         , f 3 ".y.x", f 4 ".y.y", f 5 ".y.z"
+                         , f 6 ".z.x", f 7 ".z.y", f 8 ".z.z"
+                         ]
+      (Builtin "M44F")  -> intercalate indStr [ f 0 ".x.x", f 1 ".x.y", f 2 ".x.z", f 3 ".x.w"
+                         , f 4 ".y.x", f 5 ".y.y", f 6 ".y.z", f 7 ".y.w"
+                         , f 8 ".z.x", f 9 ".z.y", f 10 ".z.z", f 11 ".z.w"
+                         , f 12 ".w.x", f 13 ".w.y", f 14 ".w.z", f 15 ".w.w"
+                         ]
+    where
+      indStr = "\n" ++ addIndentation ind ""
+      f i n = prettyExp dst ++ "["  ++ show i ++ "] = " ++ prettyExp src ++ n ++ ";"
   x -> error $ "cpp - prettyStmt: " ++ show x
 
 prettyExp = \case
